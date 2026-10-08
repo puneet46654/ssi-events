@@ -1,0 +1,17 @@
+{
+  "Name": "ssi-events-next",
+  "Comment": "Next.js server responses: honour origin Cache-Control (default no caching); RSC headers keep HTML and RSC payloads apart",
+  "MinTTL": 0,
+  "DefaultTTL": 0,
+  "MaxTTL": 31536000,
+  "ParametersInCacheKeyAndForwardedToOrigin": {
+    "EnableAcceptEncodingGzip": true,
+    "EnableAcceptEncodingBrotli": true,
+    "HeadersConfig": {
+      "HeaderBehavior": "whitelist",
+      "Headers": { "Quantity": 5, "Items": ["rsc", "next-router-prefetch", "next-router-state-tree", "next-router-segment-prefetch", "next-url"] }
+    },
+    "CookiesConfig": { "CookieBehavior": "all" },
+    "QueryStringsConfig": { "QueryStringBehavior": "all" }
+  }
+}

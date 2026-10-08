@@ -1,0 +1,6 @@
+site/node_modules/
+site/.next/
+dist/
+infra/.lambda-env.json
+infra/.dist-config.generated.json
+infra/.tmp-placeholder/

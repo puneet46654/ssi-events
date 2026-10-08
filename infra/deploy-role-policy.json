@@ -1,0 +1,5 @@
+{"Version":"2012-10-17","Statement":[
+{"Sid":"ListBucket","Effect":"Allow","Action":"s3:ListBucket","Resource":"arn:aws:s3:::ssi-events-site-051826716001"},
+{"Sid":"WriteAssetsAndReleases","Effect":"Allow","Action":["s3:PutObject","s3:GetObject"],"Resource":["arn:aws:s3:::ssi-events-site-051826716001/_next/static/*","arn:aws:s3:::ssi-events-site-051826716001/releases/*"]},
+{"Sid":"UpdateCode","Effect":"Allow","Action":["lambda:UpdateFunctionCode","lambda:GetFunction","lambda:GetFunctionConfiguration"],"Resource":"arn:aws:lambda:ap-south-1:051826716001:function:ssi-events-web"},
+{"Sid":"Invalidate","Effect":"Allow","Action":"cloudfront:CreateInvalidation","Resource":"arn:aws:cloudfront::051826716001:distribution/DISTRIBUTION_ID"}]}
