@@ -42,7 +42,25 @@ export type SlotItem = {
 export type EventCore = {
   eventId: string; eventName: string; venue: string; description: string; imageKey?: string;
   startDate: string; endDate: string; timeZone: string; status: string; updatedAt: string;
+  /** `open`: registration only, no time slots (see routes/events.ts). */
+  registrationMode?: string; capacity?: number; bookedSlots?: number;
 };
+
+/** A registration for an event without time slots: it has no slot. */
+export const isOpenRegistration = (b: Pick<BookingItem, 'slotId'>) => !b.slotId;
+
+/** When a registration-only event is over: the start of the day after its last day, in its timezone. */
+export function registrationEndsAt(event: Pick<EventCore, 'endDate' | 'timeZone'>): number {
+  const next = new Date(Date.parse(`${event.endDate}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+  return slotInstant(next, '00:00', eventTimeZone(event.timeZone));
+}
+
+/** Whether the booking's time is over: its slot's end, or the event's last day for a registration. */
+export function bookingEnded(b: BookingItem, event: EventCore | undefined, now = Date.now()): boolean {
+  if (!event) return true;
+  if (isOpenRegistration(b)) return !(now < registrationEndsAt(event));
+  return hasSlotEnded(b.date, b.endTime, event.timeZone, now);
+}
 
 export const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
 
@@ -157,13 +175,16 @@ export function publicBooking(b: BookingItem, event: EventCore | undefined) {
     date: `${b.date}T00:00:00.000Z`,
     startTime: b.startTime,
     endTime: b.endTime,
+    registrationOnly: isOpenRegistration(b),
+    eventStartDate: event ? `${event.startDate}T00:00:00.000Z` : null,
+    eventEndDate: event ? `${event.endDate}T00:00:00.000Z` : null,
     attendanceStatus: b.attendanceStatus,
     checkedInAt: b.checkedInAt ?? null,
     checkedInBy: b.checkedInBy || '',
     checkInMethod: b.checkInMethod || '',
     status: cancelled ? 'CANCELLED' as const
       : b.attendanceStatus === 'PRESENT' ? 'ATTENDED' as const
-      : !event || hasSlotEnded(b.date, b.endTime, timeZone) ? 'EXPIRED' as const
+      : bookingEnded(b, event) ? 'EXPIRED' as const
       : 'ACTIVE' as const,
     qrData: cancelled ? '' : JSON.stringify({ type: 'SSI_EVENTS_ATTENDANCE', doctorId: b.bookingId, bookingId: b.bookingId, eventId: b.eventId }),
   };

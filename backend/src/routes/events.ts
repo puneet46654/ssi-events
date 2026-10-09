@@ -4,12 +4,12 @@ import { error, HttpError, json } from '../http.js';
 import { bumpRealtime, logActivity } from '../lib/activity.js';
 import { requireAdmin } from '../lib/admins.js';
 import { assertSameOrigin, formBody } from '../lib/body.js';
-import { eventStatus, eventTimeZone } from '../lib/dates.js';
+import { eventStatus, eventTimeZone, isTimeZone } from '../lib/dates.js';
 import { startCancelNotices } from '../lib/cancel-notices.js';
 import { EDIT_LOCK_MS, NOT_EDIT_LOCKED } from '../lib/event-lock.js';
 import { isId, newId } from '../lib/ids.js';
 import { loadImage, sanitizeImage, storeImage } from '../lib/images.js';
-import { generateSlotTimes, scheduleProblem, type ScheduleInput } from '../lib/schedule.js';
+import { generateSlotTimes, isCalendarDate, scheduleProblem, type ScheduleInput } from '../lib/schedule.js';
 import type { SlotItem } from '../lib/bookings.js';
 import type { Handler } from '../router.js';
 
@@ -32,10 +32,20 @@ export type EventItem = {
   status: string;
   totalSlots: number;
   bookedSlots: number;
+  /** `slots` (default): attendees book a time slot. `open`: registration only, no time slots. */
+  registrationMode?: RegistrationMode;
+  /** Open events only: the most registrations accepted; absent means unlimited. */
+  capacity?: number;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
 };
+
+export type RegistrationMode = 'slots' | 'open';
+export const registrationModeOf = (e: Pick<EventItem, 'registrationMode'> | undefined): RegistrationMode =>
+  e?.registrationMode === 'open' ? 'open' : 'slots';
+const MAX_OPEN_DAYS = 31;
+const MAX_CAPACITY = 100_000;
 
 /** Day item (`EVENT#<id>` / `DAY#<nn>`). */
 export type DayItem = {
@@ -76,6 +86,8 @@ function publicEvent(e: EventItem, now: Date) {
     status: eventStatus(e.startDate, e.endDate, now, e.timeZone, e.status),
     totalSlots: e.totalSlots ?? 0,
     bookedSlots: e.bookedSlots ?? 0,
+    registrationMode: registrationModeOf(e),
+    capacity: registrationModeOf(e) === 'open' ? e.capacity ?? null : null,
     createdAt: e.createdAt,
     updatedAt: e.updatedAt,
   };
@@ -166,11 +178,30 @@ function readEventForm(form: FormData, existing?: EventItem) {
   if (eventName.length > 200 || venue.length > 300 || description.length > 5000) throw new HttpError(400, 'Event details are too long.');
   if (!EVENT_TYPES.includes(eventType)) throw new HttpError(400, 'Invalid event type.');
   if (!FORM_TEMPLATES.includes(bookingFormTemplate)) throw new HttpError(400, 'Invalid registration form template.');
+  const registrationMode: RegistrationMode = value('registrationMode', registrationModeOf(existing)) === 'open' ? 'open' : 'slots';
+  const base = { eventName, venue, description, eventType, bookingFormTemplate, timeZone, startDate, endDate, registrationMode };
+
+  if (registrationMode === 'open') {
+    // Registration only: dates and an optional limit on registrations, no schedule.
+    if (!isTimeZone(timeZone)) throw new HttpError(400, 'Select a valid event timezone.');
+    if (!isCalendarDate(startDate) || !isCalendarDate(endDate) || endDate < startDate) {
+      throw new HttpError(400, 'Enter valid event dates with the end on or after the start.');
+    }
+    const days = Math.round((Date.parse(endDate) - Date.parse(startDate)) / 86_400_000) + 1;
+    if (days > MAX_OPEN_DAYS) throw new HttpError(400, `A registration-only event can run for at most ${MAX_OPEN_DAYS} days.`);
+    const rawCapacity = value('capacity');
+    const capacity = rawCapacity ? Number(rawCapacity) : undefined;
+    if (capacity !== undefined && (!Number.isInteger(capacity) || capacity < 1 || capacity > MAX_CAPACITY)) {
+      throw new HttpError(400, `Registration limit must be a whole number from 1 to ${MAX_CAPACITY}, or blank for no limit.`);
+    }
+    return { ...base, numberOfDays: days, schedules: [] as ScheduleInput[], capacity };
+  }
+
   let schedules: ScheduleInput[];
   try { schedules = JSON.parse(value('daySchedules', '[]')); } catch { throw new HttpError(400, 'Invalid day schedule data.'); }
   const problem = scheduleProblem(startDate, endDate, numberOfDays, schedules, timeZone);
   if (problem) throw new HttpError(400, problem);
-  return { eventName, venue, description, eventType, bookingFormTemplate, timeZone, startDate, endDate, numberOfDays, schedules };
+  return { ...base, numberOfDays, schedules, capacity: undefined as number | undefined };
 }
 
 async function batchPut(items: Record<string, unknown>[]): Promise<void> {
@@ -233,13 +264,15 @@ export const createEvent: Handler = async (req) => {
     }
   });
   await batchPut(scheduleItems);
+  if (input.registrationMode === 'open') totalSlots = input.capacity ?? 0;
 
   const now = new Date().toISOString();
   const event: EventItem = {
     eventId, eventName: input.eventName, eventType: input.eventType, bookingFormTemplate: input.bookingFormTemplate,
     venue: input.venue, description: input.description, imageKey, numberOfDays: input.numberOfDays,
     startDate: input.startDate, endDate: input.endDate, timeZone: input.timeZone, status: 'ACTIVE',
-    totalSlots, bookedSlots: 0, createdBy: admin.username, createdAt: now, updatedAt: now,
+    totalSlots, bookedSlots: 0, registrationMode: input.registrationMode, capacity: input.capacity,
+    createdBy: admin.username, createdAt: now, updatedAt: now,
   };
   await db.send(new PutCommand({
     TableName: TABLE_NAME,
@@ -366,7 +399,7 @@ function planSchedule(eventId: string, event: EventItem, input: EventInput, days
   return { writes, deletes, totalSlots, scheduleChanged: before !== after };
 }
 
-const EDITABLE_FIELDS = ['eventName', 'eventType', 'bookingFormTemplate', 'venue', 'description', 'timeZone', 'startDate', 'endDate', 'numberOfDays'] as const;
+const EDITABLE_FIELDS = ['eventName', 'eventType', 'bookingFormTemplate', 'venue', 'description', 'timeZone', 'startDate', 'endDate', 'numberOfDays', 'registrationMode', 'capacity'] as const;
 
 /**
  * PUT /api/events/:id — same multipart form as create. Booked slots are kept (see planSchedule).
@@ -409,7 +442,25 @@ export const updateEvent: Handler = async (req) => {
       eventChildren<DayItem>(id, 'DAY#'),
       eventChildren<SlotItem>(id, 'SLOT#'),
     ]);
-    const plan = planSchedule(id, event, input, days, slots);
+    const booked = event.bookedSlots ?? 0;
+    if (booked > 0 && registrationModeOf(event) !== input.registrationMode) {
+      throw new HttpError(409, 'The registration type cannot change once people have registered.');
+    }
+    if (input.registrationMode === 'open' && input.capacity !== undefined && input.capacity < booked) {
+      throw new HttpError(409, `The registration limit cannot be lower than the ${booked} people already registered.`);
+    }
+    if (input.registrationMode === 'open' && booked > 0 && input.timeZone !== eventTimeZone(event.timeZone)) {
+      throw new HttpError(409, 'The timezone cannot change while this event has bookings.');
+    }
+    // A registration-only event has no schedule: any day and slot items left from before are removed (none are booked).
+    const plan = input.registrationMode === 'open'
+      ? {
+        writes: [] as (() => Promise<unknown>)[],
+        deletes: [...days, ...slots].map((item) => () => db.send(new DeleteCommand({ TableName: TABLE_NAME, Key: { PK: item.PK, SK: item.SK } }))),
+        totalSlots: input.capacity ?? 0,
+        scheduleChanged: days.length > 0,
+      }
+      : planSchedule(id, event, input, days, slots);
     const imageKey = thumbnail && await storeImage(thumbnail, `thumbnails/${id}-${Date.now()}`);
 
     try {
@@ -424,16 +475,17 @@ export const updateEvent: Handler = async (req) => {
     const fields: Record<string, unknown> = {
       eventName: input.eventName, eventType: input.eventType, bookingFormTemplate: input.bookingFormTemplate,
       venue: input.venue, description: input.description, timeZone: input.timeZone, startDate: input.startDate,
-      endDate: input.endDate, numberOfDays: input.numberOfDays, totalSlots: plan.totalSlots,
+      endDate: input.endDate, numberOfDays: input.numberOfDays, totalSlots: plan.totalSlots, registrationMode: input.registrationMode,
+      ...(input.capacity !== undefined ? { capacity: input.capacity } : {}),
       GSI1SK: `${input.startDate}#${id}`, updatedAt: now, ...(imageKey ? { imageKey } : {}),
     };
     const names = Object.fromEntries(Object.keys(fields).map((f, i) => [`#f${i}`, f]));
     const values = Object.fromEntries(Object.values(fields).map((v, i) => [`:f${i}`, v]));
     await db.send(new UpdateCommand({
       TableName: TABLE_NAME, Key: keys.event(id),
-      UpdateExpression: `SET ${Object.keys(names).map((n, i) => `${n} = :f${i}`).join(', ')} REMOVE editLock`,
+      UpdateExpression: `SET ${Object.keys(names).map((n, i) => `${n} = :f${i}`).join(', ')} REMOVE editLock${input.capacity === undefined ? ', #capacity' : ''}`,
       ConditionExpression: 'editLock = :until',
-      ExpressionAttributeNames: names,
+      ExpressionAttributeNames: input.capacity === undefined ? { ...names, '#capacity': 'capacity' } : names,
       ExpressionAttributeValues: { ...values, ':until': lockUntil },
     }));
     saved = true;

@@ -82,6 +82,9 @@ interface EventDetails {
     | 'COMPLETED'
     | 'CANCELLED';
 
+  /** `open`: registration only, no time slots; `capacity` null means no limit. */
+  registrationMode?: 'slots' | 'open';
+  capacity?: number | null;
   totalSlots: number;
 
   bookedSlots: number;
@@ -303,8 +306,11 @@ export default function EventDetailsPage() {
     );
   }
 
+  const registrationOnly = event.registrationMode === 'open';
+  const unlimited = registrationOnly && !event.capacity;
   const canBook =
-    event.status === 'LIVE' || event.status === 'UPCOMING';
+    (event.status === 'LIVE' || event.status === 'UPCOMING') && (unlimited || remainingCapacity > 0);
+  const bookLabel = registrationOnly ? 'Register' : 'Book a slot';
 
   return (
     <main
@@ -561,7 +567,7 @@ export default function EventDetailsPage() {
                     text-secondary
                   "
                 >
-                  {remainingCapacity}
+                  {unlimited ? 'Open' : remainingCapacity}
                 </p>
 
                 <p
@@ -573,7 +579,7 @@ export default function EventDetailsPage() {
                     text-gray-500
                   "
                 >
-                  booking places remaining
+                  {unlimited ? 'registration, no limit' : registrationOnly ? 'registration places remaining' : 'booking places remaining'}
                 </p>
               </div>
             </div>
@@ -671,7 +677,7 @@ export default function EventDetailsPage() {
             `}
           >
             {canBook
-              ? 'Book a slot' : 'Booking closed'}
+              ? bookLabel : remainingCapacity === 0 && (event.status === 'LIVE' || event.status === 'UPCOMING') ? 'Fully booked' : 'Booking closed'}
           </Link>
 
           <button
@@ -754,7 +760,7 @@ export default function EventDetailsPage() {
                 btn-primary rounded-full text-[16px] font-medium text-white
               "
             >
-              Book a slot
+              {bookLabel}
             </Link>
           ) : (
             <button

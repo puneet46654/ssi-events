@@ -68,6 +68,9 @@ type BookingRow = {
     endTime: string;
   } | null;
 
+  /** Registration for an event without time slots. */
+  registrationOnly?: boolean;
+
   createdAt: string;
 };
 
@@ -1771,7 +1774,7 @@ export default function AdminBookingsPage() {
                           "
                         >
                           {
-                            booking.pending ? 'Not selected' : formatSlot(
+                            booking.pending ? 'Not selected' : booking.registrationOnly ? 'No time slot' : formatSlot(
                               booking.slot, booking.event?.timeZone,
                             )
                           }
@@ -2159,7 +2162,7 @@ export default function AdminBookingsPage() {
                       <MobileInfo
                         label="Time Slot"
                         value={
-                          booking.pending ? 'Not selected' : formatSlot(
+                          booking.pending ? 'Not selected' : booking.registrationOnly ? 'No time slot' : formatSlot(
                             booking.slot, booking.event?.timeZone,
                           )
                         }

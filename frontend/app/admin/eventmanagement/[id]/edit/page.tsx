@@ -37,6 +37,7 @@ import {
 } from 'framer-motion';
 
 import BookingTemplateSelector from '@/app/components/admin/booking-templates/BookingTemplateSelector';
+import RegistrationModePicker, { type RegistrationMode } from '@/app/components/admin/booking-templates/RegistrationModePicker';
 
 import {
   BookingFormTemplate,
@@ -69,6 +70,9 @@ type DaySchedule = {
 
 type EventResponse = {
   timeZone?: string;
+  registrationMode?: RegistrationMode;
+  capacity?: number | null;
+  bookedSlots?: number;
   _id: string;
 
   eventName: string;
@@ -484,6 +488,9 @@ export default function EditEventPage() {
   ========================================================== */
 
   const [timeZone, setTimeZone] = useState('');
+  const [registrationMode, setRegistrationMode] = useState<RegistrationMode>('slots');
+  const [capacity, setCapacity] = useState('');
+  const [bookedCount, setBookedCount] = useState(0);
 
   const [
     eventName,
@@ -656,6 +663,9 @@ export default function EditEventPage() {
 
         if (event.status === 'CANCELLED') throw new Error('Cancelled events are kept for history and cannot be edited.');
         setTimeZone(eventTimeZone(event.timeZone));
+        setRegistrationMode(event.registrationMode === 'open' ? 'open' : 'slots');
+        setCapacity(event.capacity ? String(event.capacity) : '');
+        setBookedCount(event.bookedSlots || 0);
 
         setEventName(
           event.eventName,
@@ -1351,10 +1361,15 @@ export default function EditEventPage() {
       return;
     }
 
+    if (registrationMode === 'open' && capacity && (!Number.isInteger(Number(capacity)) || Number(capacity) < 1)) {
+      setFormError('Registration limit must be a whole number above zero, or blank for no limit.');
+      return;
+    }
+
     for (
       let index = 0;
       index <
-      numberOfDays;
+      (registrationMode === 'slots' ? numberOfDays : 0);
       index += 1
     ) {
       const error =
@@ -1386,6 +1401,8 @@ export default function EditEventPage() {
       const formData =
         new FormData();
       formData.set('timeZone', timeZone);
+      formData.set('registrationMode', registrationMode);
+      if (registrationMode === 'open') formData.set('capacity', capacity);
 
       formData.set(
         'eventName',
@@ -2491,6 +2508,15 @@ export default function EditEventPage() {
                         setFormError('');
                       }}
                     />
+                    <div className="mt-4 border-t border-gray-100 pt-4">
+                      <RegistrationModePicker
+                        mode={registrationMode}
+                        onModeChange={(mode) => { setRegistrationMode(mode); setFormError(''); }}
+                        capacity={capacity}
+                        onCapacityChange={setCapacity}
+                        locked={bookedCount > 0}
+                      />
+                    </div>
                   </div>
 
                   <input
@@ -2510,6 +2536,7 @@ export default function EditEventPage() {
             DAILY SCHEDULE
         ==================================================== */}
 
+        {registrationMode === 'slots' && (
         <motion.section
           initial={{
             opacity: 0,
@@ -3641,6 +3668,7 @@ export default function EditEventPage() {
             </AnimatePresence>
           </div>
         </motion.section>
+        )}
       </div>
     </motion.form>
   );

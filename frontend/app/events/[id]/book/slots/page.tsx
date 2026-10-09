@@ -77,6 +77,9 @@ type SlotEvent = {
     | 'UPCOMING'
     | 'COMPLETED'
     | 'CANCELLED';
+  /** `open`: registration only, no time slots. `remaining` is null when there is no limit. */
+  registrationMode?: 'slots' | 'open';
+  remaining?: number | null;
 };
 
 type SlotsResponse = {
@@ -487,6 +490,30 @@ export default function TimeSlotsPage() {
 
   if (!event) {
     return null;
+  }
+
+  if (event.registrationMode === 'open') {
+    return (
+      <OpenRegistration
+        event={event}
+        submitting={submitting}
+        error={error}
+        onBack={() => router.back()}
+        onConfirm={async () => {
+          if (submitting) return;
+          setSubmitting(true);
+          setError('');
+          try {
+            const booking = await confirmBooking(eventId, { dayScheduleId: '', slotId: '' });
+            router.replace(`/events/mytickets?booked=${encodeURIComponent(booking.bookingId)}`);
+          } catch (err) {
+            await loadSlots(true);
+            setSubmitting(false);
+            setError(err instanceof Error ? err.message : 'Unable to confirm your registration. Please retry.');
+          }
+        }}
+      />
+    );
   }
 
   /* ============================================================
@@ -2582,3 +2609,45 @@ function SlotsLoading() {
     </main>
   );
 }
+
+/** Registration-only events: no slot to choose, just confirm the registration. */
+function OpenRegistration({ event, submitting, error, onBack, onConfirm }: {
+  event: SlotEvent; submitting: boolean; error: string; onBack: () => void; onConfirm: () => void;
+}) {
+  const format = calendarDateFormatter('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const start = format.format(new Date(event.startDate)), end = format.format(new Date(event.endDate));
+  const full = event.remaining === 0;
+  const closed = event.status === 'COMPLETED' || event.status === 'CANCELLED';
+  return (
+    <main className="mx-auto w-full max-w-xl px-4 pb-16 pt-8 md:pt-14">
+      <h1 className="text-[26px] font-semibold leading-tight text-secondary md:text-[32px]">Confirm your registration</h1>
+      <p className="mt-3 text-[16px] leading-[1.6] text-gray-600">
+        This event does not use time slots. Once you confirm, your ticket with its QR code is shown on screen and sent to you by email. Present it at the venue on {start === end ? 'the day' : 'any day of the event'}.
+      </p>
+      <dl className="mt-6 space-y-3 rounded-[18px] bg-gray-50 p-5 text-[15px]">
+        <div><dt className="text-gray-500">Event</dt><dd className="font-semibold text-secondary">{event.eventName}</dd></div>
+        <div><dt className="text-gray-500">{start === end ? 'Date' : 'Dates'}</dt><dd className="font-semibold text-secondary">{start === end ? start : `${start} to ${end}`}</dd></div>
+        <div><dt className="text-gray-500">Venue</dt><dd className="font-semibold text-secondary">{event.venue}</dd></div>
+        {typeof event.remaining === 'number' && !full && (
+          <div><dt className="text-gray-500">Places remaining</dt><dd className="font-semibold text-secondary">{event.remaining}</dd></div>
+        )}
+      </dl>
+      {error && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-[14px] text-red-700">{error}</p>}
+      {full && !closed && <p className="mt-4 text-[15px] font-medium text-gray-700">Registration for this event is full.</p>}
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <button
+          type="button"
+          onClick={onConfirm}
+          disabled={submitting || full || closed}
+          className="btn-primary h-12 flex-1 rounded-full text-[16px] font-medium text-white disabled:opacity-60"
+        >
+          {submitting ? 'Confirming…' : 'Confirm registration'}
+        </button>
+        <button type="button" onClick={onBack} className="h-12 flex-1 rounded-full border border-gray-200 text-[16px] font-medium text-secondary">
+          Back
+        </button>
+      </div>
+    </main>
+  );
+}
+

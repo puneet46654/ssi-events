@@ -167,6 +167,10 @@ Requires `events` permission plus `canCreate`. Body: `multipart/form-data` with 
 | `numberOfDays` | 1-10 |
 | `daySchedules` | JSON array, one entry per day: `{ date, startTime "HH:mm", endTime, lunchEnabled, lunchStart, lunchEnd, slotDuration (min), slotGap (min), capacity 1-20, sameAsDay1 }` |
 | `thumbnail` | optional JPG/PNG/WebP, max 4 MB and 25 megapixels |
+| `registrationMode` | `slots` (default) or `open`. `open`: registration only, no schedule; `daySchedules` is ignored |
+| `capacity` | `open` only: maximum registrations, 1-100000; empty = no limit |
+
+Registration-only (`open`) events: dates up to 31 days, no day or slot items. `totalSlots` = `capacity` (0 when unlimited). Bookings omit `dayScheduleId`/`slotId`; the event's `bookedSlots < capacity` is checked in the booking transaction (`409 Registration for this event is full.`). Attendees can cancel until the event ends; reschedule returns `409`. Check-in is allowed any time while the event is live. `registrationMode` and `capacity` cannot be lowered below existing registrations or switched once anyone has registered (`409`).
 
 **Validation:**
 - Schedule dates must be ascending and inside the event dates.
