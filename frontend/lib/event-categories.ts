@@ -29,7 +29,7 @@ export const EVENT_CATEGORIES: EventCategory[] = [
     heading: 'SMRSC',
     description: 'The SSI Multi-Specialty Robotic Surgery Conference.',
     image: '/images/categories/smrsc.webp',
-    imageAlt: 'A robotic operating suite with the SSI Mantra system, surgeon console and theatre team',
+    imageAlt: 'Delegates in the audience at an SMRSC session',
     page: {
       path: '/smrsc',
       title: 'SMRSC',
@@ -49,7 +49,7 @@ export const EVENT_CATEGORIES: EventCategory[] = [
     heading: 'MantraM',
     description: 'Our mobile tele-surgical unit, carrying the SSI Mantra surgical robotic system.',
     image: '/images/categories/mantram.webp',
-    imageAlt: 'The SSi MantraM mobile unit in SS Innovations livery',
+    imageAlt: 'The SSi MantraM mobile unit, parked with its awning extended',
     page: {
       path: '/mantram',
       title: 'SSi MantraM',
