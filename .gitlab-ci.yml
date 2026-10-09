@@ -35,6 +35,10 @@ backend:
     - npm ci --no-audit --no-fund
     - npm run typecheck
     - npm test
+    # Load the production bundle itself: tests run the sources, so a bundling fault (e.g. a
+    # library's dynamic require) would otherwise only show up after deployment.
+    - npm run build
+    - npm run smoke
     - cd ..
     - bash infra/package-backend.sh "$CI_COMMIT_SHORT_SHA"
   artifacts:
