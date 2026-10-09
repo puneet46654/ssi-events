@@ -481,7 +481,7 @@ export default function MantramTemplate({
                 px-3.5
                 py-2.5
 
-                shadow-[0_6px_20px_rgba(27,75,107,0.08)]
+                shadow-[0_6px_20px_rgba(15,23,41,0.08)]
 
                 transition-all
                 duration-300
@@ -1019,7 +1019,7 @@ export default function MantramTemplate({
                 text-[13px]
                 font-semibold
                 text-white
-                shadow-[0_8px_20px_rgba(26,158,143,0.18)]
+                shadow-[0_8px_20px_rgba(40,63,143,0.18)]
                 transition-all
                 duration-200
                 hover:-translate-y-0.5
@@ -1491,7 +1491,7 @@ function DropdownShell({
         border
         border-gray-200
         bg-white
-        shadow-[0_20px_55px_rgba(27,75,107,0.16)]
+        shadow-[0_20px_55px_rgba(15,23,41,0.16)]
         sm:top-[52px]
 
         ${

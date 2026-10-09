@@ -40,6 +40,22 @@ In production, CloudFront sends every `/api/*` request to the backend, so routes
 
 You can't push to `main` directly, and nothing reaches the live site without the owner's merge.
 
+## Design language
+
+The site follows the SS Innovations design language used on the new corporate website: `SSi-Design-Language.md`, available from the web team.
+
+| Element | How it's set up | Rule |
+| --- | --- | --- |
+| Colour | `frontend/app/globals.css`: `primary` = indigo `#283F8F`, `secondary` = ink `#0F1729`, `gray-*` mapped to the SSi neutrals | Indigo is the only accent |
+| Insignia gradient | `.btn-primary`, `.ssi-rule`, `.ssi-highlight`, `var(--ssi-gradient-90)` | Only on primary buttons, thin rules, one highlighted phrase per heading, and small markers. Never as a large fill |
+| Type | Figtree (via `next/font`): 600 for headings, 500 for navigation and buttons, 400 for body. `font-bold` renders as 600 on purpose | Nothing smaller than 12px on attendee pages |
+| Shape | Panels have 28px corners (22px on phones); small cards and images 18px | Buttons are pills; dark footer band (`#0B1120`) on every page |
+| Icons | Phosphor (`@phosphor-icons/react`), regular weight, indigo | |
+| Logo | `public/logos/ssii-logo.png` (light backgrounds), `ssii-logo-white.png` (dark) | The header reads "SSii logo │ Events" |
+| Voice | Formal "we", sentence-case headings | No labels above headings, no slogans, no exclamation marks |
+| Categories | `lib/event-categories.ts`: SMRSC (`conference`), MantraM (`mantram`), CME / Workshop (`event`) | Use these names everywhere |
+| Phones first | Tap targets at least 44px, safe-area insets, bottom navigation | No horizontal scrolling down to a 360px-wide screen |
+
 ## Build and hosting notes
 
 - **Hosting:** the frontend runs on AWS Lambda as a Next.js `output: 'standalone'` server. Keep `output: 'standalone'` in `next.config.ts`.

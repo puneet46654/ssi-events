@@ -404,7 +404,7 @@ export default function AdminDashboard() {
 
             text-secondary
 
-            shadow-[0_3px_12px_rgba(27,75,107,0.04)]
+            shadow-[0_3px_12px_rgba(15,23,41,0.04)]
 
             transition-colors
 
@@ -459,7 +459,7 @@ export default function AdminDashboard() {
 
           bg-white
 
-          shadow-[0_6px_24px_rgba(27,75,107,0.045)]
+          shadow-[0_6px_24px_rgba(15,23,41,0.045)]
         "
       >
         <div
@@ -877,7 +877,7 @@ export default function AdminDashboard() {
 
             bg-white
 
-            shadow-[0_6px_24px_rgba(27,75,107,0.04)]
+            shadow-[0_6px_24px_rgba(15,23,41,0.04)]
 
             xl:col-span-2
           "
@@ -1136,7 +1136,7 @@ export default function AdminDashboard() {
 
             bg-white
 
-            shadow-[0_6px_24px_rgba(27,75,107,0.04)]
+            shadow-[0_6px_24px_rgba(15,23,41,0.04)]
           "
         >
           <SectionHeader
@@ -1430,11 +1430,11 @@ function DashboardStat({
 
         p-3.5
 
-        shadow-[0_5px_20px_rgba(27,75,107,0.035)]
+        shadow-[0_5px_20px_rgba(15,23,41,0.035)]
 
         transition-shadow
 
-        hover:shadow-[0_10px_28px_rgba(27,75,107,0.07)]
+        hover:shadow-[0_10px_28px_rgba(15,23,41,0.07)]
 
         sm:p-4
         lg:p-5
@@ -1918,11 +1918,11 @@ function UpcomingEventCard({
 
         p-3
 
-        shadow-[0_2px_8px_rgba(27,75,107,0.025)]
+        shadow-[0_2px_8px_rgba(15,23,41,0.025)]
 
         transition-shadow
 
-        hover:shadow-[0_6px_18px_rgba(27,75,107,0.065)]
+        hover:shadow-[0_6px_18px_rgba(15,23,41,0.065)]
 
         sm:p-3.5
       "

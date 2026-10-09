@@ -353,7 +353,7 @@ export default function EventBookingPage() {
         className="
           mx-auto
           w-full
-          max-w-[1500px]
+          max-w-[1200px]
 
           pb-8
           pt-4
@@ -479,7 +479,7 @@ function BookingHeader({
   if (!eventName) return null;
   return (
     <div className="border-b border-gray-200/60 bg-white/45 max-md:hidden">
-      <p className="mx-auto max-w-[600px] truncate px-6 py-2 text-center text-[10px] font-medium text-gray-500 sm:text-[11px]">
+      <p className="mx-auto max-w-[600px] truncate px-6 py-2 text-center text-[12px] font-medium text-gray-500 sm:text-[13px]">
         Registration for{' '}
         <span className="font-semibold text-secondary">
           {eventName}
@@ -541,7 +541,7 @@ function BookingMessage({
 
           text-center
 
-          shadow-[0_12px_35px_rgba(27,75,107,0.06)]
+          shadow-[0_12px_35px_rgba(15,23,41,0.06)]
 
           sm:p-7
         "
@@ -659,7 +659,7 @@ function BookingMessage({
               hover:bg-gray-50
             "
           >
-            Go Back
+            Go back
           </button>
 
           {onPrimary &&
@@ -674,17 +674,7 @@ function BookingMessage({
 
                   cursor-pointer
 
-                  rounded-xl
-
-                  bg-primary
-
-                  text-sm
-                  font-semibold
-                  text-white
-
-                  transition
-
-                  hover:brightness-95
+                  btn-primary rounded-full text-[15px] font-medium text-white
                 "
               >
                 {
@@ -708,7 +698,7 @@ function BookingTemplateSkeleton() {
       className="
         mx-auto
         w-full
-        max-w-[1500px]
+        max-w-[1200px]
 
         px-3
 

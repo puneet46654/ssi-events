@@ -1,5 +1,5 @@
-site/node_modules/
-site/.next/
+frontend/node_modules/
+frontend/.next/
 dist/
 infra/.lambda-env.json
 infra/.dist-config.generated.json

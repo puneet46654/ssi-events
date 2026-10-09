@@ -481,7 +481,7 @@ export default function ConferenceTemplate({
 
                 px-4
 
-                shadow-[0_6px_20px_rgba(27,75,107,0.08)]
+                shadow-[0_6px_20px_rgba(15,23,41,0.08)]
               "
             >
               <Image
@@ -1063,7 +1063,7 @@ export default function ConferenceTemplate({
                 font-semibold
                 text-white
 
-                shadow-[0_8px_20px_rgba(26,158,143,0.18)]
+                shadow-[0_8px_20px_rgba(40,63,143,0.18)]
 
                 transition-all
                 duration-200
@@ -1478,7 +1478,7 @@ function DropdownShell({
 
         bg-white
 
-        shadow-[0_20px_55px_rgba(27,75,107,0.16)]
+        shadow-[0_20px_55px_rgba(15,23,41,0.16)]
 
         ${
           fullWidth

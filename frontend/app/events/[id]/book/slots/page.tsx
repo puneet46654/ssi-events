@@ -533,12 +533,12 @@ export default function TimeSlotsPage() {
               className="
                 truncate
 
-                text-[10px]
+                text-[12px]
                 font-medium
 
                 text-gray-500
 
-                sm:text-[11px]
+                sm:text-[13px]
               "
             >
               Select a date and available time for{' '}
@@ -599,7 +599,7 @@ export default function TimeSlotsPage() {
 
             bg-white
 
-            shadow-[0_8px_28px_rgba(27,75,107,0.05)]
+            shadow-[0_8px_28px_rgba(15,23,41,0.05)]
 
             sm:rounded-[20px]
           "
@@ -648,7 +648,7 @@ export default function TimeSlotsPage() {
                 >
                   <span
                     className="
-                      text-[10px]
+                      text-[12px]
                       font-semibold
                       uppercase
 
@@ -657,7 +657,7 @@ export default function TimeSlotsPage() {
                       text-gray-400
                     "
                   >
-                    Time Slot Selection
+                    Choose a time slot
                   </span>
 
                   <StatusBadge
@@ -771,7 +771,7 @@ export default function TimeSlotsPage() {
               >
                 <p
                   className="
-                    text-[10px]
+                    text-[12px]
                     font-semibold
                     uppercase
 
@@ -780,7 +780,7 @@ export default function TimeSlotsPage() {
                     text-gray-400
                   "
                 >
-                  Booking Step
+                  Booking step
                 </p>
 
                 <p
@@ -800,7 +800,7 @@ export default function TimeSlotsPage() {
                   className="
                     mt-1
 
-                    text-[11px]
+                    text-[13px]
                     leading-5
 
                     text-gray-500
@@ -847,7 +847,7 @@ export default function TimeSlotsPage() {
                 <div>
                   <p
                     className="
-                      text-[10px]
+                      text-[12px]
                       font-semibold
                       uppercase
 
@@ -877,7 +877,7 @@ export default function TimeSlotsPage() {
 
                 <span
                   className="
-                    text-[10px]
+                    text-[12px]
                     font-medium
 
                     text-gray-400
@@ -966,7 +966,7 @@ export default function TimeSlotsPage() {
                                   bg-primary
                                   text-white
 
-                                  shadow-[0_8px_18px_rgba(26,158,143,0.14)]
+                                  shadow-[0_8px_18px_rgba(40,63,143,0.14)]
                                 `
                                 : `
                                   border-gray-200
@@ -983,7 +983,7 @@ export default function TimeSlotsPage() {
                             className={`
                               block
 
-                              text-[9px]
+                              text-[12px]
                               font-semibold
                               uppercase
 
@@ -1034,7 +1034,7 @@ export default function TimeSlotsPage() {
                               mt-1
                               block
 
-                              text-[10px]
+                              text-[12px]
                               font-medium
 
                               ${
@@ -1089,7 +1089,7 @@ export default function TimeSlotsPage() {
                 <div>
                   <p
                     className="
-                      text-[10px]
+                      text-[12px]
                       font-semibold
                       uppercase
 
@@ -1126,7 +1126,7 @@ export default function TimeSlotsPage() {
                 >
                   <p
                     className="
-                      text-[11px]
+                      text-[13px]
                       font-semibold
 
                       text-secondary
@@ -1140,7 +1140,7 @@ export default function TimeSlotsPage() {
                     className="
                       mt-0.5
 
-                      text-[9px]
+                      text-[12px]
 
                       text-gray-400
                     "
@@ -1282,7 +1282,7 @@ export default function TimeSlotsPage() {
 
                                     text-primary
 
-                                    shadow-[inset_0_0_0_1px_rgba(26,158,143,0.10)]
+                                    shadow-[inset_0_0_0_1px_rgba(40,63,143,0.10)]
                                   `
                                   : `
                                     cursor-pointer
@@ -1296,7 +1296,7 @@ export default function TimeSlotsPage() {
                                     hover:-translate-y-0.5
                                     hover:border-primary/30
                                     hover:bg-primary/[0.02]
-                                    hover:shadow-[0_5px_14px_rgba(27,75,107,0.05)]
+                                    hover:shadow-[0_5px_14px_rgba(15,23,41,0.05)]
                                   `
                             }
                           `}
@@ -1324,7 +1324,7 @@ export default function TimeSlotsPage() {
                             className={`
                               mt-0.5
 
-                              text-[9px]
+                              text-[12px]
                               font-medium
 
                               ${
@@ -1497,7 +1497,7 @@ export default function TimeSlotsPage() {
                         >
                           <p
                             className="
-                              text-[10px]
+                              text-[12px]
                               font-semibold
                               uppercase
 
@@ -1578,7 +1578,7 @@ export default function TimeSlotsPage() {
                     px-3.5
                     py-3
 
-                    text-[11px]
+                    text-[13px]
                     font-medium
                     leading-5
 
@@ -1654,15 +1654,7 @@ export default function TimeSlotsPage() {
                   items-center
                   justify-center
 
-                  rounded-xl
-
-                  bg-primary
-
-                  text-sm
-                  font-semibold
-                  text-white
-
-                  shadow-[0_8px_20px_rgba(26,158,143,0.16)]
+                  btn-primary rounded-full text-[16px] font-medium text-white disabled:bg-none
 
                   transition-all
                   duration-200
@@ -1693,12 +1685,12 @@ export default function TimeSlotsPage() {
 
             text-center
 
-            text-[9px]
+            text-[12px]
             leading-4
 
             text-gray-400
 
-            sm:text-[10px]
+            sm:text-[12px]
           "
         >
           Slot availability may change until the booking is confirmed.
@@ -1726,7 +1718,7 @@ export default function TimeSlotsPage() {
           pb-[max(12px,env(safe-area-inset-bottom))]
           pt-3
 
-          shadow-[0_-8px_24px_rgba(27,75,107,0.06)]
+          shadow-[0_-8px_24px_rgba(15,23,41,0.06)]
 
           backdrop-blur-xl
 
@@ -1762,7 +1754,7 @@ export default function TimeSlotsPage() {
                     className="
                       truncate
 
-                      text-[10px]
+                      text-[12px]
                       font-medium
 
                       text-gray-400
@@ -1775,7 +1767,7 @@ export default function TimeSlotsPage() {
                     className="
                       truncate
 
-                      text-[11px]
+                      text-[13px]
                       font-semibold
 
                       text-secondary
@@ -1806,7 +1798,7 @@ export default function TimeSlotsPage() {
                     px-2
                     py-1
 
-                    text-[9px]
+                    text-[12px]
                     font-semibold
 
                     text-primary
@@ -1829,15 +1821,7 @@ export default function TimeSlotsPage() {
               items-center
               justify-center
 
-              rounded-xl
-
-              bg-primary
-
-              text-sm
-              font-semibold
-              text-white
-
-              shadow-[0_8px_20px_rgba(26,158,143,0.16)]
+              btn-primary rounded-full text-[16px] font-medium text-white disabled:bg-none
 
               transition-all
 
@@ -1907,7 +1891,7 @@ function StatusBadge({
         px-2
         py-1
 
-        text-[8px]
+        text-[12px]
         font-bold
         uppercase
 
@@ -1996,12 +1980,12 @@ function LegendItem({
 
       <span
         className="
-          text-[9px]
+          text-[12px]
           font-medium
 
           text-gray-500
 
-          sm:text-[10px]
+          sm:text-[12px]
         "
       >
         {label}
@@ -2103,7 +2087,7 @@ function EmptyBlock({
 
           max-w-sm
 
-          text-[11px]
+          text-[13px]
           leading-5
 
           text-gray-500
@@ -2169,7 +2153,7 @@ function SlotsError({
 
             text-center
 
-            shadow-[0_12px_35px_rgba(27,75,107,0.06)]
+            shadow-[0_12px_35px_rgba(15,23,41,0.06)]
           "
         >
           <div
@@ -2281,7 +2265,7 @@ function SlotsError({
                 hover:bg-gray-50
               "
             >
-              Go Back
+              Go back
             </button>
 
             <button
@@ -2306,7 +2290,7 @@ function SlotsError({
                 hover:brightness-95
               "
             >
-              Try Again
+              Try again
             </button>
           </div>
         </div>
@@ -2419,7 +2403,7 @@ function SlotsLoading() {
 
             bg-white
 
-            shadow-[0_8px_28px_rgba(27,75,107,0.05)]
+            shadow-[0_8px_28px_rgba(15,23,41,0.05)]
           "
         >
           <div

@@ -373,7 +373,7 @@ export default function AdminLayout({
 
           px-3
 
-          shadow-[0_1px_8px_rgba(27,75,107,0.035)]
+          shadow-[0_1px_8px_rgba(15,23,41,0.035)]
 
           backdrop-blur-xl
 
@@ -613,7 +613,7 @@ export default function AdminLayout({
 
                 bg-white
 
-                shadow-[18px_0_45px_rgba(27,75,107,0.16)]
+                shadow-[18px_0_45px_rgba(15,23,41,0.16)]
 
                 lg:hidden
               "

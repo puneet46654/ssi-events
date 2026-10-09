@@ -1027,7 +1027,7 @@ export default function CheckInPage() {
 
                           bg-primary
 
-                          shadow-[0_0_14px_rgba(26,158,143,0.8)]
+                          shadow-[0_0_14px_rgba(40,63,143,0.8)]
                         "
                       />
                     )}

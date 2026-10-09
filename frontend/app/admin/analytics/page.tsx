@@ -19,7 +19,7 @@ type Analytics = {
   feedback: { total: number; average: number; stars: { star: number; count: number }[]; latest: { rating: number; message: string; submittedAt: string }[] };
 };
 
-const COLORS = { primary: '#1a9e8f', secondary: '#1b4b6b', blue: '#4387b3', red: '#d75d5d', amber: '#d49c35' };
+const COLORS = { primary: '#283F8F', secondary: '#0F1729', blue: '#4387b3', red: '#d75d5d', amber: '#d49c35' };
 const RANGES = [['24h', 'Last 24 hours'], ['7d', 'Last 7 days'], ['30d', 'Last 30 days']] as const;
 const REFRESH_MS = 30000;
 const LIVE_MS = 5000;

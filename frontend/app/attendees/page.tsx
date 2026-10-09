@@ -1232,7 +1232,7 @@ export default function AttendeesPage() {
 
                         bg-primary
 
-                        shadow-[0_0_10px_rgba(26,158,143,0.7)]
+                        shadow-[0_0_10px_rgba(40,63,143,0.7)]
 
                         sm:hidden
                       "
@@ -1273,7 +1273,7 @@ export default function AttendeesPage() {
 
                         bg-primary
 
-                        shadow-[0_0_10px_rgba(26,158,143,0.7)]
+                        shadow-[0_0_10px_rgba(40,63,143,0.7)]
 
                         sm:block
                       "

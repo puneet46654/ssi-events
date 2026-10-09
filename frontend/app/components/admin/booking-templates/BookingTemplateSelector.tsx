@@ -74,7 +74,7 @@ export default function BookingTemplateSelector({
                       ? `
                         border-primary
                         bg-primary/[0.055]
-                        shadow-[0_0_0_2px_rgba(26,158,143,0.07)]
+                        shadow-[0_0_0_2px_rgba(40,63,143,0.07)]
                       `
                       : `
                         border-gray-200

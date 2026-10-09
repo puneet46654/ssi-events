@@ -129,7 +129,7 @@ export default function AuthLayout({
       >
         <div className="absolute inset-0 bg-[linear-gradient(135deg,var(--color-primary)_0%,var(--color-secondary-mid)_46%,var(--color-secondary-dark)_100%)]" />
 
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_5%,rgba(255,255,255,0.28),transparent_28%),radial-gradient(circle_at_90%_88%,rgba(26,158,143,0.30),transparent_34%),radial-gradient(circle_at_55%_45%,rgba(255,255,255,0.08),transparent_34%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_5%,rgba(255,255,255,0.28),transparent_28%),radial-gradient(circle_at_90%_88%,rgba(40,63,143,0.30),transparent_34%),radial-gradient(circle_at_55%_45%,rgba(255,255,255,0.08),transparent_34%)]" />
 
         <motion.div
           animate={{

@@ -71,8 +71,9 @@ interface IEvent {
 
 type EventTab =
   | 'All Events'
-  | 'Conferences'
-  | 'Mantram'
+  | 'SMRSC'
+  | 'MantraM'
+  | 'CME / Workshops'
   | 'Live'
   | 'Upcoming'
   | 'Completed';
@@ -85,8 +86,9 @@ type DeleteTarget = {
 
 const tabs: EventTab[] = [
   'All Events',
-  'Conferences',
-  'Mantram',
+  'SMRSC',
+  'MantraM',
+  'CME / Workshops',
   'Live',
   'Upcoming',
   'Completed',
@@ -418,7 +420,7 @@ export default function EventsManagementPage() {
 
           if (
             activeTab ===
-            'Conferences'
+            'SMRSC'
           ) {
             matchesTab =
               event.eventType ===
@@ -427,11 +429,15 @@ export default function EventsManagementPage() {
 
           if (
             activeTab ===
-            'Mantram'
+            'MantraM'
           ) {
             matchesTab =
               event.eventType ===
               'mantram';
+          }
+
+          if (activeTab === 'CME / Workshops') {
+            matchesTab = event.eventType === 'event';
           }
 
           if (
@@ -789,7 +795,7 @@ export default function EventsManagementPage() {
 
                 text-white
 
-                shadow-[0_5px_16px_rgba(26,158,143,0.18)]
+                shadow-[0_5px_16px_rgba(40,63,143,0.18)]
 
                 transition-all
 
@@ -939,7 +945,7 @@ export default function EventsManagementPage() {
 
           bg-white
 
-          shadow-[0_4px_18px_rgba(27,75,107,0.035)]
+          shadow-[0_4px_18px_rgba(15,23,41,0.035)]
 
           sm:mt-5
         "
@@ -1756,11 +1762,11 @@ function EventCard({
 
         bg-white
 
-        shadow-[0_5px_20px_rgba(27,75,107,0.03)]
+        shadow-[0_5px_20px_rgba(15,23,41,0.03)]
 
         transition-shadow
 
-        hover:shadow-[0_12px_32px_rgba(27,75,107,0.07)]
+        hover:shadow-[0_12px_32px_rgba(15,23,41,0.07)]
       "
     >
       <div
@@ -2325,7 +2331,7 @@ function SummaryCard({
 
         p-3
 
-        shadow-[0_4px_16px_rgba(27,75,107,0.025)]
+        shadow-[0_4px_16px_rgba(15,23,41,0.025)]
 
         sm:p-4
       "
@@ -2762,7 +2768,7 @@ function DeleteModal({
 
             p-4
 
-            shadow-[0_20px_60px_rgba(27,75,107,0.2)]
+            shadow-[0_20px_60px_rgba(15,23,41,0.2)]
 
             sm:rounded-[18px]
             sm:p-5
