@@ -1,6 +1,5 @@
 'use client';
 
-import { AppFeedbackDialog } from '@/components/user/AppFeedback';
 
 import { ticketStorage } from '@/lib/booking-contracts';
 import PendingRegistrations from '@/components/user/PendingRegistrations';
@@ -158,11 +157,6 @@ export default function EventsPage() {
       'ALL',
     );
 
-  // The Feedback buttons open the app feedback dialog.
-  const [
-    showFeedbackPicker,
-    setShowFeedbackPicker,
-  ] = useState(false);
 
   /* ==========================================================
      LOAD EVENTS
@@ -499,21 +493,6 @@ export default function EventsPage() {
     );
   }
 
-  /* ==========================================================
-     FEEDBACK
-  ========================================================== */
-
-  function openFeedback() {
-    setShowFeedbackPicker(
-      true,
-    );
-  }
-
-  function closeFeedback() {
-    setShowFeedbackPicker(
-      false,
-    );
-  }
 
   /* ==========================================================
      PAGE
@@ -836,7 +815,7 @@ export default function EventsPage() {
         </section>
 
         <div className="mt-1 md:mt-10">
-          <CategoryCards events={events} active={typeFilter} onSelect={setTypeFilter} loading={loading && events.length === 0} />
+          <CategoryCards events={events} loading={loading && events.length === 0} />
         </div>
         <div id="event-results" className="scroll-mt-[calc(72px+env(safe-area-inset-top))]" />
 
@@ -949,34 +928,10 @@ export default function EventsPage() {
           >
             <LoadingState />
           </div>
-        ) : loadError && events.length === 0 ? null : events.length ===
-          0 ? (
-          /* ==================================================
-             NO EVENTS AT ALL
-          ================================================== */
-
-          <div
-            className="
-              mt-4
-
-              md:mt-8
-            "
-          >
-            <NoPublishedEvents
-              onRefresh={() =>
-                void fetchEvents(
-                  false,
-                )
-              }
-              refreshing={
-                refreshing
-              }
-              onFeedback={
-                openFeedback
-              }
-            />
-          </div>
-        ) : filteredEvents.length ===
+        ) : loadError && events.length === 0 ? null
+          // With no events at all, the category cards already say "Coming soon".
+          : events.length === 0 ? null
+          : filteredEvents.length ===
           0 ? (
           /* ==================================================
              FILTERS RETURNED NOTHING
@@ -1154,9 +1109,6 @@ export default function EventsPage() {
       ====================================================== */}
 
 
-      {showFeedbackPicker && (
-        <AppFeedbackDialog onClose={closeFeedback} />
-      )}
     </div>
   );
 }
@@ -2297,210 +2249,6 @@ const OpenEventCard = memo(function OpenEventCard({
    EMPTY STATE
 ============================================================ */
 
-function NoPublishedEvents({
-  onRefresh,
-  refreshing,
-  onFeedback,
-}: {
-  onRefresh:
-    () => void;
-
-  refreshing:
-    boolean;
-
-  onFeedback:
-    () => void;
-}) {
-  return (
-    <motion.section
-      initial={{
-        opacity: 0,
-        y: 8,
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-      }}
-      className="
-        rounded-2xl
-
-        border
-        border-gray-200
-
-        bg-white
-
-        px-5
-        py-9
-
-        text-center
-
-        shadow-[0_4px_18px_rgba(15,23,41,0.025)]
-
-        sm:px-8
-        sm:py-12
-      "
-    >
-      <span
-        className="
-          mx-auto
-
-          grid
-          h-11
-          w-11
-
-          place-items-center
-
-          rounded-xl
-
-          border
-          border-gray-200
-
-          bg-gray-50
-
-          text-gray-400
-        "
-      >
-        <CalendarLargeIcon />
-      </span>
-
-      <h2
-        className="
-          mt-4
-
-          font-heading
-
-          text-[19px]
-          font-semibold
-
-          tracking-[-0.02em]
-
-          text-secondary
-        "
-      >
-        No events are available
-        right now
-      </h2>
-
-      <p
-        className="
-          mx-auto
-          mt-1.5
-
-          max-w-[450px]
-
-          text-[13px]
-          leading-5
-
-          text-gray-500
-        "
-      >
-        New conferences,
-        MantraM sessions and
-        programmes will appear here
-        when they are published.
-      </p>
-
-      <div
-        className="
-          mt-5
-
-          flex
-          flex-wrap
-          items-center
-          justify-center
-          gap-2
-        "
-      >
-        <button
-          type="button"
-          disabled={
-            refreshing
-          }
-          onClick={
-            onRefresh
-          }
-          className="
-            inline-flex
-            h-10
-
-            items-center
-            justify-center
-            gap-2
-
-            rounded-lg
-
-            bg-primary
-
-            px-4
-
-            text-[12px]
-            font-semibold
-
-            text-white
-
-            transition-colors
-
-            hover:bg-primary-dark
-
-            disabled:opacity-50
-          "
-        >
-          <RefreshIcon
-            spinning={
-              refreshing
-            }
-          />
-
-          {refreshing
-            ? 'Checking...'
-            : 'Check again'}
-        </button>
-
-        <button
-          type="button"
-          onClick={
-            onFeedback
-          }
-          className="
-            inline-flex
-            h-10
-
-            items-center
-            justify-center
-            gap-2
-
-            rounded-lg
-
-            border
-            border-gray-200
-
-            bg-white
-
-            px-4
-
-            text-[12px]
-            font-semibold
-
-            text-secondary
-
-            transition-colors
-
-            hover:bg-gray-50
-          "
-        >
-          <FeedbackIcon />
-
-          Feedback
-        </button>
-      </div>
-    </motion.section>
-  );
-}
-
-/* ============================================================
-   NO MATCHING EVENTS
-============================================================ */
-
 function NoMatchingEvents({
   clearAll,
 }: {
@@ -3010,29 +2758,6 @@ function CloseIcon() {
   );
 }
 
-function FeedbackIcon() {
-  return (
-    <svg
-      className="h-4 w-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={1.8}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8l-5 3v-3H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
-      />
-
-      <path
-        strokeLinecap="round"
-        d="M8 9h8M8 13h5"
-      />
-    </svg>
-  );
-}
-
 function LocationIcon() {
   return (
     <svg
@@ -3061,23 +2786,6 @@ function CalendarIcon() {
   return (
     <svg
       className="h-3.5 w-3.5 shrink-0"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={1.8}
-    >
-      <path
-        strokeLinecap="round"
-        d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 011 1v14H4V6a1 1 0 011-1Z"
-      />
-    </svg>
-  );
-}
-
-function CalendarLargeIcon() {
-  return (
-    <svg
-      className="h-5 w-5"
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
