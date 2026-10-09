@@ -2,9 +2,11 @@
   "name": "ssi-events-docs",
   "private": true,
   "type": "module",
-  "description": "Generates docs/SSI-Events-Project-Documentation.pdf and .docx",
+  "description": "Generates the project documentation and user guide (PDF and DOCX) in docs/",
   "scripts": {
-    "build": "node build.mjs"
+    "build": "node build.mjs project && node build.mjs guide",
+    "build:project": "node build.mjs project",
+    "build:guide": "node build.mjs guide"
   },
   "dependencies": {
     "docx": "9.5.1",
