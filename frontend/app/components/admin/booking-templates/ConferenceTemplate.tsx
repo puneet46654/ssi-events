@@ -68,7 +68,7 @@ const inputClass = `
 const labelClass = `
   mb-1.5
   block
-  text-[10px]
+  text-[12px]
   font-semibold
   uppercase
   tracking-[0.035em]
@@ -502,7 +502,7 @@ export default function ConferenceTemplate({
                 className="
                   truncate
                   whitespace-nowrap
-                  text-[12px]
+                  text-[14px]
                   font-semibold
                   text-secondary
                 "
@@ -564,7 +564,7 @@ export default function ConferenceTemplate({
                 px-4
                 py-3
 
-                text-xs
+                text-sm
                 font-medium
                 leading-5
 
@@ -1251,20 +1251,20 @@ function PhoneCountrySelector({
                     </span>
 
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-xs font-semibold text-secondary">
+                      <span className="block truncate text-sm font-semibold text-secondary">
                         {
                           country.name
                         }
                       </span>
 
-                      <span className="text-[10px] text-gray-400">
+                      <span className="text-[12px] text-gray-400">
                         {
                           country.iso2
                         }
                       </span>
                     </span>
 
-                    <span className="shrink-0 text-xs font-semibold text-primary">
+                    <span className="shrink-0 text-sm font-semibold text-primary">
                       {
                         country.callingCode
                       }
@@ -1419,13 +1419,13 @@ function CountrySelector({
                     </span>
 
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-xs font-semibold text-secondary">
+                      <span className="block truncate text-sm font-semibold text-secondary">
                         {
                           country.name
                         }
                       </span>
 
-                      <span className="text-[10px] text-gray-400">
+                      <span className="text-[12px] text-gray-400">
                         {
                           country.iso2
                         }
@@ -1575,7 +1575,7 @@ function SearchBox({
             bg-gray-50
             pl-9
             pr-3
-            text-xs
+            text-sm
             text-secondary
             outline-none
             transition-all
@@ -1649,7 +1649,7 @@ function LoadingText({
         gap-2
         px-3
         py-6
-        text-xs
+        text-sm
         text-gray-500
       "
     >

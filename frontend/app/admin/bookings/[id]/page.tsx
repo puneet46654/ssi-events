@@ -777,7 +777,7 @@ export default function BookingDetailsPage() {
             className="
               mt-2
 
-              text-[13px]
+              text-[14px]
               leading-5
 
               text-gray-500
@@ -809,7 +809,7 @@ export default function BookingDetailsPage() {
 
               px-4
 
-              text-[12px]
+              text-[14px]
               font-semibold
 
               text-white
@@ -907,7 +907,7 @@ export default function BookingDetailsPage() {
             items-center
             gap-1.5
 
-            text-[12px]
+            text-[14px]
             font-medium
 
             text-gray-500
@@ -995,7 +995,7 @@ export default function BookingDetailsPage() {
                 gap-x-2
                 gap-y-1
 
-                text-[12px]
+                text-[14px]
 
                 text-gray-500
               "
@@ -1065,7 +1065,7 @@ export default function BookingDetailsPage() {
 
                     px-4
 
-                    text-[12px]
+                    text-[14px]
                     font-semibold
 
                     text-gray-600
@@ -1104,7 +1104,7 @@ export default function BookingDetailsPage() {
 
                     px-4
 
-                    text-[12px]
+                    text-[14px]
                     font-semibold
 
                     text-white
@@ -1139,7 +1139,7 @@ export default function BookingDetailsPage() {
                   type="button"
                   disabled={markingPresent}
                   onClick={() => void setAttendance(attendance === 'PRESENT' ? 'NOT_PRESENT' : 'PRESENT')}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-primary/30 bg-white px-4 text-[12px] font-semibold text-primary transition hover:bg-primary/[0.05] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-primary/30 bg-white px-4 text-[14px] font-semibold text-primary transition hover:bg-primary/[0.05] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {markingPresent ? <><SpinnerIcon /> Saving...</> : attendance === 'PRESENT' ? 'Mark Not Present' : 'Mark Present'}
                 </button></AdminAccess>
@@ -1166,7 +1166,7 @@ export default function BookingDetailsPage() {
 
                   px-4
 
-                  text-[12px]
+                  text-[14px]
                   font-semibold
 
                   text-white
@@ -1208,7 +1208,7 @@ export default function BookingDetailsPage() {
 
                 px-4
 
-                text-[12px]
+                text-[14px]
                 font-semibold
 
                 text-red-600
@@ -1447,11 +1447,11 @@ export default function BookingDetailsPage() {
               >
                 {isEditing && !booking.pending && (
                   <label className="block min-w-0">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.045em] text-gray-400">Attendance</span>
+                    <span className="text-[12px] font-semibold uppercase tracking-[0.045em] text-gray-400">Attendance</span>
                     <select
                       value={attendanceDraft || attendance}
                       onChange={(event) => setAttendanceDraft(event.target.value as AttendanceStatus)}
-                      className="mt-1.5 h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-[13px] text-secondary outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                      className="mt-1.5 h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-[14px] text-secondary outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="PRESENT">Present</option>
                       <option value="NOT_PRESENT">Not Present</option>
@@ -1522,7 +1522,7 @@ export default function BookingDetailsPage() {
 
                   text-center
 
-                  text-[12px]
+                  text-[14px]
 
                   text-gray-500
                 "
@@ -1541,7 +1541,7 @@ export default function BookingDetailsPage() {
           >
             {booking.pending ? (
               <CompactCard icon={<AttendanceIcon />} title="Time Slot">
-                <p className="text-[13px] leading-5 text-gray-600">
+                <p className="text-[14px] leading-5 text-gray-600">
                   Not selected yet. This attendee entered their details but left before choosing a slot,
                   so there is no ticket or attendance yet. It will be removed automatically when they
                   book or when the event ends.
@@ -1700,7 +1700,7 @@ export default function BookingDetailsPage() {
                     className="
                       mt-1
 
-                      text-[12px]
+                      text-[14px]
                       leading-5
 
                       text-gray-500
@@ -1728,7 +1728,7 @@ export default function BookingDetailsPage() {
               >
                 <p
                   className="
-                    text-[11px]
+                    text-[13px]
 
                     text-gray-500
                   "
@@ -1740,7 +1740,7 @@ export default function BookingDetailsPage() {
                   className="
                     mt-1
 
-                    text-[13px]
+                    text-[14px]
                     font-semibold
 
                     text-secondary
@@ -1789,7 +1789,7 @@ export default function BookingDetailsPage() {
 
                     px-4
 
-                    text-[12px]
+                    text-[14px]
                     font-semibold
 
                     text-gray-600
@@ -1825,7 +1825,7 @@ export default function BookingDetailsPage() {
 
                     px-4
 
-                    text-[12px]
+                    text-[14px]
                     font-semibold
 
                     text-white
@@ -1932,7 +1932,7 @@ function CompactCard({
 
         <h2
           className="
-            text-[13px]
+            text-[14px]
             font-semibold
 
             text-secondary
@@ -1987,7 +1987,7 @@ function SummaryItem({
     >
       <p
         className="
-          text-[10px]
+          text-[12px]
           font-medium
 
           text-gray-400
@@ -2005,7 +2005,7 @@ function SummaryItem({
 
           truncate
 
-          text-[12px]
+          text-[14px]
           font-semibold
 
           text-secondary
@@ -2039,7 +2039,7 @@ function ReadOnlyField({
     >
       <p
         className="
-          text-[10px]
+          text-[12px]
           font-semibold
 
           uppercase
@@ -2058,7 +2058,7 @@ function ReadOnlyField({
 
           break-words
 
-          text-[13px]
+          text-[14px]
           font-medium
 
           leading-5
@@ -2126,7 +2126,7 @@ function EditableField({
     >
       <span
         className="
-          text-[10px]
+          text-[12px]
           font-semibold
 
           uppercase
@@ -2170,7 +2170,7 @@ function EditableField({
             px-3
             py-2.5
 
-            text-[13px]
+            text-[14px]
 
             text-secondary
 
@@ -2214,7 +2214,7 @@ function EditableField({
 
             px-3
 
-            text-[13px]
+            text-[14px]
 
             text-secondary
 
@@ -2347,13 +2347,13 @@ function AttendancePanel({
             className={
               present
                 ? `
-                    text-[13px]
+                    text-[14px]
                     font-semibold
 
                     text-emerald-800
                   `
                 : `
-                    text-[13px]
+                    text-[14px]
                     font-semibold
 
                     text-gray-700
@@ -2369,7 +2369,7 @@ function AttendancePanel({
             className="
               mt-0.5
 
-              text-[11px]
+              text-[13px]
 
               text-gray-500
             "
@@ -2455,7 +2455,7 @@ function MiniRow({
     >
       <span
         className="
-          text-[11px]
+          text-[13px]
 
           text-gray-500
         "
@@ -2471,7 +2471,7 @@ function MiniRow({
 
           text-right
 
-          text-[11px]
+          text-[13px]
           font-semibold
 
           text-secondary
@@ -2515,7 +2515,7 @@ function AttendanceBadge({
               px-2.5
               py-1
 
-              text-[10px]
+              text-[12px]
               font-semibold
 
               text-emerald-700
@@ -2538,7 +2538,7 @@ function AttendanceBadge({
               px-2.5
               py-1
 
-              text-[10px]
+              text-[12px]
               font-semibold
 
               text-gray-600
@@ -2666,7 +2666,7 @@ function InlineInfo({
 
         gap-1.5
 
-        text-[12px]
+        text-[14px]
 
         text-gray-500
       "
@@ -2799,13 +2799,13 @@ function FeedbackBanner({
           className={
             success
               ? `
-                  text-[12px]
+                  text-[14px]
                   leading-5
 
                   text-primary-dark
                 `
               : `
-                  text-[12px]
+                  text-[14px]
                   leading-5
 
                   text-red-700

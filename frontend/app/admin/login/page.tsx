@@ -272,7 +272,7 @@ export default function AdminLoginPage() {
                 px-4
                 py-3
                 text-center
-                text-[12px]
+                text-[14px]
                 font-semibold
                 text-red-600
                 shadow-[0_8px_24px_rgba(239,68,68,0.08)]
@@ -299,7 +299,7 @@ export default function AdminLoginPage() {
             className="
               ml-1
               block
-              text-[11px]
+              text-[13px]
               font-bold
               uppercase
               tracking-[0.12em]
@@ -374,7 +374,7 @@ export default function AdminLoginPage() {
             className="
               ml-1
               block
-              text-[11px]
+              text-[13px]
               font-bold
               uppercase
               tracking-[0.12em]
@@ -803,7 +803,7 @@ export default function AdminLoginPage() {
               }}
               className="
                 text-center
-                text-[11px]
+                text-[13px]
                 font-medium
                 tracking-wide
                 text-secondary/55

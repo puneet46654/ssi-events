@@ -444,7 +444,7 @@ export default function Sidebar({
                       px-3
                       py-2.5
 
-                      text-[13px]
+                      text-[14px]
                       font-medium
 
                       transition-all
@@ -573,7 +573,7 @@ export default function Sidebar({
               target="_blank"
               rel="noopener noreferrer"
               onClick={handleNavigation}
-              className="group relative flex cursor-pointer items-center gap-2.5 overflow-hidden rounded-xl px-3 py-2.5 text-[13px] font-medium text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-secondary lg:gap-3 lg:px-3.5 lg:py-3 lg:text-sm"
+              className="group relative flex cursor-pointer items-center gap-2.5 overflow-hidden rounded-xl px-3 py-2.5 text-[14px] font-medium text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-secondary lg:gap-3 lg:px-3.5 lg:py-3 lg:text-sm"
             >
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-gray-400 transition-colors duration-200 group-hover:text-secondary">
                 <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9} aria-hidden="true">
@@ -640,13 +640,13 @@ export default function Sidebar({
 
                   bg-primary
 
-                  text-[11px]
+                  text-[13px]
                   font-bold
                   text-white
 
                   lg:h-10
                   lg:w-10
-                  lg:text-xs
+                  lg:text-sm
                 "
               >
                 {initials}
@@ -662,7 +662,7 @@ export default function Sidebar({
                   className="
                     truncate
 
-                    text-[13px]
+                    text-[14px]
                     font-semibold
 
                     text-secondary
@@ -673,8 +673,8 @@ export default function Sidebar({
                   {displayName}
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="truncate text-[10px] text-gray-400 font-medium">@{currentUser.username}</span>
-                  <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.2 text-[8px] font-bold uppercase text-primary tracking-wider">
+                  <span className="truncate text-[12px] text-gray-400 font-medium">@{currentUser.username}</span>
+                  <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.2 text-[12px] font-bold uppercase text-primary tracking-wider">
                     {currentUser.role || 'Admin'}
                   </span>
                 </div>
@@ -705,7 +705,7 @@ export default function Sidebar({
               px-3
               py-2.5
 
-              text-[13px]
+              text-[14px]
               font-medium
 
               text-gray-500

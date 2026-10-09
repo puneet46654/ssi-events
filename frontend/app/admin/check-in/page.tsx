@@ -431,12 +431,12 @@ export default function CheckInPage() {
 
               max-w-[680px]
 
-              text-[12px]
+              text-[14px]
               leading-5
 
               text-gray-500
 
-              sm:text-[13px]
+              sm:text-[14px]
             "
           >
             Select a live event,
@@ -719,7 +719,7 @@ export default function CheckInPage() {
                 <p
                   className="
                     mt-0.5
-                    text-[11px]
+                    text-[13px]
                     text-gray-500
                   "
                 >
@@ -872,7 +872,7 @@ export default function CheckInPage() {
                         className="
                           mt-4
 
-                          text-[13px]
+                          text-[14px]
                           font-semibold
 
                           text-secondary
@@ -890,7 +890,7 @@ export default function CheckInPage() {
                         className="
                           mt-1
 
-                          text-[11px]
+                          text-[13px]
                           leading-5
 
                           text-gray-500
@@ -1102,7 +1102,7 @@ export default function CheckInPage() {
                       <div>
                         <p
                           className="
-                            text-[12px]
+                            text-[14px]
                             font-semibold
                             text-secondary
                           "
@@ -1113,7 +1113,7 @@ export default function CheckInPage() {
                         <p
                           className="
                             mt-0.5
-                            text-[10px]
+                            text-[12px]
                             text-gray-500
                           "
                         >
@@ -1182,12 +1182,12 @@ export default function CheckInPage() {
                           className="
                             truncate
 
-                            text-[10px]
+                            text-[12px]
                             font-medium
 
                             text-secondary
 
-                            sm:text-[11px]
+                            sm:text-[13px]
                           "
                         >
                           {
@@ -1264,7 +1264,7 @@ export default function CheckInPage() {
                 <p
                   className="
                     mt-0.5
-                    text-[11px]
+                    text-[13px]
                     leading-4
                     text-gray-500
                   "
@@ -1411,7 +1411,7 @@ export default function CheckInPage() {
                 <p
                   className="
                     mt-0.5
-                    text-[11px]
+                    text-[13px]
                     text-gray-500
                   "
                 >
@@ -1455,7 +1455,7 @@ export default function CheckInPage() {
                   <div>
                     <p
                       className="
-                        text-[11px]
+                        text-[13px]
                         font-medium
                         text-gray-500
                       "
@@ -1491,7 +1491,7 @@ export default function CheckInPage() {
 
                       <span
                         className="
-                          text-[12px]
+                          text-[14px]
                           text-gray-400
                         "
                       >
@@ -1527,7 +1527,7 @@ export default function CheckInPage() {
                     <p
                       className="
                         mt-0.5
-                        text-[10px]
+                        text-[12px]
                         text-gray-400
                       "
                     >
@@ -1655,7 +1655,7 @@ export default function CheckInPage() {
                 <p
                   className="
                     mt-0.5
-                    text-[11px]
+                    text-[13px]
                     text-gray-500
                   "
                 >
@@ -1714,7 +1714,7 @@ export default function CheckInPage() {
                   className="
                     mt-3
 
-                    text-[12px]
+                    text-[14px]
                     font-medium
 
                     text-secondary
@@ -1726,7 +1726,7 @@ export default function CheckInPage() {
                 <p
                   className="
                     mt-1
-                    text-[11px]
+                    text-[13px]
                     text-gray-500
                   "
                 >
@@ -1808,7 +1808,7 @@ export default function CheckInPage() {
                           className="
                             truncate
 
-                            text-[12px]
+                            text-[14px]
                             font-semibold
 
                             text-secondary
@@ -1827,7 +1827,7 @@ export default function CheckInPage() {
 
                             font-mono
 
-                            text-[9px]
+                            text-[12px]
                             text-gray-400
                           "
                         >
@@ -1845,7 +1845,7 @@ export default function CheckInPage() {
                       >
                         <p
                           className="
-                            text-[10px]
+                            text-[12px]
                             font-semibold
                             text-primary
                           "
@@ -1861,7 +1861,7 @@ export default function CheckInPage() {
                           className="
                             mt-0.5
 
-                            text-[8px]
+                            text-[12px]
                             font-medium
 
                             uppercase
@@ -2098,7 +2098,7 @@ function ScanResult({
                   className="min-h-11 rounded-lg bg-primary px-4 py-2 text-left text-[14px] font-semibold leading-5 text-white hover:bg-primary/90"
                 >
                   <span className="block">Check in to {slot.startTime}–{slot.endTime}</span>
-                  <span className="block text-[13px] font-normal text-white/85">{slot.remaining === 1 ? '1 seat left' : `${slot.remaining} seats left`}</span>
+                  <span className="block text-[14px] font-normal text-white/85">{slot.remaining === 1 ? '1 seat left' : `${slot.remaining} seats left`}</span>
                 </button>
               ))}
             </div>
@@ -2112,7 +2112,7 @@ function ScanResult({
               className="
                 mt-1.5
                 font-mono
-                text-[13px]
+                text-[14px]
                 text-gray-600
               "
             >
@@ -2184,7 +2184,7 @@ function EventMeta({
     >
       <p
         className="
-          text-[9px]
+          text-[12px]
           font-medium
           text-gray-400
         "
@@ -2216,7 +2216,7 @@ function EventMeta({
           className={`
             truncate
 
-            text-[11px]
+            text-[13px]
             font-semibold
 
             ${
@@ -2358,7 +2358,7 @@ function ProgressStat({
     >
       <p
         className="
-          text-[10px]
+          text-[12px]
           text-gray-400
         "
       >

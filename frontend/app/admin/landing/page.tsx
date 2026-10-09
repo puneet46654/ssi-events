@@ -344,15 +344,15 @@ export default function AdminDashboard() {
 
               max-w-[720px]
 
-              text-[11px]
+              text-[13px]
               leading-[18px]
 
               text-gray-500
 
-              sm:text-[12px]
+              sm:text-[14px]
               sm:leading-5
 
-              lg:text-[13px]
+              lg:text-[14px]
             "
           >
             Monitor registrations,
@@ -399,7 +399,7 @@ export default function AdminDashboard() {
 
             px-3.5
 
-            text-[10px]
+            text-[12px]
             font-semibold
 
             text-secondary
@@ -414,7 +414,7 @@ export default function AdminDashboard() {
             disabled:cursor-not-allowed
             disabled:opacity-50
 
-            sm:text-[11px]
+            sm:text-[13px]
           "
         >
           <RefreshIcon
@@ -487,7 +487,7 @@ export default function AdminDashboard() {
           >
             <h2
               className="
-                text-[13px]
+                text-[14px]
                 font-semibold
 
                 text-secondary
@@ -638,7 +638,7 @@ export default function AdminDashboard() {
             >
               <p
                 className="
-                  text-[11px]
+                  text-[13px]
                   font-semibold
 
                   text-red-700
@@ -654,7 +654,7 @@ export default function AdminDashboard() {
 
                   break-words
 
-                  text-[10px]
+                  text-[12px]
                   leading-4
 
                   text-red-600
@@ -682,7 +682,7 @@ export default function AdminDashboard() {
 
               px-4
 
-              text-[10px]
+              text-[12px]
               font-semibold
 
               text-red-600
@@ -719,7 +719,7 @@ export default function AdminDashboard() {
         <div>
           <h2
             className="
-              text-[13px]
+              text-[14px]
               font-semibold
 
               text-secondary
@@ -733,10 +733,10 @@ export default function AdminDashboard() {
           <p
             className="
               mt-0.5
-              text-[9px]
+              text-[12px]
               text-gray-400
 
-              sm:text-[10px]
+              sm:text-[12px]
             "
           >
             Current platform activity
@@ -1019,7 +1019,7 @@ export default function AdminDashboard() {
 
                               font-mono
 
-                              text-[10px]
+                              text-[12px]
                               font-semibold
 
                               text-primary
@@ -1056,7 +1056,7 @@ export default function AdminDashboard() {
                               max-w-[220px]
                               truncate
 
-                              text-[11px]
+                              text-[13px]
                               font-medium
 
                               text-gray-700
@@ -1071,7 +1071,7 @@ export default function AdminDashboard() {
                         <td
                           className="
                             whitespace-nowrap
-                            text-[11px]
+                            text-[13px]
                           "
                         >
                           {formatShortDate(
@@ -1082,7 +1082,7 @@ export default function AdminDashboard() {
                         <td
                           className="
                             whitespace-nowrap
-                            text-[11px]
+                            text-[13px]
                           "
                         >
                           {formatSlot(
@@ -1318,12 +1318,12 @@ function QuickActionCard({
               className="
                 truncate
 
-                text-[11px]
+                text-[13px]
                 font-semibold
 
                 text-secondary
 
-                sm:text-[12px]
+                sm:text-[14px]
               "
             >
               {title}
@@ -1350,12 +1350,12 @@ function QuickActionCard({
             className="
               mt-1
 
-              text-[9px]
+              text-[12px]
               leading-4
 
               text-gray-400
 
-              sm:text-[10px]
+              sm:text-[12px]
             "
           >
             {description}
@@ -1459,7 +1459,7 @@ function DashboardStat({
             className="
               truncate
 
-              text-[9px]
+              text-[12px]
               font-bold
 
               uppercase
@@ -1468,7 +1468,7 @@ function DashboardStat({
 
               text-gray-400
 
-              sm:text-[10px]
+              sm:text-[12px]
             "
           >
             {label}
@@ -1521,10 +1521,10 @@ function DashboardStat({
 
                   truncate
 
-                  text-[9px]
+                  text-[12px]
                   text-gray-400
 
-                  sm:text-[10px]
+                  sm:text-[12px]
                 "
               >
                 {description}
@@ -1614,7 +1614,7 @@ function SectionHeader({
       >
         <h2
           className="
-            text-[13px]
+            text-[14px]
             font-semibold
 
             text-secondary
@@ -1631,11 +1631,11 @@ function SectionHeader({
 
             truncate
 
-            text-[9px]
+            text-[12px]
 
             text-gray-400
 
-            sm:text-[10px]
+            sm:text-[12px]
           "
         >
           {description}
@@ -1658,7 +1658,7 @@ function SectionHeader({
 
           whitespace-nowrap
 
-          text-[9px]
+          text-[12px]
           font-semibold
 
           text-primary
@@ -1667,7 +1667,7 @@ function SectionHeader({
 
           hover:text-primary-dark
 
-          sm:text-[10px]
+          sm:text-[12px]
         "
       >
         {linkText}
@@ -1749,7 +1749,7 @@ function RecentBookingCard({
 
               font-mono
 
-              text-[8px]
+              text-[12px]
               font-bold
 
               tracking-[0.02em]
@@ -1766,7 +1766,7 @@ function RecentBookingCard({
 
               break-words
 
-              text-[13px]
+              text-[14px]
               font-semibold
 
               leading-5
@@ -1804,7 +1804,7 @@ function RecentBookingCard({
           className="
             break-words
 
-            text-[10px]
+            text-[12px]
             font-medium
 
             leading-4
@@ -1825,7 +1825,7 @@ function RecentBookingCard({
             gap-x-3
             gap-y-1
 
-            text-[9px]
+            text-[12px]
 
             text-gray-400
           "
@@ -1958,14 +1958,14 @@ function UpcomingEventCard({
 
                 break-words
 
-                text-[11px]
+                text-[13px]
                 font-semibold
 
                 leading-[17px]
 
                 text-secondary
 
-                sm:text-[12px]
+                sm:text-[14px]
               "
             >
               {event.eventName}
@@ -1986,7 +1986,7 @@ function UpcomingEventCard({
                   px-1.5
                   py-0.5
 
-                  text-[7px]
+                  text-[12px]
                   font-bold
 
                   uppercase
@@ -2007,7 +2007,7 @@ function UpcomingEventCard({
 
               break-words
 
-              text-[9px]
+              text-[12px]
               leading-4
 
               text-gray-400
@@ -2055,7 +2055,7 @@ function UpcomingEventCard({
 
             <span
               className="
-                text-[8px]
+                text-[12px]
                 text-gray-400
               "
             >
@@ -2065,7 +2065,7 @@ function UpcomingEventCard({
 
           <p
             className="
-              text-[7px]
+              text-[12px]
               text-gray-400
             "
           >
@@ -2088,7 +2088,7 @@ function UpcomingEventCard({
         >
           <span
             className="
-              text-[8px]
+              text-[12px]
               font-medium
 
               text-gray-400
@@ -2099,7 +2099,7 @@ function UpcomingEventCard({
 
           <span
             className="
-              text-[8px]
+              text-[12px]
               font-semibold
 
               text-secondary
@@ -2192,7 +2192,7 @@ function AttendanceBadge({
           px-2
           py-1
 
-          text-[8px]
+          text-[12px]
           font-semibold
 
           text-emerald-700
@@ -2232,7 +2232,7 @@ function AttendanceBadge({
         px-2
         py-1
 
-        text-[8px]
+        text-[12px]
         font-semibold
 
         text-amber-700
@@ -2307,7 +2307,7 @@ function DashboardEmpty({
         className="
           mt-2.5
 
-          text-[11px]
+          text-[13px]
           font-semibold
 
           text-secondary
@@ -2323,7 +2323,7 @@ function DashboardEmpty({
 
           max-w-[240px]
 
-          text-[9px]
+          text-[12px]
           leading-4
 
           text-gray-400
