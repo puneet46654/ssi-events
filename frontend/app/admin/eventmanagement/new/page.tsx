@@ -41,6 +41,7 @@ import {
   BookingFormTemplate,
   DEFAULT_BOOKING_TEMPLATE,
   isBookingFormTemplate,
+  DEFAULT_TEMPLATE_FOR_TYPE,
 } from '@/app/components/admin/booking-templates/types';
 
 import { useEventDraft } from '@/lib/use-event-draft';
@@ -1527,13 +1528,10 @@ export default function CreateNewEventPage() {
                   onChange={(
                     event,
                   ) => {
-                    setEventType(
-                      event.target
-                        .value as
-                        | 'conference'
-                        | 'mantram'
-                        | 'event',
-                    );
+                    const nextType = event.target.value as 'conference' | 'mantram' | 'event';
+                    setEventType(nextType);
+                    // Each kind of event has its usual registration form; the admin can still change it below.
+                    setBookingFormTemplate(DEFAULT_TEMPLATE_FOR_TYPE[nextType]);
 
                     setFormError('');
                   }}

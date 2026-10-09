@@ -10,6 +10,8 @@ export type EventCategory = {
   /** Plural form for headings, e.g. "Upcoming CME and workshops". */
   heading: string;
   description: string;
+  /** Its own page (e.g. /mantram), once it has one: introduction, list heading and empty state. */
+  page?: { path: string; title: string; intro: string[]; listHeading: string; empty: string };
 };
 
 export const EVENT_CATEGORIES: EventCategory[] = [
@@ -23,7 +25,17 @@ export const EVENT_CATEGORIES: EventCategory[] = [
     type: 'mantram',
     name: 'MantraM',
     heading: 'MantraM',
-    description: 'MantraM programmes hosted by SS Innovations.',
+    description: 'Our mobile tele-surgical unit, carrying the SSI Mantra surgical robotic system.',
+    page: {
+      path: '/mantram',
+      title: 'SSi MantraM',
+      intro: [
+        'SSi MantraM is our mobile tele-surgical unit. It carries the SSI Mantra surgical robotic system to host sites, bringing robotic surgery closer to the surgeons and patients who need it.',
+        'Choose a visit below and book a time slot. Your ticket is shown on screen and sent to you by email.',
+      ],
+      listHeading: 'Upcoming visits',
+      empty: 'No MantraM visits are open for registration at present. New visits are published here as they are scheduled.',
+    },
   },
   {
     type: 'event',

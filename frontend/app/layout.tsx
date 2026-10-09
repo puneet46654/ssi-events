@@ -15,13 +15,13 @@ const figtree = Figtree({
 
 export const metadata: Metadata = {
   title: "SS Innovations Events",
-  description: "Register for SS Innovations conferences, MantraM programmes and CME workshops, and book your slot.",
+  description: "Register for SS Innovations conferences and CME programmes, or book a session with SSi MantraM, our mobile tele-surgical unit.",
   applicationName: "SS Innovations Events",
   icons: { icon: "/logos/ssilogo.png", apple: "/logos/ssilogo.png" },
   appleWebApp: { capable: true, title: "SSi Events", statusBarStyle: "default" },
   openGraph: {
     title: "SS Innovations Events",
-    description: "Conferences, MantraM programmes and CME workshops by SS Innovations.",
+    description: "Conferences, CME programmes and SSi MantraM visits by SS Innovations.",
     url: "https://events.ssistudios.com",
     siteName: "SS Innovations Events",
     images: [{ url: "/logos/ssii-logo.png", width: 520, height: 227, alt: "SS Innovations" }],
