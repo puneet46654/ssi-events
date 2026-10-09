@@ -15,9 +15,10 @@ import { AppFeedbackDialog } from '@/components/user/AppFeedback';
 // The event catalogue is the home page (`/`); `/events` permanently redirects there.
 const ROOT_PAGES = ['/', '/events/mytickets'];
 
-const BUTTON = 'inline-flex h-10 items-center justify-center gap-2 rounded-lg border px-4 text-[11px] font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/15';
-const BUTTON_IDLE = 'border-gray-200 bg-white text-secondary hover:border-primary/25 hover:bg-primary/[0.035] hover:text-primary';
-const BUTTON_ACTIVE = 'border-primary/30 bg-primary/[0.06] text-primary';
+// Desktop navigation: medium-weight links; the active page carries the insignia-gradient underline.
+const NAV = 'relative inline-flex h-11 items-center gap-2 rounded-full px-4 text-[15px] font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30';
+const NAV_IDLE = 'text-gray-600 hover:bg-gray-50 hover:text-secondary';
+const NAV_ACTIVE = 'text-secondary after:absolute after:inset-x-4 after:-bottom-[13px] after:h-[2px] after:rounded-full after:bg-[image:var(--ssi-gradient-90)]';
 const ROUND = 'grid shrink-0 place-items-center rounded-full text-secondary transition active:scale-95';
 
 function useChrome() {
@@ -63,55 +64,52 @@ export function UserHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-gray-200/80 bg-[#F7F9FA]/95 pt-[env(safe-area-inset-top)] backdrop-blur-xl md:bg-white/95 md:pt-0">
+      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 pt-[env(safe-area-inset-top)] backdrop-blur-xl md:pt-0">
         {/* Phones */}
-        <div className="mx-auto flex h-[52px] max-w-[520px] items-center gap-2.5 px-4 md:hidden">
+        <div className="mx-auto flex h-14 max-w-[560px] items-center gap-2 px-4 md:hidden">
           {chrome.showBack && (
-            <button type="button" onClick={chrome.goBack} aria-label="Go back" className={`-ml-1.5 h-9 w-9 active:bg-gray-200/70 ${ROUND}`}>
+            <button type="button" onClick={chrome.goBack} aria-label="Go back" className={`-ml-2 h-11 w-11 active:bg-gray-100 ${ROUND}`}>
               <BackIcon />
             </button>
           )}
           <Brand compact />
           <div className="ml-auto flex items-center gap-1">
             {chrome.isEventDetails && (
-              <button type="button" onClick={() => void share()} aria-label={shareLabel} className={`h-9 w-9 active:bg-gray-200/70 ${ROUND}`}>
+              <button type="button" onClick={() => void share()} aria-label={shareLabel} className={`h-11 w-11 active:bg-gray-100 ${ROUND}`}>
                 <ShareIcon done={shared} />
               </button>
             )}
-            <button type="button" onClick={() => setFeedbackOpen(true)} aria-label="Feedback" className={`-mr-1.5 h-9 w-9 active:bg-gray-200/70 ${ROUND}`}>
+            <button type="button" onClick={() => setFeedbackOpen(true)} aria-label="Feedback" className={`-mr-2 h-11 w-11 active:bg-gray-100 ${ROUND}`}>
               <FeedbackIcon />
             </button>
           </div>
         </div>
 
         {/* Tablets and desktops */}
-        <div className="mx-auto hidden h-[66px] w-full max-w-[1500px] items-center justify-between gap-6 px-6 md:flex lg:px-10">
+        <div className="mx-auto hidden h-[72px] w-full max-w-[1200px] items-center justify-between gap-6 px-6 md:flex">
           <div className="flex items-center gap-3">
             {chrome.showBack && (
               <button type="button" onClick={chrome.goBack} aria-label="Go back"
-                className={`group h-10 w-10 border border-gray-200 bg-white shadow-[0_2px_8px_rgba(27,75,107,0.05)] hover:border-primary/30 hover:text-primary ${ROUND}`}>
+                className={`group h-11 w-11 bg-gray-50 hover:bg-gray-100 ${ROUND}`}>
                 <BackIcon />
               </button>
             )}
             <Brand />
           </div>
-          <nav aria-label="Main" className="flex items-center gap-2">
+          <nav aria-label="Main" className="flex items-center gap-1">
             {chrome.isEventDetails && (
-              <button type="button" onClick={() => void share()} className={`${BUTTON} ${BUTTON_IDLE}`}>
+              <button type="button" onClick={() => void share()} className={`${NAV} ${NAV_IDLE}`}>
                 <ShareIcon done={shared} />
                 {shared ? 'Link copied' : 'Share'}
               </button>
             )}
-            <Link href="/" aria-current={chrome.onEvents ? 'page' : undefined} className={`${BUTTON} ${chrome.onEvents ? BUTTON_ACTIVE : BUTTON_IDLE}`}>
-              <EventsIcon />
+            <Link href="/" aria-current={chrome.onEvents ? 'page' : undefined} className={`${NAV} ${chrome.onEvents ? NAV_ACTIVE : NAV_IDLE}`}>
               Events
             </Link>
-            <Link href="/events/mytickets" aria-current={chrome.onTickets ? 'page' : undefined} className={`${BUTTON} ${chrome.onTickets ? BUTTON_ACTIVE : BUTTON_IDLE}`}>
-              <TicketIcon />
-              My Tickets
+            <Link href="/events/mytickets" aria-current={chrome.onTickets ? 'page' : undefined} className={`${NAV} ${chrome.onTickets ? NAV_ACTIVE : NAV_IDLE}`}>
+              My tickets
             </Link>
-            <button type="button" onClick={() => setFeedbackOpen(true)} className={`${BUTTON} ${BUTTON_IDLE}`}>
-              <FeedbackIcon />
+            <button type="button" onClick={() => setFeedbackOpen(true)} className={`${NAV} ${NAV_IDLE}`}>
               Feedback
             </button>
           </nav>
@@ -122,11 +120,21 @@ export function UserHeader() {
   );
 }
 
-/** Quiet credit line under every user page. */
+/** Every page closes on the dark band, as on the SS Innovations website. */
 export function UserFooter() {
   return (
-    <footer className="px-4 py-6 text-center text-[11px] text-gray-400">
-      © {new Date().getFullYear()} SS Innovations · Developed by SSI Maya
+    <footer className="relative mt-16 bg-[#0B1120] text-[#B8C0CF] before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:bg-[image:var(--ssi-gradient-90)]">
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-6 px-5 py-10 md:flex-row md:items-center md:justify-between md:px-6">
+        <div className="flex items-center gap-3">
+          <Image src="/logos/ssii-logo-white.png" alt="SS Innovations" width={520} height={227} className="h-8 w-auto" />
+          <span className="h-6 w-px bg-white/20" aria-hidden="true" />
+          <span className="text-[17px] font-medium tracking-[-0.01em] text-white">Events</span>
+        </div>
+        <div className="flex flex-col gap-1.5 text-[14px] md:items-end">
+          <a href="https://ssinnovations.com" className="text-[#8FD8C4] transition-colors hover:text-white">ssinnovations.com</a>
+          <p className="text-[#8C95A8]">© {new Date().getFullYear()} SS Innovations · Developed by SSI Maya</p>
+        </div>
+      </div>
     </footer>
   );
 }
@@ -135,22 +143,25 @@ export function UserBottomNav() {
   const { onTickets } = useChrome();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 grid h-[var(--user-nav-h)] grid-cols-2 border-t border-gray-200/80 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_18px_rgba(27,75,107,0.045)] backdrop-blur-xl md:hidden">
+    <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 grid h-[var(--user-nav-h)] grid-cols-2 border-t border-gray-200 bg-white/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
       <NavItem href="/" label="Events" active={!onTickets}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 10.5 12 3l9 7.5M5 9.5V20h5v-6h4v6h5V9.5" />
       </NavItem>
-      <NavItem href="/events/mytickets" label="My Tickets" active={onTickets}>
+      <NavItem href="/events/mytickets" label="My tickets" active={onTickets}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V7Zm10-2v12" />
       </NavItem>
     </nav>
   );
 }
 
+/** The SSii logo followed by the product name, separated by a hairline. */
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <Link href="/" className="inline-flex min-w-0 items-center gap-2 transition-opacity hover:opacity-80">
-      <Image src="/logos/ssilogo.png" alt="SSI" width={compact ? 24 : 26} height={compact ? 24 : 26} priority className="shrink-0 object-contain" />
-      <span className={`truncate font-semibold text-secondary ${compact ? 'text-[13px]' : 'text-[14px]'}`}>SSInnovations Events</span>
+    <Link href="/" aria-label="SS Innovations Events, home" className="inline-flex min-w-0 items-center gap-2.5 rounded-lg transition-opacity hover:opacity-80">
+      <Image src="/logos/ssii-logo.png" alt="SS Innovations" width={520} height={227} priority
+        className={`w-auto shrink-0 ${compact ? 'h-7' : 'h-8'}`} />
+      <span className={`w-px shrink-0 bg-gray-200 ${compact ? 'h-5' : 'h-6'}`} aria-hidden="true" />
+      <span className={`font-medium tracking-[-0.012em] text-secondary ${compact ? 'text-[17px]' : 'text-[19px]'}`}>Events</span>
     </Link>
   );
 }
@@ -170,11 +181,11 @@ function NavItem({
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className={`flex flex-col items-center justify-center gap-0.5 text-[11px] font-semibold ${
-        active ? 'text-primary' : 'text-gray-400'
+      className={`relative flex flex-col items-center justify-center gap-1 text-[12px] font-medium transition-colors active:bg-gray-50 ${
+        active ? 'text-primary before:absolute before:top-0 before:h-[2px] before:w-10 before:rounded-full before:bg-[image:var(--ssi-gradient-90)]' : 'text-gray-500'
       }`}
     >
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6} aria-hidden="true">
         {children}
       </svg>
       {label}
@@ -198,23 +209,6 @@ function ShareIcon({ done }: { done: boolean }) {
   ) : (
     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12 4 4m-4-4L8 7M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
-    </svg>
-  );
-}
-
-function EventsIcon() {
-  return (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
-      <path strokeLinecap="round" d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 011 1v14H4V6a1 1 0 011-1Z" />
-    </svg>
-  );
-}
-
-function TicketIcon() {
-  return (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 5h14v4a3 3 0 010 6v4H5v-4a3 3 0 010-6V5Z" />
-      <path strokeLinecap="round" d="M12 7v10" />
     </svg>
   );
 }

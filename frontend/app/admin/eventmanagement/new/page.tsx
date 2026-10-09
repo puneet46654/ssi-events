@@ -198,7 +198,7 @@ const primaryButton = `
 
   text-white
 
-  shadow-[0_4px_14px_rgba(26,158,143,0.18)]
+  shadow-[0_4px_14px_rgba(40,63,143,0.18)]
 
   transition-all
   duration-150
@@ -1283,7 +1283,7 @@ export default function CreateNewEventPage() {
 
           p-2
 
-          shadow-[0_4px_18px_rgba(27,75,107,0.055)]
+          shadow-[0_4px_18px_rgba(15,23,41,0.055)]
 
           backdrop-blur-xl
         "
@@ -1459,7 +1459,7 @@ export default function CreateNewEventPage() {
 
             bg-white
 
-            shadow-[0_3px_14px_rgba(27,75,107,0.025)]
+            shadow-[0_3px_14px_rgba(15,23,41,0.025)]
           "
         >
           <CardHeader
@@ -1515,7 +1515,7 @@ export default function CreateNewEventPage() {
               </Field>
 
               <Field
-                label="Event Type"
+                label="Category"
                 required
               >
                 <select
@@ -1548,17 +1548,9 @@ export default function CreateNewEventPage() {
                     Select type
                   </option>
 
-                  <option value="conference">
-                    Conference
-                  </option>
-
-                  <option value="mantram">
-                    Mantram
-                  </option>
-
-                  <option value="event">
-                    Event
-                  </option>
+                  <option value="conference">SMRSC (conference)</option>
+                  <option value="mantram">MantraM</option>
+                  <option value="event">CME / Workshop</option>
                 </select>
               </Field>
 
@@ -2051,7 +2043,7 @@ export default function CreateNewEventPage() {
 
             bg-white
 
-            shadow-[0_3px_14px_rgba(27,75,107,0.025)]
+            shadow-[0_3px_14px_rgba(15,23,41,0.025)]
           "
         >
           {/* HEADER */}
@@ -2259,7 +2251,7 @@ export default function CreateNewEventPage() {
                               ? `
                                   border-primary/30
                                   bg-white
-                                  shadow-[0_2px_8px_rgba(26,158,143,0.08)]
+                                  shadow-[0_2px_8px_rgba(40,63,143,0.08)]
                                 `
                               : `
                                   border-transparent

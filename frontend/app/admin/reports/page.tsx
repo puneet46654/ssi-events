@@ -239,9 +239,9 @@ const EMPTY_FILTERS: FilterState = {
 const PAGE_SIZE = 15;
 
 const COLORS = {
-  primary: '#1a9e8f',
+  primary: '#283F8F',
   primaryLight: '#63c6b9',
-  secondary: '#1b4b6b',
+  secondary: '#0F1729',
   blue: '#4387b3',
   green: '#2f9e76',
   amber: '#d49c35',
@@ -5123,7 +5123,7 @@ const tooltipStyle = {
     '1px solid #e5e7eb',
 
   boxShadow:
-    '0 8px 25px rgba(27,75,107,0.08)',
+    '0 8px 25px rgba(15,23,41,0.08)',
 
   fontSize:
     '10px',

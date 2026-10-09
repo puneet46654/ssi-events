@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   images: {
     localPatterns: [
       {
-        pathname: '/logos/ssilogo.png',
+        pathname: '/logos/**',
       },
     ],
   },

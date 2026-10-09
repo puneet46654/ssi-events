@@ -285,7 +285,7 @@ export default function MyTicketsPage() {
       className="
         min-h-dvh
 
-        bg-[#F7F9FA]
+        bg-white
 
         pb-[76px]
 
@@ -301,7 +301,7 @@ export default function MyTicketsPage() {
           mx-auto
 
           w-full
-          max-w-[1500px]
+          max-w-[1200px]
 
           px-4
 
@@ -310,7 +310,7 @@ export default function MyTicketsPage() {
           md:px-6
           md:py-8
 
-          lg:px-10
+
         "
       >
 
@@ -342,7 +342,7 @@ export default function MyTicketsPage() {
               text-secondary
             "
           >
-            My Tickets
+            My tickets
           </h1>
 
 
@@ -364,7 +364,7 @@ export default function MyTicketsPage() {
               onClick={resetTickets}
               className="
                 mt-3
-                text-[11px]
+                text-[13px]
                 font-semibold
                 text-primary
                 hover:text-primary-dark
@@ -412,7 +412,7 @@ export default function MyTicketsPage() {
             <label
               htmlFor="ticket-mobile"
               className="
-                text-[11px]
+                text-[13px]
 
                 font-semibold
 
@@ -512,21 +512,12 @@ export default function MyTicketsPage() {
 
                 w-full
 
-                rounded-lg
-
-                bg-primary
-
-                text-[12px]
-
-                font-semibold
-
-                text-white
-              "
+                btn-primary rounded-full text-[15px] font-medium text-white "
             >
 
               {loading
                 ? 'Checking...'
-                : 'View Tickets'}
+                : 'View tickets'}
             </button>
             {previousMobile && (
               <button
@@ -1092,7 +1083,7 @@ function TicketCard({
 
           <span
             className="
-              text-[11px]
+              text-[13px]
 
               font-semibold
 
@@ -1120,7 +1111,7 @@ function TicketCard({
 
               py-2
 
-              text-[11px]
+              text-[13px]
 
               font-semibold
 
@@ -1136,18 +1127,18 @@ function TicketCard({
               href={googleCalendarUrl(ticket)}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-lg border border-gray-200 px-3 py-2 text-[11px] font-semibold text-secondary hover:bg-gray-50"
+              className="rounded-lg border border-gray-200 px-3 py-2 text-[13px] font-semibold text-secondary hover:bg-gray-50"
             >
               Add to Google Calendar
             </a>
             {changeable && (
               <>
                 <button type="button" onClick={() => onManage('reschedule')}
-                  className="rounded-lg border border-primary/30 px-3 py-2 text-[11px] font-semibold text-primary hover:bg-primary/[0.05]">
+                  className="rounded-lg border border-primary/30 px-3 py-2 text-[13px] font-semibold text-primary hover:bg-primary/[0.05]">
                   Reschedule
                 </button>
                 <button type="button" onClick={() => onManage('cancel')}
-                  className="rounded-lg border border-red-200 px-3 py-2 text-[11px] font-semibold text-red-600 hover:bg-red-50">
+                  className="rounded-lg border border-red-200 px-3 py-2 text-[13px] font-semibold text-red-600 hover:bg-red-50">
                   Cancel booking
                 </button>
               </>
@@ -1204,7 +1195,7 @@ function StatusBadge({
 
         py-1
 
-        text-[10px]
+        text-[12px]
 
         font-semibold
 
@@ -1303,7 +1294,7 @@ function ManageTicketDialog({
           <div className="mt-4 space-y-4">
             {days.map(day => (
               <div key={day._id}>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{dayLabel(day.date)}</p>
+                <p className="text-[13px] font-semibold uppercase tracking-wide text-gray-400">{dayLabel(day.date)}</p>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   {day.slots.map(slot => {
                     const selected = choice?.slotId === slot._id;
@@ -1312,7 +1303,7 @@ function ManageTicketDialog({
                         onClick={() => setChoice({ dayScheduleId: day._id, slotId: slot._id })}
                         className={`rounded-lg border px-3 py-2 text-left text-[12px] ${selected ? 'border-primary bg-primary/[0.06] text-primary' : 'border-gray-200 text-secondary hover:bg-gray-50'}`}>
                         <span className="block font-semibold">{slot.startTime} - {slot.endTime}</span>
-                        <span className="text-[11px] text-gray-500">{slot.remaining} seat{slot.remaining === 1 ? '' : 's'} left</span>
+                        <span className="text-[13px] text-gray-500">{slot.remaining} seat{slot.remaining === 1 ? '' : 's'} left</span>
                       </button>
                     );
                   })}

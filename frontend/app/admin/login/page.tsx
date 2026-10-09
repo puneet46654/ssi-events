@@ -210,7 +210,7 @@ export default function AdminLoginPage() {
             border
             border-primary/20
             bg-white
-            shadow-[0_14px_35px_rgba(27,75,107,0.13)]
+            shadow-[0_14px_35px_rgba(15,23,41,0.13)]
           "
         >
           <div
@@ -356,7 +356,7 @@ export default function AdminLoginPage() {
               focus:border-primary/50
               focus:bg-white
 
-              focus:shadow-[0_0_0_4px_rgba(26,158,143,0.08),0_10px_28px_rgba(27,75,107,0.06)]
+              focus:shadow-[0_0_0_4px_rgba(40,63,143,0.08),0_10px_28px_rgba(15,23,41,0.06)]
 
               disabled:cursor-not-allowed
               disabled:opacity-60
@@ -437,7 +437,7 @@ export default function AdminLoginPage() {
                 focus:border-primary/50
                 focus:bg-white
 
-                focus:shadow-[0_0_0_4px_rgba(26,158,143,0.08),0_10px_28px_rgba(27,75,107,0.06)]
+                focus:shadow-[0_0_0_4px_rgba(40,63,143,0.08),0_10px_28px_rgba(15,23,41,0.06)]
 
                 disabled:cursor-not-allowed
                 disabled:opacity-60

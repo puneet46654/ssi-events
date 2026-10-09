@@ -4,6 +4,8 @@ import { AppFeedbackDialog } from '@/components/user/AppFeedback';
 
 import { ticketStorage } from '@/lib/booking-contracts';
 import PendingRegistrations from '@/components/user/PendingRegistrations';
+import { CategoryCards } from '@/components/user/CategoryCards';
+import { categoryOf } from '@/lib/event-categories';
 
 import { calendarDateFormatter } from '@/lib/events/dates';
 
@@ -518,13 +520,10 @@ export default function EventsPage() {
 
   return (
     <div
-      className="
+            className="
         min-h-dvh
-
-        bg-[#F7F9FA]
-
+        bg-white
         pb-[76px]
-
         md:pb-0
       "
     >
@@ -541,7 +540,7 @@ export default function EventsPage() {
           border-b
           border-gray-200/80
 
-          bg-[#F7F9FA]/95
+          bg-white
 
           px-4
           pb-3
@@ -567,34 +566,28 @@ export default function EventsPage() {
           >
             <h1
               className="
-                font-heading
-
-                text-[22px]
-                font-bold
-
-                leading-[1.2]
-
-                tracking-[-0.03em]
-
+                                font-heading
+                text-[32px]
+                font-semibold
+                leading-[1.05]
+                tracking-[-0.025em]
                 text-secondary
               "
             >
-              Discover Events
+              <span className="ssi-highlight">SS Innovations</span> events
             </h1>
 
             <p
               className="
-                mt-1
-
-                text-[11px]
-                leading-[17px]
-
+                                mt-2
+                text-[16px]
+                leading-[1.5]
                 text-gray-500
               "
             >
-              Explore conferences,
-              MantraM sessions and
-              upcoming programmes.
+              Register for our conferences, MantraM
+              programmes and CME workshops, and book
+              your slot.
             </p>
           </div>
 
@@ -672,7 +665,7 @@ export default function EventsPage() {
           mx-auto
 
           w-full
-          max-w-[1500px]
+          max-w-[1200px]
 
           px-4
           py-5
@@ -681,8 +674,6 @@ export default function EventsPage() {
 
           md:px-6
           md:py-8
-
-          lg:px-10
         "
       >
         <PendingRegistrations />
@@ -707,36 +698,28 @@ export default function EventsPage() {
           >
             <h1
               className="
-                font-heading
-
-                text-[30px]
-                font-bold
-
-                tracking-[-0.035em]
-
+                                font-heading
+                text-[46px]
+                font-semibold
+                leading-[1.08]
+                tracking-[-0.028em]
                 text-secondary
-
-                lg:text-[34px]
+                lg:text-[56px]
               "
             >
-              Discover Events
+              <span className="ssi-highlight">SS Innovations</span> events
             </h1>
 
             <p
               className="
-                mt-1.5
-
-                text-[12px]
-                leading-5
-
+                mt-3
+                max-w-[46ch]
+                text-[19px]
+                leading-[1.5]
                 text-gray-500
               "
             >
-              Browse conferences,
-              MantraM sessions and
-              programmes currently
-              available through
-              SSInnovations Events.
+              Register for our conferences, MantraM programmes and CME workshops, and book your slot.
             </p>
           </div>
               <div className="flex w-full max-w-[600px] items-center gap-2">
@@ -851,6 +834,11 @@ export default function EventsPage() {
           </div>
         </section>
 
+        <div className="mt-1 md:mt-10">
+          <CategoryCards events={events} active={typeFilter} onSelect={setTypeFilter} loading={loading && events.length === 0} />
+        </div>
+        <div id="event-results" className="scroll-mt-[calc(72px+env(safe-area-inset-top))]" />
+
         {/* ====================================================
             ACTIVE FILTERS
         ==================================================== */}
@@ -927,7 +915,7 @@ export default function EventsPage() {
                 className="
                   ml-1
 
-                  text-[10px]
+                  text-[12px]
                   font-semibold
 
                   text-gray-400
@@ -1085,8 +1073,8 @@ export default function EventsPage() {
               0 && (
               <AnimatedSection>
                 <SectionHeading
-                  title="Upcoming Conferences"
-                  subtitle="Upcoming conferences and scientific programmes"
+                                    title="SMRSC"
+                  subtitle="The SSI Multi-Specialty Robotic Surgery Conference"
                 />
 
                 <UpcomingGrid
@@ -1103,7 +1091,7 @@ export default function EventsPage() {
               0 && (
               <AnimatedSection>
                 <SectionHeading
-                  title="Upcoming MantraM Sessions"
+                                    title="MantraM"
                   subtitle="Upcoming MantraM programmes"
                 />
 
@@ -1121,8 +1109,8 @@ export default function EventsPage() {
               0 && (
               <AnimatedSection>
                 <SectionHeading
-                  title="Upcoming Events"
-                  subtitle="More programmes and opportunities to participate"
+                                    title="CME and workshops"
+                  subtitle="Continuing medical education and hands-on workshops"
                 />
 
                 <UpcomingGrid
@@ -1277,7 +1265,7 @@ function SearchBar({
           ${
             mobile
               ? 'h-11 text-[12px]'
-              : 'h-10 text-[11px]'
+              : 'h-10 text-[13px]'
           }
         `}
       />
@@ -1422,7 +1410,7 @@ function MobileFilterPanel(
 
         p-3.5
 
-        shadow-[0_18px_42px_rgba(27,75,107,0.15)]
+        shadow-[0_18px_42px_rgba(15,23,41,0.15)]
       "
     >
       <FilterContents
@@ -1478,7 +1466,7 @@ function DesktopFilterPanel(
 
         p-4
 
-        shadow-[0_18px_45px_rgba(27,75,107,0.14)]
+        shadow-[0_18px_45px_rgba(15,23,41,0.14)]
       "
     >
       <FilterContents
@@ -1527,7 +1515,7 @@ function FilterContents({
             className="
               mt-0.5
 
-              text-[8px]
+              text-[12px]
 
               text-gray-400
             "
@@ -1624,7 +1612,7 @@ function FilterContents({
         "
       >
         <FilterLabel>
-          Event Type
+          Category
         </FilterLabel>
 
         <div
@@ -1694,7 +1682,7 @@ function FilterContents({
             !hasActiveFilters
           }
           className="
-            text-[10px]
+            text-[12px]
             font-semibold
 
             text-gray-400
@@ -1723,7 +1711,7 @@ function FilterContents({
 
             px-4
 
-            text-[9px]
+            text-[12px]
             font-semibold
 
             text-white
@@ -1753,7 +1741,7 @@ function FilterLabel({
   return (
     <p
       className="
-        text-[8px]
+        text-[12px]
         font-bold
 
         uppercase
@@ -1801,7 +1789,7 @@ function FilterChoice({
 
         px-3
 
-        text-[9px]
+        text-[12px]
         font-semibold
 
         transition-all
@@ -1871,7 +1859,7 @@ function FilterTag({
         px-2.5
         py-1.5
 
-        text-[9px]
+        text-[12px]
         font-medium
 
         text-secondary
@@ -1972,16 +1960,12 @@ function SectionHeading({
     >
       <h2
         className="
-          font-heading
-
-          text-[17px]
-          font-semibold
-
-          tracking-[-0.02em]
-
-          text-secondary
-
-          md:text-[20px]
+                      font-heading
+            text-[22px]
+            font-semibold
+            tracking-[-0.02em]
+            text-secondary
+            md:text-[28px]
         "
       >
         {title}
@@ -1990,13 +1974,10 @@ function SectionHeading({
       {subtitle && (
         <p
           className="
-            mt-0.5
-
-            text-[9px]
-
-            text-gray-400
-
-            md:text-[10px]
+                          mt-1
+              text-[14px]
+              text-gray-500
+              md:text-[16px]
           "
         >
           {subtitle}
@@ -2063,13 +2044,13 @@ const OpenEventCard = memo(function OpenEventCard({
 
           bg-white
 
-          shadow-[0_3px_12px_rgba(27,75,107,0.025)]
+          shadow-[0_3px_12px_rgba(15,23,41,0.025)]
 
           transition-all
           duration-200
 
           hover:border-gray-300
-          hover:shadow-[0_8px_24px_rgba(27,75,107,0.055)]
+          hover:shadow-[0_8px_24px_rgba(15,23,41,0.055)]
         "
       >
         {/* IMAGE */}
@@ -2137,23 +2118,6 @@ const OpenEventCard = memo(function OpenEventCard({
           "
         >
           {/* TYPE */}
-
-          <p
-            className="
-              text-[8px]
-              font-semibold
-
-              uppercase
-
-              tracking-[0.06em]
-
-              text-gray-400
-            "
-          >
-            {formatType(
-              event.eventType,
-            )}
-          </p>
 
           {/* NAME */}
 
@@ -2230,7 +2194,7 @@ const OpenEventCard = memo(function OpenEventCard({
                 className="
                   shrink-0
 
-                  text-[8px]
+                  text-[12px]
                   font-semibold
 
                   text-secondary
@@ -2246,12 +2210,12 @@ const OpenEventCard = memo(function OpenEventCard({
 
                   truncate
 
-                  text-[10px]
+                  text-[12px]
                   leading-4
 
                   text-gray-500
 
-                  md:text-[11px]
+                  md:text-[13px]
                 "
               >
                 {event.description
@@ -2283,7 +2247,7 @@ const OpenEventCard = memo(function OpenEventCard({
             >
               <span
                 className="
-                  text-[8px]
+                  text-[12px]
                   font-medium
 
                   text-gray-400
@@ -2298,7 +2262,7 @@ const OpenEventCard = memo(function OpenEventCard({
                   items-center
                   gap-1.5
 
-                  text-[10px]
+                  text-[12px]
                   font-semibold
 
                   text-primary
@@ -2438,13 +2402,13 @@ const UpcomingEventCard = memo(function UpcomingEventCard({
 
           p-2.5
 
-          shadow-[0_2px_10px_rgba(27,75,107,0.02)]
+          shadow-[0_2px_10px_rgba(15,23,41,0.02)]
 
           transition-all
           duration-200
 
           hover:border-gray-300
-          hover:shadow-[0_7px_20px_rgba(27,75,107,0.05)]
+          hover:shadow-[0_7px_20px_rgba(15,23,41,0.05)]
 
           md:min-h-[112px]
           md:p-3
@@ -2517,22 +2481,6 @@ const UpcomingEventCard = memo(function UpcomingEventCard({
             flex-1
           "
         >
-          <p
-            className="
-              text-[7px]
-              font-semibold
-
-              uppercase
-
-              tracking-[0.05em]
-
-              text-gray-400
-            "
-          >
-            {formatType(
-              event.eventType,
-            )}
-          </p>
 
           <h3
             className="
@@ -2559,7 +2507,7 @@ const UpcomingEventCard = memo(function UpcomingEventCard({
 
               truncate
 
-              text-[9px]
+              text-[12px]
 
               text-gray-500
             "
@@ -2575,7 +2523,7 @@ const UpcomingEventCard = memo(function UpcomingEventCard({
 
               truncate
 
-              text-[8px]
+              text-[12px]
 
               text-gray-400
             "
@@ -2652,7 +2600,7 @@ function NoPublishedEvents({
 
         text-center
 
-        shadow-[0_4px_18px_rgba(27,75,107,0.025)]
+        shadow-[0_4px_18px_rgba(15,23,41,0.025)]
 
         sm:px-8
         sm:py-12
@@ -2706,7 +2654,7 @@ function NoPublishedEvents({
 
           max-w-[450px]
 
-          text-[11px]
+          text-[13px]
           leading-5
 
           text-gray-500
@@ -2751,7 +2699,7 @@ function NoPublishedEvents({
 
             px-4
 
-            text-[10px]
+            text-[12px]
             font-semibold
 
             text-white
@@ -2771,7 +2719,7 @@ function NoPublishedEvents({
 
           {refreshing
             ? 'Checking...'
-            : 'Check Again'}
+            : 'Check again'}
         </button>
 
         <button
@@ -2796,7 +2744,7 @@ function NoPublishedEvents({
 
             px-4
 
-            text-[10px]
+            text-[12px]
             font-semibold
 
             text-secondary
@@ -2848,7 +2796,7 @@ function NoMatchingEvents({
 
         text-center
 
-        shadow-[0_3px_14px_rgba(27,75,107,0.02)]
+        shadow-[0_3px_14px_rgba(15,23,41,0.02)]
       "
     >
       <span
@@ -2891,7 +2839,7 @@ function NoMatchingEvents({
 
           max-w-[350px]
 
-          text-[10px]
+          text-[12px]
           leading-5
 
           text-gray-500
@@ -2920,7 +2868,7 @@ function NoMatchingEvents({
 
           px-4
 
-          text-[9px]
+          text-[12px]
           font-semibold
 
           text-secondary
@@ -3114,9 +3062,9 @@ function MetaRow({
         className="
           truncate
 
-          text-[9px]
+          text-[12px]
 
-          md:text-[10px]
+          md:text-[12px]
         "
       >
         {value}
@@ -3216,28 +3164,7 @@ function formatType(
     EventTypeFilter |
     IEvent['eventType'],
 ) {
-  if (
-    value ===
-    'ALL'
-  ) {
-    return 'All';
-  }
-
-  if (
-    value ===
-    'conference'
-  ) {
-    return 'Conference';
-  }
-
-  if (
-    value ===
-    'mantram'
-  ) {
-    return 'MantraM';
-  }
-
-  return 'Event';
+  return value === 'ALL' ? 'All' : categoryOf(value).name;
 }
 
 function formatDate(

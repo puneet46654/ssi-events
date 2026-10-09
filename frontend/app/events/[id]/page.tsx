@@ -357,7 +357,7 @@ export default function EventDetailsPage() {
             sm:border
             sm:border-gray-200
 
-            sm:shadow-[0_8px_28px_rgba(27,75,107,0.05)]
+            sm:shadow-[0_8px_28px_rgba(15,23,41,0.05)]
           "
         >
           {/* IMAGE */}
@@ -467,19 +467,7 @@ export default function EventDetailsPage() {
               "
             >
               <div className="min-w-0">
-                <p
-                  className="
-                    text-[10px]
-                    font-semibold
-                    uppercase
-                    tracking-[0.08em]
-                    text-gray-400
-                  "
-                >
-                  {formatEventType(
-                    event.eventType,
-                  )}
-                </p>
+                
 
                 <h1
                   className="
@@ -559,17 +547,7 @@ export default function EventDetailsPage() {
                   lg:block
                 "
               >
-                <p
-                  className="
-                    text-[10px]
-                    font-semibold
-                    uppercase
-                    tracking-[0.06em]
-                    text-gray-400
-                  "
-                >
-                  Availability
-                </p>
+                <p className="text-[14px] font-medium text-gray-500">Availability</p>
 
                 <p
                   className="
@@ -621,7 +599,7 @@ export default function EventDetailsPage() {
                   sm:text-lg
                 "
               >
-                About This Event
+                About this event
               </h2>
 
               <p
@@ -683,23 +661,7 @@ export default function EventDetailsPage() {
               items-center
               justify-center
 
-              rounded-xl
-
-              text-sm
-              font-semibold
-
-              transition-all
-
-              ${
-                canBook
-                  ? `
-                    bg-primary
-                    text-white
-
-                    shadow-[0_7px_18px_rgba(26,158,143,0.16)]
-
-                    hover:brightness-95
-                  `
+              rounded-full text-[16px] font-medium transition-all ${ canBook ? ` btn-primary text-white `
                   : `
                     cursor-not-allowed
                     bg-gray-200
@@ -709,8 +671,7 @@ export default function EventDetailsPage() {
             `}
           >
             {canBook
-              ? 'Book Your Slots'
-              : 'Booking Closed'}
+              ? 'Book a slot' : 'Booking closed'}
           </Link>
 
           <button
@@ -740,7 +701,7 @@ export default function EventDetailsPage() {
               hover:bg-gray-50
             "
           >
-            Go Back
+            Go back
           </button>
         </div>
       </div>
@@ -763,7 +724,7 @@ export default function EventDetailsPage() {
           pb-[max(12px,env(safe-area-inset-bottom))]
           pt-3
 
-          shadow-[0_-8px_24px_rgba(27,75,107,0.06)]
+          shadow-[0_-8px_24px_rgba(15,23,41,0.06)]
 
           backdrop-blur-xl
 
@@ -790,22 +751,10 @@ export default function EventDetailsPage() {
                 items-center
                 justify-center
 
-                rounded-xl
-
-                bg-primary
-
-                text-sm
-                font-semibold
-                text-white
-
-                shadow-[0_7px_18px_rgba(26,158,143,0.16)]
-
-                transition
-
-                active:scale-[0.995]
+                btn-primary rounded-full text-[16px] font-medium text-white
               "
             >
-              Book Your Slots
+              Book a slot
             </Link>
           ) : (
             <button
@@ -824,7 +773,7 @@ export default function EventDetailsPage() {
                 text-gray-400
               "
             >
-              Booking Closed
+              Booking closed
             </button>
           )}
 
@@ -852,7 +801,7 @@ export default function EventDetailsPage() {
               hidden sm:block
             "
           >
-            Go Back
+            Go back
           </button>
         </div>
       </div>
@@ -891,14 +840,7 @@ function StatusBadge({
         px-2.5
         py-1.5
 
-        text-[9px]
-        font-bold
-        uppercase
-        tracking-[0.06em]
-
-        shadow-sm
-
-        ${classes}
+        text-[13px] font-medium shadow-sm ${classes}
       `}
     >
       {status ===
@@ -910,11 +852,7 @@ function StatusBadge({
             rounded-full
             bg-[#19CC6A]
           "
-        />
-      )}
-
-      {status}
-    </span>
+        /> )} {status.charAt(0) + status.slice(1).toLowerCase()} </span>
   );
 }
 
@@ -963,7 +901,7 @@ function EventError({
 
           text-center
 
-          shadow-[0_12px_35px_rgba(27,75,107,0.06)]
+          shadow-[0_12px_35px_rgba(15,23,41,0.06)]
         "
       >
         <h1
@@ -1017,7 +955,7 @@ function EventError({
               text-secondary
             "
           >
-            Go Back
+            Go back
           </button>
 
           <button
@@ -1037,7 +975,7 @@ function EventError({
               text-white
             "
           >
-            Try Again
+            Try again
           </button>
         </div>
       </div>
@@ -1079,7 +1017,7 @@ function InfoPill({
         px-2.5
         py-1.5
 
-        text-[11px]
+        text-[13px]
         font-medium
         text-secondary
 
@@ -1264,30 +1202,6 @@ function EventDetailsSkeleton() {
   );
 }
 
-/* ============================================================
-   FORMAT
-============================================================ */
-
-function formatEventType(
-  value:
-    EventDetails['eventType'],
-) {
-  if (
-    value ===
-    'conference'
-  ) {
-    return 'Conference';
-  }
-
-  if (
-    value ===
-    'mantram'
-  ) {
-    return 'MantraM';
-  }
-
-  return 'Event';
-}
 
 function formatDateRange(
   startValue: string,
