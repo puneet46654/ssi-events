@@ -23,9 +23,9 @@ export function CategoryCards({ events, loading = false }: Props) {
           const open = events.filter((e) => e.eventType === category.type && (e.status === 'UPCOMING' || e.status === 'LIVE')).length;
           const externalUrl = category.external?.externalUrl;
           const status = category.external
-            ? (externalUrl ? 'Register on the conference website' : 'Coming soon')
-            : open > 0 ? (open === 1 ? '1 event open for registration' : `${open} events open for registration`) : 'Coming soon';
-          const active = status !== 'Coming soon';
+            ? (externalUrl ? 'Register on the conference website' : 'Registration details to follow')
+            : open > 0 ? (open === 1 ? '1 event open for registration' : `${open} events open for registration`) : 'No events open at present';
+          const active = category.external ? Boolean(externalUrl) : open > 0;
           const body = (
             <>
               <span className="relative block aspect-[16/9] overflow-hidden rounded-[16px] bg-gray-100 md:rounded-[20px]">

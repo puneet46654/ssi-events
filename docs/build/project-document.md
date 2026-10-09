@@ -54,7 +54,7 @@ The system is serverless and pay-per-request. Nothing runs between requests, so 
 | Feature | Description |
 | --- | --- |
 | Event catalogue | Home page (`/`) with three category cards (SMRSC, SSi MantraM, CME / workshop) and the published events, soonest first. Search and filters by status and type |
-| Category pages | `/smrsc` (registration on the conference website; "coming soon" until its address is set), `/mantram`, `/cme`: introduction and events open for registration |
+| Category pages | `/smrsc` (registration on the conference website; "registration details to follow" until its address is set), `/mantram`, `/cme`: introduction and events open for registration |
 | Event page | Description, dates, venue, availability; "Book a slot" or "Register" |
 | Registration forms | Conference registration (with Faculty / Delegate) and standard registration (without). Chosen per event; MantraM events default to the standard form |
 | Slot booking | Live availability per day; full and ended slots cannot be chosen; overselling is prevented in the database |

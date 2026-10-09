@@ -929,7 +929,7 @@ export default function EventsPage() {
             <LoadingState />
           </div>
         ) : loadError && events.length === 0 ? null
-          // With no events at all, the category cards already say "Coming soon".
+          // With no events at all, the category cards already say none are open.
           : events.length === 0 ? null
           : filteredEvents.length ===
           0 ? (
