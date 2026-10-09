@@ -7,10 +7,14 @@ import {
   useMemo,
   useRef,
 } from 'react';
-import { io, type Socket } from 'socket.io-client';
-
-import type { RealtimeChange } from '@/lib/realtime';
 import { clearFetchCache } from '@/lib/client-cache';
+
+/** A resource changed on the server (see GET /api/realtime). */
+export type RealtimeChange = {
+  resource: 'events' | 'bookings' | 'attendance';
+  action: 'created' | 'updated' | 'deleted';
+  id?: string;
+};
 
 type RealtimeContextValue = {
   subscribe: (
@@ -39,19 +43,7 @@ export function RealtimeProvider({
       );
     };
 
-    // Socket pushes are immediate; polling also covers disconnects and serverless deployments.
-    let socket: Socket | undefined;
-    if (process.env.NODE_ENV === 'development') {
-      socket = io({
-        autoConnect: true,
-        transports: ['websocket'],
-        reconnection: true,
-        timeout: 2500,
-      });
-      socket.on('data.changed', handleChange);
-    }
-
-    // Poll the CDN-cached feed while visible, including when a socket connection is unavailable.
+    // Poll the CDN-cached revision counters while the tab is visible.
     let last: Record<string, number> | null = null;
     let stopped = false;
     let polling = false;
@@ -88,8 +80,6 @@ export function RealtimeProvider({
     return () => {
       stopped = true;
       controller.abort();
-      socket?.off('data.changed', handleChange);
-      socket?.disconnect();
       window.clearInterval(interval);
       document.removeEventListener('visibilitychange', poll);
     };

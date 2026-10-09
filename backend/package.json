@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/*.test.ts",
     "build": "esbuild src/handler.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/index.mjs --external:@aws-sdk/* --external:sharp --sourcemap=inline \"--banner:js=import { createRequire as __createRequire } from 'node:module'; const require = __createRequire(import.meta.url);\"",
-    "smoke": "node --input-type=module -e \"const m = await import('./dist/index.mjs'); if (typeof m.handler !== 'function') throw new Error('handler missing'); console.log('bundle loads')\""
+    "smoke": "node --input-type=module -e \"const m = await import('./dist/index.mjs'); if (typeof m.handler !== 'function') throw new Error('handler missing'); console.log('bundle loads')\"",
+    "dev": "tsx scripts/dev-server.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1148.0",
