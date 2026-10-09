@@ -4,7 +4,9 @@ import { Router } from './router.js';
 import { login, logout, session } from './routes/admin-auth.js';
 import { collectAnalytics } from './routes/analytics.js';
 import { cancelBooking, createBooking, eventSlots, getOwnBooking, myTickets, rescheduleBooking, savePending } from './routes/bookings.js';
-import { createEvent, eventImage, getEvent, listEvents } from './routes/events.js';
+import { listActivity } from './routes/admin-activity.js';
+import { createUser, deleteUser, listUsers, updateUser } from './routes/admin-users.js';
+import { createEvent, deleteEvent, eventImage, getEvent, listEvents, updateEvent } from './routes/events.js';
 import { health } from './routes/health.js';
 import { countries, states } from './routes/location.js';
 import { realtimeVersions } from './routes/realtime.js';
@@ -15,6 +17,8 @@ export const router = new Router()
   .get('/api/events', listEvents)
   .post('/api/events', createEvent)
   .get('/api/events/:id', getEvent)
+  .put('/api/events/:id', updateEvent)
+  .delete('/api/events/:id', deleteEvent)
   .get('/api/events/:id/image', eventImage)
   .get('/api/events/:id/slots', eventSlots)
   .post('/api/events/mytickets', myTickets)
@@ -29,7 +33,12 @@ export const router = new Router()
   .post('/api/analytics/collect', collectAnalytics)
   .post('/api/admin/login', login)
   .post('/api/admin/logout', logout)
-  .get('/api/admin/session', session);
+  .get('/api/admin/session', session)
+  .get('/api/admin/users', listUsers)
+  .post('/api/admin/users', createUser)
+  .put('/api/admin/users/:id', updateUser)
+  .delete('/api/admin/users/:id', deleteUser)
+  .get('/api/admin/activity', listActivity);
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<Response> {
   try {

@@ -1,13 +1,15 @@
-import { BatchWriteCommand, GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { BatchWriteCommand, DeleteCommand, GetCommand, PutCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { db, keys, lists, pad, TABLE_NAME } from '../db/table.js';
 import { error, HttpError, json } from '../http.js';
 import { bumpRealtime, logActivity } from '../lib/activity.js';
 import { requireAdmin } from '../lib/admins.js';
 import { assertSameOrigin, formBody } from '../lib/body.js';
 import { eventStatus, eventTimeZone } from '../lib/dates.js';
+import { EDIT_LOCK_MS, NOT_EDIT_LOCKED } from '../lib/event-lock.js';
 import { isId, newId } from '../lib/ids.js';
 import { loadImage, sanitizeImage, storeImage } from '../lib/images.js';
 import { generateSlotTimes, scheduleProblem, type ScheduleInput } from '../lib/schedule.js';
+import type { SlotItem } from '../lib/bookings.js';
 import type { Handler } from '../router.js';
 
 const EVENT_TYPES = ['conference', 'mantram', 'event'];
@@ -151,13 +153,13 @@ export const eventImage: Handler = async (req) => {
   };
 };
 
-/** Reads and validates the admin event form (same fields as the existing create-event screen). */
-function readEventForm(form: FormData) {
+/** Reads and validates the admin event form (same fields as the create and edit screens). */
+function readEventForm(form: FormData, existing?: EventItem) {
   const value = (key: string, fallback = '') => String(form.get(key) ?? fallback).trim();
   const eventName = value('eventName'), venue = value('venue'), description = value('description');
   const eventType = value('eventType');
-  const bookingFormTemplate = value('bookingFormTemplate', 'practitioner-institutional');
-  const timeZone = value('timeZone', 'Asia/Kolkata');
+  const bookingFormTemplate = value('bookingFormTemplate', existing?.bookingFormTemplate || 'practitioner-institutional');
+  const timeZone = value('timeZone', eventTimeZone(existing?.timeZone));
   const startDate = value('startDate'), endDate = value('endDate'), numberOfDays = Number(value('numberOfDays'));
   if (!eventName || !venue || !description) throw new HttpError(400, 'Required event information is missing.');
   if (eventName.length > 200 || venue.length > 300 || description.length > 5000) throw new HttpError(400, 'Event details are too long.');
@@ -171,15 +173,27 @@ function readEventForm(form: FormData) {
 }
 
 async function batchPut(items: Record<string, unknown>[]): Promise<void> {
-  for (let i = 0; i < items.length; i += 25) {
-    let requests = items.slice(i, i + 25).map((Item) => ({ PutRequest: { Item } }));
+  await batchWrite(items.map((Item) => ({ PutRequest: { Item } })));
+}
+
+async function batchWrite(all: Record<string, unknown>[]): Promise<void> {
+  for (let i = 0; i < all.length; i += 25) {
+    let requests = all.slice(i, i + 25);
     for (let attempt = 0; requests.length; attempt++) {
-      if (attempt > 5) throw new Error('DynamoDB did not accept all schedule items.');
+      if (attempt > 5) throw new Error('DynamoDB did not accept all batch items.');
       if (attempt) await new Promise((r) => setTimeout(r, 50 * 2 ** attempt));
       const result = await db.send(new BatchWriteCommand({ RequestItems: { [TABLE_NAME]: requests } }));
       requests = (result.UnprocessedItems?.[TABLE_NAME] ?? []) as typeof requests;
     }
   }
+}
+
+/** The thumbnail field, sanitized; undefined when none was chosen. */
+async function readThumbnail(form: FormData) {
+  const thumbnail = form.get('thumbnail');
+  if (thumbnail instanceof File && thumbnail.size > 0) return sanitizeImage(thumbnail);
+  if (thumbnail !== null && thumbnail !== '' && !(thumbnail instanceof File)) throw new HttpError(400, 'Choose a JPG, PNG or WebP image file.');
+  return undefined;
 }
 
 /**
@@ -194,13 +208,8 @@ export const createEvent: Handler = async (req) => {
   const input = readEventForm(form);
   const eventId = newId();
 
-  const thumbnail = form.get('thumbnail');
-  let imageKey: string | undefined;
-  if (thumbnail instanceof File && thumbnail.size > 0) {
-    imageKey = await storeImage(await sanitizeImage(thumbnail), `thumbnails/${eventId}-${Date.now()}`);
-  } else if (thumbnail !== null && thumbnail !== '' && !(thumbnail instanceof File)) {
-    throw new HttpError(400, 'Choose a JPG, PNG or WebP image file.');
-  }
+  const thumbnail = await readThumbnail(form);
+  const imageKey = thumbnail && await storeImage(thumbnail, `thumbnails/${eventId}-${Date.now()}`);
 
   const pk = keys.event(eventId).PK;
   const scheduleItems: Record<string, unknown>[] = [];
@@ -244,5 +253,269 @@ export const createEvent: Handler = async (req) => {
   return json(201, {
     success: true, message: 'Event created successfully.', eventId,
     bookingFormTemplate: event.bookingFormTemplate, imageUrl: imageUrl(event),
+  });
+};
+
+/* ---------- Editing and removing events ---------- */
+
+const isConditionFailure = (err: unknown) => (err as { name?: string })?.name === 'ConditionalCheckFailedException';
+
+/** Every item under the event's partition with the given sort-key prefix, read strongly consistent. */
+async function eventChildren<T>(eventId: string, prefix: string): Promise<(T & { PK: string; SK: string })[]> {
+  const items: (T & { PK: string; SK: string })[] = [];
+  let ExclusiveStartKey: Record<string, unknown> | undefined;
+  do {
+    const page = await db.send(new QueryCommand({
+      TableName: TABLE_NAME, ConsistentRead: true,
+      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :prefix)',
+      ExpressionAttributeValues: { ':pk': keys.event(eventId).PK, ':prefix': prefix },
+      ExclusiveStartKey,
+    }));
+    items.push(...(page.Items ?? []) as (T & { PK: string; SK: string })[]);
+    ExclusiveStartKey = page.LastEvaluatedKey;
+  } while (ExclusiveStartKey);
+  return items;
+}
+
+/** Runs the writes a few at a time; stops at the first failure. */
+async function runLimited(tasks: (() => Promise<unknown>)[], limit = 10): Promise<void> {
+  for (let i = 0; i < tasks.length; i += limit) await Promise.all(tasks.slice(i, i + limit).map((t) => t()));
+}
+
+type EventInput = ReturnType<typeof readEventForm>;
+
+const dayFields = (s: ScheduleInput) => ({
+  date: s.date, startTime: s.startTime, endTime: s.endTime, lunchEnabled: s.lunchEnabled,
+  lunchStart: s.lunchEnabled ? s.lunchStart || '' : '', lunchEnd: s.lunchEnabled ? s.lunchEnd || '' : '',
+  slotDuration: Number(s.slotDuration), slotGap: Number(s.slotGap), capacity: Number(s.capacity), sameAsDay1: Boolean(s.sameAsDay1),
+});
+
+/**
+ * Works out the schedule writes for an edit. Booked seats are never moved: each booked slot must
+ * still exist (same date, start and end) on the same day number, with room for its bookings.
+ * Unbooked slots and days are rewritten freely.
+ */
+function planSchedule(eventId: string, event: EventItem, input: EventInput, days: (DayItem & { SK: string })[], slots: (SlotItem & { SK: string })[]) {
+  if ((event.bookedSlots ?? 0) > 0 && input.timeZone !== eventTimeZone(event.timeZone)) {
+    throw new HttpError(409, 'The timezone cannot change while this event has bookings.');
+  }
+  const desired = input.schedules.map((schedule, index) => ({
+    dayNumber: index + 1, schedule, times: generateSlotTimes(schedule),
+    dayId: days.find((d) => d.date === schedule.date)?.dayId ?? newId(),
+  }));
+
+  for (const slot of slots.filter((s) => s.bookedCount > 0)) {
+    const label = `${slot.date} ${slot.startTime}-${slot.endTime}`;
+    const day = desired.find((d) => d.schedule.date === slot.date);
+    if (!day || !day.times.some((t) => t.startTime === slot.startTime && t.endTime === slot.endTime)) {
+      throw new HttpError(409, `The booked slot ${label} cannot be moved or removed. Cancel the event if it cannot go ahead.`);
+    }
+    if (day.dayNumber !== slot.dayNumber) {
+      throw new HttpError(409, `Day ${slot.dayNumber} (${slot.date}) has bookings, so days before it cannot be added or removed.`);
+    }
+    if (Number(day.schedule.capacity) < slot.bookedCount) {
+      throw new HttpError(409, `Capacity for ${label} cannot be lower than its ${slot.bookedCount} existing bookings.`);
+    }
+  }
+
+  const pk = keys.event(eventId).PK;
+  const kept = new Set<string>();
+  const writes: (() => Promise<unknown>)[] = [];
+  let totalSlots = 0;
+
+  for (const { dayNumber, schedule, times, dayId } of desired) {
+    const day: DayItem = { dayId, dayNumber, ...dayFields(schedule) };
+    // Days hold no counters, so overwriting them is safe.
+    writes.push(() => db.send(new PutCommand({ TableName: TABLE_NAME, Item: { PK: pk, SK: `DAY#${pad(dayNumber)}`, ...day } })));
+    for (const time of times) {
+      totalSlots += day.capacity;
+      const existing = slots.find((o) => o.date === day.date && o.dayNumber === dayNumber && o.startTime === time.startTime && o.endTime === time.endTime);
+      if (existing) {
+        kept.add(existing.SK);
+        // Only capacity and the day link change; seat counts are left to the booking transactions.
+        writes.push(() => db.send(new UpdateCommand({
+          TableName: TABLE_NAME, Key: { PK: pk, SK: existing.SK },
+          UpdateExpression: 'SET #cap = :cap, dayId = :day',
+          ConditionExpression: 'bookedCount <= :cap',
+          ExpressionAttributeNames: { '#cap': 'capacity' },
+          ExpressionAttributeValues: { ':cap': day.capacity, ':day': dayId },
+        })));
+      } else {
+        const slotId = newId();
+        writes.push(() => db.send(new PutCommand({
+          TableName: TABLE_NAME,
+          Item: { ...keys.slot(eventId, dayNumber, time.startTime, slotId), slotId, dayId, dayNumber, date: day.date, ...time, capacity: day.capacity, bookedCount: 0 },
+          ConditionExpression: 'attribute_not_exists(PK)',
+        })));
+      }
+    }
+  }
+
+  // Removed only while still empty: a seat taken in the meantime makes the delete fail.
+  const deletes: (() => Promise<unknown>)[] = [
+    ...slots.filter((o) => !kept.has(o.SK)).map((o) => () => db.send(new DeleteCommand({
+      TableName: TABLE_NAME, Key: { PK: pk, SK: o.SK },
+      ConditionExpression: 'bookedCount = :zero', ExpressionAttributeValues: { ':zero': 0 },
+    }))),
+    ...days.filter((d) => d.dayNumber > desired.length).map((d) => () => db.send(new DeleteCommand({ TableName: TABLE_NAME, Key: { PK: pk, SK: d.SK } }))),
+  ];
+
+  const before = JSON.stringify([...days].sort((a, b) => a.dayNumber - b.dayNumber).map((d) => dayFields(d as unknown as ScheduleInput)));
+  const after = JSON.stringify(desired.map((d) => dayFields(d.schedule)));
+  return { writes, deletes, totalSlots, scheduleChanged: before !== after };
+}
+
+const EDITABLE_FIELDS = ['eventName', 'eventType', 'bookingFormTemplate', 'venue', 'description', 'timeZone', 'startDate', 'endDate', 'numberOfDays'] as const;
+
+/**
+ * PUT /api/events/:id — same multipart form as create. Booked slots are kept (see planSchedule).
+ * The event is edit-locked while its schedule is rewritten, so no booking or reschedule can land
+ * between the checks and the writes.
+ */
+export const updateEvent: Handler = async (req) => {
+  assertSameOrigin(req);
+  const admin = await requireAdmin(req, 'events', 'write');
+  const { id } = req.params;
+  if (!isId(id)) return error(400, 'Invalid event ID.');
+  const existing = await getEventItem(id);
+  if (!existing) return error(404, 'Event not found.');
+  if (existing.status === 'CANCELLED') return error(409, 'Cancelled events are kept for history and cannot be edited.');
+  const form = await formBody(req);
+  const input = readEventForm(form, existing);
+  const thumbnail = await readThumbnail(form);
+
+  const lockUntil = Date.now() + EDIT_LOCK_MS;
+  try {
+    await db.send(new UpdateCommand({
+      TableName: TABLE_NAME, Key: keys.event(id),
+      UpdateExpression: 'SET editLock = :until',
+      ConditionExpression: `attribute_exists(PK) AND #s <> :cancelled AND ${NOT_EDIT_LOCKED}`,
+      ExpressionAttributeNames: { '#s': 'status' },
+      ExpressionAttributeValues: { ':until': lockUntil, ':now': Date.now(), ':cancelled': 'CANCELLED' },
+    }));
+  } catch (err) {
+    if (!isConditionFailure(err)) throw err;
+    const current = await getEventItem(id);
+    if (!current) return error(404, 'Event not found.');
+    if (current.status === 'CANCELLED') return error(409, 'Cancelled events are kept for history and cannot be edited.');
+    return error(409, 'Another change to this event is being saved. Wait a moment and try again.');
+  }
+
+  let saved = false;
+  try {
+    const [event, days, slots] = await Promise.all([
+      db.send(new GetCommand({ TableName: TABLE_NAME, Key: keys.event(id), ConsistentRead: true })).then((r) => r.Item as EventItem),
+      eventChildren<DayItem>(id, 'DAY#'),
+      eventChildren<SlotItem>(id, 'SLOT#'),
+    ]);
+    const plan = planSchedule(id, event, input, days, slots);
+    const imageKey = thumbnail && await storeImage(thumbnail, `thumbnails/${id}-${Date.now()}`);
+
+    try {
+      await runLimited(plan.writes);
+      await runLimited(plan.deletes);
+    } catch (err) {
+      if (!isConditionFailure(err)) throw err;
+      throw new HttpError(409, 'Bookings changed while the event was being saved. Reload the event and save again.');
+    }
+
+    const now = new Date().toISOString();
+    const fields: Record<string, unknown> = {
+      eventName: input.eventName, eventType: input.eventType, bookingFormTemplate: input.bookingFormTemplate,
+      venue: input.venue, description: input.description, timeZone: input.timeZone, startDate: input.startDate,
+      endDate: input.endDate, numberOfDays: input.numberOfDays, totalSlots: plan.totalSlots,
+      GSI1SK: `${input.startDate}#${id}`, updatedAt: now, ...(imageKey ? { imageKey } : {}),
+    };
+    const names = Object.fromEntries(Object.keys(fields).map((f, i) => [`#f${i}`, f]));
+    const values = Object.fromEntries(Object.values(fields).map((v, i) => [`:f${i}`, v]));
+    await db.send(new UpdateCommand({
+      TableName: TABLE_NAME, Key: keys.event(id),
+      UpdateExpression: `SET ${Object.keys(names).map((n, i) => `${n} = :f${i}`).join(', ')} REMOVE editLock`,
+      ConditionExpression: 'editLock = :until',
+      ExpressionAttributeNames: names,
+      ExpressionAttributeValues: { ...values, ':until': lockUntil },
+    }));
+    saved = true;
+
+    const changed = [
+      ...EDITABLE_FIELDS.filter((f) => String(existing[f]) !== String(input[f])),
+      ...(plan.scheduleChanged ? ['schedule'] : []),
+      ...(imageKey ? ['thumbnail'] : []),
+    ];
+    await Promise.all([
+      bumpRealtime('events'),
+      bumpRealtime('bookings'),
+      logActivity({ admin: admin.username, action: 'update', resource: 'event', resourceId: id, details: { eventName: input.eventName, fields: changed } }),
+    ]);
+    const updated = { ...existing, ...fields } as EventItem;
+    return json(200, {
+      success: true, message: 'Event updated successfully.', eventId: id,
+      bookingFormTemplate: updated.bookingFormTemplate, imageUrl: imageUrl(updated), updatedAt: now,
+    });
+  } catch (err) {
+    if (isConditionFailure(err)) throw new HttpError(409, 'The event changed while it was being saved. Reload it and save again.');
+    throw err;
+  } finally {
+    if (!saved) {
+      // Release the lock early; what was written is consistent, and saving again completes the edit.
+      await db.send(new UpdateCommand({
+        TableName: TABLE_NAME, Key: keys.event(id), UpdateExpression: 'REMOVE editLock',
+        ConditionExpression: 'editLock = :until', ExpressionAttributeValues: { ':until': lockUntil },
+      })).catch(() => undefined);
+    }
+  }
+};
+
+/**
+ * DELETE /api/events/:id — an event nobody has booked is deleted with its schedule and pending
+ * registrations. Once anyone has booked, it is cancelled instead: bookings stay for the record and
+ * tickets stop admitting.
+ */
+export const deleteEvent: Handler = async (req) => {
+  assertSameOrigin(req);
+  const admin = await requireAdmin(req, 'events', 'delete');
+  const { id } = req.params;
+  if (!isId(id)) return error(400, 'Invalid event ID.');
+  const event = await getEventItem(id);
+  if (!event) return error(404, 'Event not found.');
+
+  let cancelled = event.status === 'CANCELLED';
+  if (!cancelled) {
+    try {
+      // The event item goes first, and only while unbooked; without it no booking can be created.
+      await db.send(new DeleteCommand({
+        TableName: TABLE_NAME, Key: keys.event(id),
+        ConditionExpression: `attribute_exists(PK) AND bookedSlots = :zero AND ${NOT_EDIT_LOCKED}`,
+        ExpressionAttributeValues: { ':zero': 0, ':now': Date.now() },
+      }));
+    } catch (err) {
+      if (!isConditionFailure(err)) throw err;
+      const current = await getEventItem(id);
+      if (!current) return error(404, 'Event not found.');
+      if ((current.bookedSlots ?? 0) <= 0) return error(409, 'This event is being edited. Wait a moment and try again.');
+      await db.send(new UpdateCommand({
+        TableName: TABLE_NAME, Key: keys.event(id),
+        UpdateExpression: 'SET #s = :cancelled, updatedAt = :now',
+        ConditionExpression: 'attribute_exists(PK)',
+        ExpressionAttributeNames: { '#s': 'status' },
+        ExpressionAttributeValues: { ':cancelled': 'CANCELLED', ':now': new Date().toISOString() },
+      }));
+      cancelled = true;
+    }
+    if (!cancelled) {
+      const children = await eventChildren<Record<string, unknown>>(id, '');
+      await batchWrite(children.map((c) => ({ DeleteRequest: { Key: { PK: c.PK, SK: c.SK } } })));
+    }
+    await Promise.all([
+      bumpRealtime('events'), bumpRealtime('bookings'), bumpRealtime('attendance'),
+      logActivity({
+        admin: admin.username, action: cancelled ? 'update' : 'delete', resource: 'event', resourceId: id,
+        details: { eventName: event.eventName, cancelled },
+      }),
+    ]);
+  }
+  return json(200, {
+    success: true, cancelled,
+    message: cancelled ? 'Event cancelled. Booking history is preserved; tickets are no longer valid for admission.' : 'Event deleted successfully.',
   });
 };

@@ -24,6 +24,7 @@ export type AdminItem = {
   createdAt: string;
   updatedAt: string;
   lastLoginAt?: string;
+  createdBy?: string;
 };
 
 export type AdminProfile = Pick<AdminItem, 'username' | 'name' | 'role' | 'permissions' | 'canCreate' | 'canDelete'>;
@@ -68,10 +69,14 @@ export async function getAdmin(username: string): Promise<AdminItem | undefined>
   return Item as AdminItem | undefined;
 }
 
+/** The admin as stored: item keys plus the listing index. */
+// Keys go last: an admin read back from the table still carries its old keys, which a rename must not reuse.
+export const adminRecord = (admin: AdminItem) => ({ ...admin, ...keys.admin(admin.username), GSI1PK: lists.admins, GSI1SK: admin.username });
+
 export async function putAdmin(admin: AdminItem, mustBeNew = false): Promise<void> {
   await db.send(new PutCommand({
     TableName: TABLE_NAME,
-    Item: { ...keys.admin(admin.username), GSI1PK: lists.admins, GSI1SK: admin.username, ...admin },
+    Item: adminRecord(admin),
     ...(mustBeNew ? { ConditionExpression: 'attribute_not_exists(PK)' } : {}),
   }));
 }

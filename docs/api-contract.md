@@ -34,8 +34,8 @@ The planned list mirrors the endpoints the current frontend calls. Each one gets
 | GET | `/api/events` | Public event catalogue (CDN-cached 5 s) | none | **live** |
 | POST | `/api/events` | Create event (with schedule) | admin: events + create | **live** |
 | GET | `/api/events/:id` | Event details + schedule | none | **live** |
-| PUT | `/api/events/:id` | Edit event (keeps booked slots) | admin: events | planned |
-| DELETE | `/api/events/:id` | Delete empty event / cancel booked event | admin: events | planned |
+| PUT | `/api/events/:id` | Edit event (keeps booked slots) | admin: events + create | **live** |
+| DELETE | `/api/events/:id` | Delete empty event / cancel booked event | admin: events + delete | **live** |
 | GET | `/api/events/:id/slots` | Live slot availability, all days | none | **live** |
 | GET | `/api/events/:id/image` | Event image (validated, re-encoded at upload) | none | **live** |
 | POST | `/api/events/mytickets` | My Tickets: mobile number, plus booking reference on a new device | none | **live** |
@@ -49,8 +49,8 @@ The planned list mirrors the endpoints the current frontend calls. Each one gets
 | POST | `/api/admin/login` | Sign in | none | **live** |
 | POST | `/api/admin/logout` | Sign out | admin | **live** |
 | GET | `/api/admin/session` | Current admin + permissions | admin | **live** |
-| GET, POST | `/api/admin/users` | List / create admins | admin: auth | planned |
-| PUT, DELETE | `/api/admin/users/:id` | Edit / remove admin | admin: auth | planned |
+| GET, POST | `/api/admin/users` | List / create admins | superadmin | **live** |
+| PUT, DELETE | `/api/admin/users/:id` | Edit / remove admin | superadmin | **live** |
 | GET | `/api/admin/bookings` | Search bookings (paginated) | admin: bookings | planned |
 | GET, PATCH, DELETE | `/api/admin/bookings/:id` | Booking detail / edit / cancel | admin: bookings | planned |
 | DELETE | `/api/admin/bookings/pending/:id` | Discard a pending booking | admin: bookings | planned |
@@ -59,7 +59,7 @@ The planned list mirrors the endpoints the current frontend calls. Each one gets
 | GET | `/api/admin/reports` | Report data for CSV/Excel/print | admin: reports | planned |
 | GET | `/api/admin/analytics` | Analytics summary | admin: dashboard | planned |
 | GET | `/api/admin/analytics/live` | Live visitors | admin: dashboard | planned |
-| GET | `/api/admin/activity` | Admin activity log | admin: auth | planned |
+| GET | `/api/admin/activity` | Admin activity log | superadmin | **live** |
 
 ## `GET /api/health`
 
@@ -192,6 +192,39 @@ Errors:
 - `400` malformed ID
 - `404` not found
 
+### `PUT /api/events/:id`
+
+Requires `events` permission plus `canCreate`. Same multipart fields as `POST /api/events`; `thumbnail` is optional and replaces the image only when sent.
+
+**Booked seats are never moved.** The edit is refused with `409` if:
+- a slot that has bookings would disappear or change its date, start or end time
+- a day with bookings would change its day number (days before it added or removed)
+- a slot's new capacity is lower than its bookings
+- the timezone changes while the event has any bookings
+- the event is cancelled
+
+Slots and days without bookings are rewritten freely.
+
+**Concurrency:** the event is edit-locked (`editLock`, at most 60 s) while its schedule is rewritten. New bookings and reschedules on that event get `409` "being updated" during that window; cancellations still go through. A second edit at the same time gets `409`. If an edit fails partway, the lock is released and saving again completes it.
+
+`200`:
+```json
+{ "success": true, "message": "Event updated successfully.", "eventId": "<ULID>",
+  "bookingFormTemplate": "...", "imageUrl": "/api/events/<id>/image?v=<ms> or empty", "updatedAt": "ISO" }
+```
+Errors: `400` invalid input (with reason), `401`, `403`, `404`, `409` as above.
+
+### `DELETE /api/events/:id`
+
+Requires `events` permission plus `canDelete`.
+
+- **No bookings:** the event, its days, slots and pending registrations are deleted. `200 { success, cancelled: false, message }`
+- **Any booking (or already cancelled):** the event is cancelled instead. Bookings are kept for the record, tickets show `CANCELLED` and lose their QR code. `200 { success, cancelled: true, message }`
+
+The delete is conditional on the event still having no bookings, so a booking that lands at the same moment turns the delete into a cancellation. `409` while an edit holds the lock.
+
+Event images stay in S3 when an event is deleted or its image is replaced (the API role has no delete permission on the bucket).
+
 ### `GET /api/events/:id/image`
 
 The image bytes, with `cache-control: public, max-age=31536000, immutable`; the URL carries a version. Returns `404` if the event has no image.
@@ -301,3 +334,52 @@ Body: `{ mobile (full international number), bookingId? }`
 - states: `{ success, states: [{ name, code }] }`
 
 `502` if the source is down.
+
+## User & Access (superadmin only)
+
+The `auth` module is never granted to `admin` or `staff`, so these endpoints answer `403` to anyone but a superadmin. Users are addressed by login ID: `_id` is the username.
+
+**User fields returned:** `_id`, `username`, `name`, `role`, `permissions`, `canCreate`, `canDelete`, `isActive`, `createdBy`, `lastLoginAt`, `createdAt`, `updatedAt`. Password hashes are never returned.
+
+**Passwords:** at least 12 characters, with upper-case and lower-case letters and a number. Only the scrypt hash is stored, so the screen shows a new password once, at the moment it is set.
+
+### `GET /api/admin/users`
+
+`200 { success, users: [...] }`, newest first.
+
+### `POST /api/admin/users`
+
+Body: `{ username, name, password, role, permissions, canCreate, canDelete, isActive }`
+
+- `username`: 3-40 characters, `a-z 0-9 . _ -` (stored lower-case)
+- `name`: 2-100 characters
+- `role`: `superadmin`, `admin` or `staff`; superadmins always get every module and both rights
+- `permissions`: at least one of `dashboard`, `events`, `bookings`, `check-in`, `reports` (others are ignored)
+
+`201 { success, user }`. Errors: `400` with the reason, `409` login ID taken.
+
+### `PUT /api/admin/users/:id`
+
+Body: any of the create fields. `password` only when resetting it.
+
+- Access changes apply on the user's next request.
+- A password reset or login ID change signs that user out everywhere.
+- You cannot change your own login ID, role or active status.
+- At least one active superadmin must remain (`400`).
+
+`200 { success, user }`. Errors: `400`, `404`, `409` login ID taken.
+
+### `DELETE /api/admin/users/:id`
+
+Not your own account, and not the last active superadmin (`400`). `200 { success, message }`; `404` if not found.
+
+### `GET /api/admin/activity?admin=&action=&from=&to=`
+
+The admin audit trail, newest first, at most 200 entries.
+
+- `from` / `to`: ISO timestamps; without them, the last year (the retention period) is searched.
+- `admin`: login ID; `action`: `login`, `login_failed`, `logout`, `create`, `update`, `delete`, `role_change`.
+
+`200 { success, logs: [{ _id, admin, action, resource, resourceId, details, createdAt }] }`
+
+`resource` is `auth`, `event` or `admin_user`. User changes carry `details.changes` (`{ field: { from, to } }`) and `details.credentialReset`; event edits carry `details.fields` (the fields that changed).

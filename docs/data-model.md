@@ -66,11 +66,17 @@ If the request key already exists, it's a retry. The backend then returns the bo
 
 | Item | Attributes |
 | --- | --- |
-| Event | `eventId`, `eventName`, `eventType`, `bookingFormTemplate`, `venue`, `description`, `imageKey` (S3 key), `numberOfDays`, `startDate`/`endDate` (`YYYY-MM-DD`), `timeZone`, `status` (`ACTIVE` or `CANCELLED`; `LIVE`/`UPCOMING`/`COMPLETED` is computed when read), `totalSlots`, `bookedSlots`, `createdBy`, `createdAt`, `updatedAt` |
+| Event | `eventId`, `eventName`, `eventType`, `bookingFormTemplate`, `venue`, `description`, `imageKey` (S3 key), `numberOfDays`, `startDate`/`endDate` (`YYYY-MM-DD`), `timeZone`, `status` (`ACTIVE` or `CANCELLED`; `LIVE`/`UPCOMING`/`COMPLETED` is computed when read), `totalSlots`, `bookedSlots`, `editLock` (epoch ms, present only while an edit runs), `createdBy`, `createdAt`, `updatedAt` |
 | Day schedule | `dayId`, `dayNumber`, `date`, `startTime`, `endTime`, `lunchEnabled`, `lunchStart`, `lunchEnd`, `slotDuration`, `slotGap`, `capacity`, `sameAsDay1` (numbers stored as numbers) |
 | Slot | `slotId`, `dayId`, `dayNumber`, `date`, `startTime`, `endTime`, `capacity`, `bookedCount` |
-| Admin user | `username`, `name`, `role` (`superadmin`, `admin` or `staff`), `permissions[]`, `canCreate`, `canDelete`, `isActive`, `passwordHash` + `passwordSalt` (scrypt, 64-byte key, 16-byte salt), `createdAt`, `updatedAt`, `lastLoginAt` |
+| Admin user | `username`, `name`, `role` (`superadmin`, `admin` or `staff`), `permissions[]`, `canCreate`, `canDelete`, `isActive`, `passwordHash` + `passwordSalt` (scrypt, 64-byte key, 16-byte salt), `createdBy`, `createdAt`, `updatedAt`, `lastLoginAt` |
 | Admin activity | `admin`, `action`, `resource`, `resourceId`, `details` (sensitive keys removed), `createdAt` |
+
+**Event edit** takes the edit lock on the event item, then writes each day and slot with its own condition: kept slots change capacity only while `bookedCount <= capacity`, and removed slots are deleted only while `bookedCount = 0`. Booking and reschedule transactions refuse to run while the lock is held. The event item is updated last, which also removes the lock. Slot sort keys keep the day number they were created with; a booked day can't change its number.
+
+**Event deletion** deletes the event item first, on condition `bookedSlots = 0`. Without the event item, no booking can be created, so the remaining items under `EVENT#<id>` are then batch-deleted.
+
+**Admin login ID change** moves the item (`ADMIN#<old>` → `ADMIN#<new>`) in one transaction.
 
 **Event creation** writes the day and slot items first, in batches of 25, and the event item last. A create that fails midway leaves no event in the catalogue; its orphaned day and slot items are never read.
 
