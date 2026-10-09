@@ -41,11 +41,11 @@ The planned list mirrors the endpoints the current frontend calls. Each one gets
 | POST | `/api/events/mytickets` | My Tickets: mobile number, plus booking reference on a new device | none | **live** |
 | GET, POST, PATCH, DELETE | `/api/bookings` | Look up / create / reschedule / cancel own booking | booking grant | **live** |
 | POST | `/api/bookings/pending` | Save attendee details before slot choice | none | **live** |
-| POST, GET | `/api/feedback` | App rating | none / admin | planned |
+| POST, GET | `/api/feedback` | App rating (one per browser) / whether this browser has rated | none | **live** |
 | GET | `/api/realtime` | Revision counters for polling (CDN-cached 2 s) | none | **live** |
 | GET | `/api/location/countries` | Country list (calling codes, flags) | none | **live** |
 | GET | `/api/location/states` | States for a country | none | **live** |
-| POST | `/api/analytics/collect` | Anonymous page analytics (always 204; storage planned) | none | **live** |
+| POST | `/api/analytics/collect` | Anonymous page views, API timings and presence (always 204) | none | **live** |
 | POST | `/api/admin/login` | Sign in | none | **live** |
 | POST | `/api/admin/logout` | Sign out | admin | **live** |
 | GET | `/api/admin/session` | Current admin + permissions | admin | **live** |
@@ -57,8 +57,8 @@ The planned list mirrors the endpoints the current frontend calls. Each one gets
 | GET, POST | `/api/admin/attendance` | Check-in lookup / QR or manual check-in | admin: check-in | **live** |
 | GET | `/api/admin/dashboard` | Dashboard figures | admin: dashboard | **live** |
 | GET | `/api/admin/reports` | Report data for CSV/Excel/print | admin: reports | **live** |
-| GET | `/api/admin/analytics` | Analytics summary | admin: dashboard | planned |
-| GET | `/api/admin/analytics/live` | Live visitors | admin: dashboard | planned |
+| GET | `/api/admin/analytics` | Analytics summary | admin: reports | **live** |
+| GET | `/api/admin/analytics/live` | Live visitors | admin: reports | **live** |
 | GET | `/api/admin/activity` | Admin activity log | superadmin | **live** |
 
 ## `GET /api/health`
@@ -96,9 +96,13 @@ Poll every few seconds while the tab is visible. Refetch a resource when its num
 
 ## `POST /api/analytics/collect`
 
-Body: `{ visitorId, sessionId, events: [{ kind: "pageview" | "api", path, ts, ... }], presence?: { path } }`
+Body: `{ visitorId, sessionId, events: [{ kind: "pageview" | "api", path, ts, referrer?, method?, status?, ms? }], presence?: { path } }`
 
-Always returns `204` with no body. Views aren't stored yet; storage comes with the admin analytics endpoints.
+Always returns `204` with no body, so it never affects the page.
+
+- **Stored:** page views and API timings as `ANALYTICS#<day>` items, kept 90 days; the page an open tab is on as a `PRESENCE` item, kept 2 minutes. Paths are grouped by shape (`/events/:id/book`); query strings are dropped.
+- **Not stored:** admin pages, bots, requests from other sites (by `Origin`), IDs that aren't random visitor/session IDs, more than 50 events per request. No names, emails, phone numbers or IP addresses are recorded.
+- **Location:** country and city are not available yet (CloudFront does not forward visitor location to the API), so reports show them as Unknown.
 
 ## Admin sign-in
 
@@ -514,3 +518,31 @@ Requires `dashboard`. The admin landing page.
 - `upcomingEvents`: the next three live or upcoming events: `{ id, eventName, venue, startDate, endDate, status, booked, capacity, percentage }`
 
 "Today" is each event's own calendar day in its timezone.
+
+## Analytics (admin)
+
+Both require `reports` (the analytics screen sits under Reports).
+
+### `GET /api/admin/analytics?range=24h|7d|30d`
+
+`200 { success, range, unit: "hour" | "day", totals, series, funnel, topPages, topEvents, referrers, countries, cities, devices, browsers, os, api, feedback, statuses }`
+
+- `totals`: page views, unique visitors and sessions in the range, visitors active in the last 5 minutes, bookings and pending registrations created in the range, and conversion (sessions with a confirmed booking ÷ sessions, %).
+- `series`: views and visitors per hour (24h) or day, in India time.
+- `funnel`: sessions reaching the events list, an event page, the registration form, slot selection, and a confirmed booking.
+- `api`: per endpoint: calls, errors (5xx or network), error rate, p50 / p95 / max response time as the visitor experienced it.
+- `feedback`: app ratings over all time: total, average, count per star, latest 20 with comments.
+
+### `GET /api/admin/analytics/live`
+
+`200 { success, at, online (visitors), onlineTabs, pagesNow, devicesNow, recent (last 20 views in the past hour), perMinute (views per minute, last 30 minutes) }`. A tab counts as online if it reported in the last 45 seconds.
+
+## Feedback
+
+### `GET /api/feedback`
+
+`200 { success, submitted }`: whether this browser has already rated the app. Sets the anonymous `ssievents_session_id` cookie (HttpOnly, 30 days) if absent.
+
+### `POST /api/feedback`
+
+Body: `{ rating: 1-5, message? (up to 500 characters) }`. `200 { success }`; `400` invalid rating; `409 { duplicate: true }` if this browser has already rated. One rating per browser, enforced in one transaction; ratings are not linked to any attendee.
