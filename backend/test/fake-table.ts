@@ -17,8 +17,12 @@ function check(item: Item | undefined, condition: string | undefined, values: It
   return condition.split(' AND ').every((part) => {
     part = part.trim();
     let m: RegExpMatchArray | null;
+    if ((m = part.match(/^\((.+)\)$/))) return m[1]!.split(' OR ').some((alt) => check(item, alt, values, names));
     if (part === 'attribute_not_exists(PK)') return !item;
     if (part === 'attribute_exists(PK)') return !!item;
+    if ((m = part.match(/^attribute_not_exists\((\w+)\)$/))) return item?.[m[1]!] === undefined;
+    if ((m = part.match(/^(\S+) <= (:\w+)$/))) return !!item && attr(m[1]!) <= values[m[2]!];
+    if ((m = part.match(/^(\S+) < (:\w+)$/))) return !!item && attr(m[1]!) < values[m[2]!];
     if (part === 'bookedCount < #cap') return !!item && item.bookedCount < item[names['#cap']];
     if ((m = part.match(/^(\S+) > (:\w+)$/))) return !!item && attr(m[1]!) > values[m[2]!];
     if ((m = part.match(/^(\S+) <> (:\w+)$/))) return !!item && attr(m[1]!) !== values[m[2]!];
@@ -30,6 +34,12 @@ function check(item: Item | undefined, condition: string | undefined, values: It
 function update(item: Item, expression: string, values: Item, names: Item = {}): Item {
   const out = { ...item };
   const name = (n: string) => names[n] ?? n;
+  const removeAt = expression.indexOf('REMOVE ');
+  if (removeAt >= 0) {
+    for (const attr of expression.slice(removeAt + 7).split(/,\s*/)) delete out[name(attr.trim())];
+    expression = expression.slice(0, removeAt).trim();
+    if (!expression) return out;
+  }
   const [verb, rest] = [expression.slice(0, 3), expression.slice(4)];
   for (const clause of rest.split(/,\s*/)) {
     let m: RegExpMatchArray | null;
@@ -49,9 +59,12 @@ function query(input: Item): Item[] {
     if (wanted === undefined || i[pkAttr] !== wanted) return false;
     const begins = input.KeyConditionExpression.match(/begins_with\(SK, (:\w+)\)/);
     if (begins) return String(i.SK).startsWith(v[begins[1]]);
+    const between = input.KeyConditionExpression.match(/SK BETWEEN (:\w+) AND (:\w+)/);
+    if (between && !(i.SK >= v[between[1]] && i.SK <= v[between[2]])) return false;
     if (v[':since']) return i.SK >= v[':since'];
     return true;
-  });
+  }).filter((i) => check(i, input.FilterExpression, v, input.ExpressionAttributeNames))
+    .sort((a, b) => (input.ScanIndexForward === false ? -1 : 1) * String(a.SK).localeCompare(String(b.SK)));
 }
 
 export async function installFakeTable(db: { send: (...args: any[]) => any }) {
@@ -62,16 +75,27 @@ export async function installFakeTable(db: { send: (...args: any[]) => any }) {
     switch (command.constructor.name) {
       case 'GetCommand': return { Item: table.get(k(input.Key)) };
       case 'PutCommand':
-        if (!check(table.get(k(input.Item)), input.ConditionExpression)) throw new ConditionalCheckFailed('condition');
+        if (!check(table.get(k(input.Item)), input.ConditionExpression, input.ExpressionAttributeValues, input.ExpressionAttributeNames)) throw new ConditionalCheckFailed('condition');
         table.set(k(input.Item), input.Item); return {};
-      case 'DeleteCommand': table.delete(k(input.Key)); return {};
+      case 'DeleteCommand':
+        if (!check(table.get(k(input.Key)), input.ConditionExpression, input.ExpressionAttributeValues, input.ExpressionAttributeNames)) {
+          throw new ConditionalCheckFailed('condition');
+        }
+        table.delete(k(input.Key)); return {};
       case 'UpdateCommand': {
-        const item = table.get(k(input.Key)) ?? { ...input.Key };
+        const current = table.get(k(input.Key));
+        if (input.ConditionExpression && !check(current, input.ConditionExpression, input.ExpressionAttributeValues, input.ExpressionAttributeNames)) {
+          throw new ConditionalCheckFailed('condition');
+        }
+        const item = current ?? { ...input.Key };
         table.set(k(input.Key), update(item, input.UpdateExpression, input.ExpressionAttributeValues ?? {}, input.ExpressionAttributeNames));
         return {};
       }
       case 'BatchWriteCommand':
-        for (const r of Object.values(input.RequestItems)[0] as Item[]) table.set(k(r.PutRequest.Item), r.PutRequest.Item);
+        for (const r of Object.values(input.RequestItems)[0] as Item[]) {
+          if (r.DeleteRequest) table.delete(k(r.DeleteRequest.Key));
+          else table.set(k(r.PutRequest.Item), r.PutRequest.Item);
+        }
         return {};
       case 'QueryCommand': {
         const rows = query(input);

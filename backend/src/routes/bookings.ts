@@ -9,6 +9,7 @@ import {
   phoneIdentity, publicBooking, readBookingDetails, sha256, slotStart, type BookingItem, type EventCore, type SlotItem,
 } from '../lib/bookings.js';
 import { calendarDate, eventStatus, eventTimeZone, zonedDate } from '../lib/dates.js';
+import { EDIT_LOCKED_MESSAGE, NOT_EDIT_LOCKED } from '../lib/event-lock.js';
 import { isId } from '../lib/ids.js';
 import { isValidPhone, normalizePhone } from '../lib/phone.js';
 import type { Handler, Request } from '../router.js';
@@ -176,9 +177,9 @@ export const createBooking: Handler = async (req) => {
         { Update: {
           TableName: TABLE_NAME, Key: keys.event(eventId),
           UpdateExpression: 'ADD bookedSlots :one',
-          ConditionExpression: 'attribute_exists(PK) AND #s <> :cancelled',
+          ConditionExpression: `attribute_exists(PK) AND #s <> :cancelled AND ${NOT_EDIT_LOCKED}`,
           ExpressionAttributeNames: { '#s': 'status' },
-          ExpressionAttributeValues: { ':one': 1, ':cancelled': 'CANCELLED' },
+          ExpressionAttributeValues: { ':one': 1, ':cancelled': 'CANCELLED', ':now': Date.now() },
         } },
         { Put: {
           TableName: TABLE_NAME,
@@ -204,7 +205,10 @@ export const createBooking: Handler = async (req) => {
       if (original) return bookingResponse(original, true);
     }
     if (failed[0]) throw new HttpError(409, 'This slot is no longer available.');
-    if (failed[1]) throw new HttpError(409, 'This event has been cancelled. Tickets are not valid for admission.');
+    if (failed[1]) {
+      const current = await getEventCore(eventId);
+      throw new HttpError(409, current && current.status !== 'CANCELLED' ? EDIT_LOCKED_MESSAGE : 'This event has been cancelled. Tickets are not valid for admission.');
+    }
     throw new HttpError(409, 'The booking could not be completed. Please retry.');
   }
 
@@ -291,12 +295,19 @@ export const rescheduleBooking: Handler = async (req) => {
             ':now': now, ':old': booking.slotId, ':present': 'PRESENT',
           },
         } },
+        { ConditionCheck: { // not while an admin is changing the schedule
+          TableName: TABLE_NAME, Key: keys.event(booking.eventId),
+          ConditionExpression: `#s <> :cancelled AND ${NOT_EDIT_LOCKED}`,
+          ExpressionAttributeNames: { '#s': 'status' },
+          ExpressionAttributeValues: { ':cancelled': 'CANCELLED', ':now': Date.now() },
+        } },
       ],
     }));
   } catch (err) {
     const failed = cancelledParts(err);
     if (!failed) throw err;
     if (failed[0]) throw new HttpError(409, 'This slot is no longer available.');
+    if (failed[3]) throw new HttpError(409, EDIT_LOCKED_MESSAGE);
     throw new HttpError(409, 'The booking changed while you were editing it. Reload My Tickets and try again.');
   }
   await bumpRealtime('bookings');

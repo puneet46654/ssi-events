@@ -37,6 +37,15 @@ import {
   type AdminRole,
 } from '@/lib/admin-auth';
 
+/** Mirrors the backend rule (backend/src/lib/passwords.ts) so problems show before saving. */
+function passwordProblem(password: string): string {
+  if (password.length < 12) return 'Password must be at least 12 characters.';
+  if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) {
+    return 'Password needs upper-case and lower-case letters and at least one number.';
+  }
+  return '';
+}
+
 type ManagedUser = {
   _id: string;
   username: string;
@@ -315,11 +324,13 @@ export default function AdminAuthManagementPage() {
   }
 
   function generateRandomPassword() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*';
-    let pwd = '';
-    for (let i = 0; i < 10; i++) {
-      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+    // 16 characters from an unambiguous set, with upper case, lower case and a digit guaranteed.
+    const pick = (set: string) => set[crypto.getRandomValues(new Uint32Array(1))[0]! % set.length]!;
+    const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ', lower = 'abcdefghijkmnopqrstuvwxyz', digits = '23456789';
+    const rest = Array.from({ length: 13 }, () => pick(upper + lower + digits + '!@#$%^&*'));
+    const pwd = [pick(upper), pick(lower), pick(digits), ...rest]
+      .map((c) => [crypto.getRandomValues(new Uint32Array(1))[0]!, c] as const)
+      .sort((a, b) => a[0] - b[0]).map(([, c]) => c).join('');
     setFormData((prev) => ({ ...prev, password: pwd }));
     setShowPassword(true);
   }
@@ -336,12 +347,12 @@ export default function AdminAuthManagementPage() {
       setFormError('Please enter login username.');
       return;
     }
-    if (!editingUserId && (!formData.password || formData.password.length < 6)) {
-      setFormError('Password must be at least 6 characters long.');
+    if (!editingUserId && passwordProblem(formData.password)) {
+      setFormError(passwordProblem(formData.password));
       return;
     }
-    if (editingUserId && formData.password && formData.password.length < 6) {
-      setFormError('New password must be at least 6 characters.');
+    if (editingUserId && formData.password && passwordProblem(formData.password)) {
+      setFormError(passwordProblem(formData.password));
       return;
     }
     if (formData.role !== 'superadmin' && formData.permissions.length === 0) {
@@ -932,7 +943,7 @@ export default function AdminAuthManagementPage() {
                     <input id="user-password"
                       type={showPassword ? 'text' : 'password'}
                       required={!editingUserId}
-                      placeholder={editingUserId ? 'Enter a new password to change it' : 'Min 6 characters'}
+                      placeholder={editingUserId ? 'Enter a new password to change it' : 'At least 12 characters'}
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       className="h-10 w-full rounded-xl border border-gray-200 bg-[#F6F8FB] px-3.5 pr-10 text-xs font-medium text-secondary outline-none transition focus:border-primary/50 focus:bg-white focus:ring-2 focus:ring-primary/10"
