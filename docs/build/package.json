@@ -1,0 +1,15 @@
+{
+  "name": "ssi-events-docs",
+  "private": true,
+  "type": "module",
+  "description": "Generates docs/SSI-Events-Project-Documentation.pdf and .docx",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "docx": "9.5.1",
+    "highlight.js": "11.11.1",
+    "marked": "15.0.12",
+    "playwright-core": "1.56.1"
+  }
+}

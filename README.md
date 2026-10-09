@@ -8,7 +8,7 @@ Production: https://events.ssistudios.com
 | `frontend/` | Next.js 16 site (attendee pages and admin) |
 | `backend/` | API for `/api/*`: TypeScript, AWS Lambda, DynamoDB |
 | `infra/` | AWS setup, packaging and deploy scripts |
-| `docs/` | API contract, data model, frontend guide |
+| `docs/` | API contract, data model, frontend guide, project documentation (PDF/DOCX, source in `docs/build/`) |
 
 ## Local development
 
