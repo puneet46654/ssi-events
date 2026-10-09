@@ -188,10 +188,10 @@ test('admission only during the booked slot', async () => {
   seedEvent(LATE, DAY, SLOT, today, '23:58', '23:59', 'MantraM Late');
   const id = await book(LATE, DAY, SLOT, 1);
   const res = await scan(id, LATE);
-  // Unless this runs in the last two minutes of the UTC day, the slot hasn't started yet.
-  if (new Date().toISOString().slice(11, 16) < '23:58') {
+  // Unless this runs in the last 17 minutes of the UTC day, check-in (15 minutes early) hasn't opened yet.
+  if (new Date().toISOString().slice(11, 16) < '23:43') {
     assert.equal(res.status, 409);
-    assert.match(res.data.error, /Check-in for this ticket is open on/);
+    assert.match(res.data.error, /Check-in opens at 23:43/);
   }
 });
 

@@ -469,7 +469,7 @@ Requires `check-in`.
 
 ### `POST /api/admin/attendance`
 
-Requires `check-in`. Body: `{ eventId, method: "QR" | "MANUAL", code?, bookingId? }`
+Requires `check-in`. Body: `{ eventId, method: "QR" | "MANUAL", code?, bookingId?, moveToSlotId? }`
 
 - `QR`: `code` is the scanned text. The ticket QR is JSON `{ type: "SSI_EVENTS_ATTENDANCE", bookingId, eventId }`; a bare booking reference is accepted too.
 - `MANUAL`: `bookingId` is the reference typed by staff (any case).
@@ -477,7 +477,8 @@ Requires `check-in`. Body: `{ eventId, method: "QR" | "MANUAL", code?, bookingId
 **Rules:**
 - The event must be live today and not cancelled (`409`).
 - The ticket must belong to that event (`409` for another event's QR, `404` otherwise).
-- Admission is open during the booked slot only, from its start until its end, in the event's timezone (`409` with the slot's times). Staff can still mark someone present at any time from the booking's page.
+- Admission opens **15 minutes before** the booked slot and lasts until it ends, in the event's timezone. Staff can still mark someone present at any time from the booking's page.
+- **Early or late arrivals:** outside that window the answer is `409 { error, booking: { bookingId, fullName, date, startTime, endTime }, openSlots: [{ slotId, dayScheduleId, date, startTime, endTime, remaining }] }`: today's other slots of the event that admit people now and still have seats. Sending the same request with `moveToSlotId` moves the booking into that slot and checks in, in one transaction (new seat claimed only if free, old seat released, booking unchanged and not yet checked in, event not being edited or cancelled). The move is in the activity log.
 - Scanning a ticket that is already checked in is not an error: `alreadyPresent: true`. Two scanners reading the same ticket at once record it once.
 
 `200 { success, alreadyPresent, message, booking: { id, bookingId, fullName, email, attendanceStatus, checkedInAt } }`
