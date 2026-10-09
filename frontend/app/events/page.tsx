@@ -48,7 +48,11 @@ interface IEvent {
   eventType:
     | 'conference'
     | 'mantram'
-    | 'event';
+    | 'event'
+    | 'participation';
+
+  /** `info`: listed for information only, no booking. */
+  registrationMode?: 'slots' | 'open' | 'info';
 
   venue: string;
 
@@ -78,7 +82,8 @@ type EventTypeFilter =
   | 'ALL'
   | 'conference'
   | 'mantram'
-  | 'event';
+  | 'event'
+  | 'participation';
 
 /* ============================================================
    ANIMATION
@@ -396,7 +401,8 @@ export default function EventsPage() {
             event,
           ) =>
             event.status ===
-            'LIVE',
+            'LIVE' &&
+            event.registrationMode !== 'info',
         ),
       [
         filteredEvents,
@@ -452,6 +458,18 @@ export default function EventsPage() {
       [
         filteredEvents,
       ],
+    );
+
+  const upcomingParticipation =
+    useMemo(
+      () =>
+        filteredEvents.filter(
+          (event) =>
+            event.eventType === 'participation' &&
+            (event.status === 'UPCOMING' ||
+              (event.status === 'LIVE' && event.registrationMode === 'info')),
+        ),
+      [filteredEvents],
     );
 
   const completedEvents =
@@ -1077,6 +1095,19 @@ export default function EventsPage() {
               </AnimatedSection>
             )}
 
+            {/* CONFERENCES WE ATTEND */}
+
+            {upcomingParticipation.length > 0 && (
+              <AnimatedSection>
+                <SectionHeading
+                  title="Conferences"
+                  subtitle="Congresses and conferences where we exhibit and present"
+                />
+
+                <UpcomingGrid events={upcomingParticipation} />
+              </AnimatedSection>
+            )}
+
             {/* COMPLETED */}
 
             {completedEvents.length >
@@ -1583,6 +1614,7 @@ function FilterContents({
               'conference',
               'mantram',
               'event',
+              'participation',
             ] as EventTypeFilter[]
           ).map(
             (

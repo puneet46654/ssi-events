@@ -13,7 +13,7 @@ import { generateSlotTimes, isCalendarDate, scheduleProblem, type ScheduleInput 
 import type { SlotItem } from '../lib/bookings.js';
 import type { Handler } from '../router.js';
 
-const EVENT_TYPES = ['conference', 'mantram', 'event'];
+const EVENT_TYPES = ['conference', 'mantram', 'event', 'participation'];
 const FORM_TEMPLATES = ['practitioner-institutional', 'template-2', 'template-3'];
 
 /** Event item (`EVENT#<id>` / `META`); see docs/data-model.md. Dates are `YYYY-MM-DD`. */
@@ -36,16 +36,44 @@ export type EventItem = {
   registrationMode?: RegistrationMode;
   /** Open events only: the most registrations accepted; absent means unlimited. */
   capacity?: number;
+  /** Info events only: where to find us at the venue, e.g. "Hall 8, Stand C12". */
+  stand?: string;
+  /** Info events only: labelled links (conference website, LinkedIn post, press release). */
+  links?: EventLink[];
   createdBy: string;
   createdAt: string;
   updatedAt: string;
 };
 
-export type RegistrationMode = 'slots' | 'open';
+/** `slots`: book a time slot. `open`: registration only, no slots. `info`: listed for information, no booking. */
+export type RegistrationMode = 'slots' | 'open' | 'info';
+export type EventLink = { label: string; url: string };
 export const registrationModeOf = (e: Pick<EventItem, 'registrationMode'> | undefined): RegistrationMode =>
-  e?.registrationMode === 'open' ? 'open' : 'slots';
+  e?.registrationMode === 'open' || e?.registrationMode === 'info' ? e.registrationMode : 'slots';
 const MAX_OPEN_DAYS = 31;
 const MAX_CAPACITY = 100_000;
+const MAX_LINKS = 4;
+
+/** Links on an info event: at most four, each with a label and an http(s) address. */
+function readLinks(raw: string): EventLink[] {
+  let parsed: unknown;
+  try { parsed = JSON.parse(raw || '[]'); } catch { throw new HttpError(400, 'Invalid links data.'); }
+  if (!Array.isArray(parsed)) throw new HttpError(400, 'Invalid links data.');
+  const links = parsed
+    .map((l) => ({ label: String(l?.label ?? '').trim(), url: String(l?.url ?? '').trim() }))
+    .filter((l) => l.label || l.url);
+  if (links.length > MAX_LINKS) throw new HttpError(400, `Add at most ${MAX_LINKS} links.`);
+  for (const l of links) {
+    if (!l.label || l.label.length > 60) throw new HttpError(400, 'Each link needs a label of up to 60 characters.');
+    let url: URL;
+    try { url = new URL(l.url); } catch { throw new HttpError(400, `Enter a full web address for "${l.label}", starting with https://.`); }
+    if ((url.protocol !== 'https:' && url.protocol !== 'http:') || l.url.length > 500) {
+      throw new HttpError(400, `Enter a full web address for "${l.label}", starting with https://.`);
+    }
+    l.url = url.href;
+  }
+  return links;
+}
 
 /** Day item (`EVENT#<id>` / `DAY#<nn>`). */
 export type DayItem = {
@@ -88,6 +116,8 @@ function publicEvent(e: EventItem, now: Date) {
     bookedSlots: e.bookedSlots ?? 0,
     registrationMode: registrationModeOf(e),
     capacity: registrationModeOf(e) === 'open' ? e.capacity ?? null : null,
+    stand: registrationModeOf(e) === 'info' ? e.stand ?? '' : '',
+    links: registrationModeOf(e) === 'info' ? e.links ?? [] : [],
     createdAt: e.createdAt,
     updatedAt: e.updatedAt,
   };
@@ -178,17 +208,26 @@ function readEventForm(form: FormData, existing?: EventItem) {
   if (eventName.length > 200 || venue.length > 300 || description.length > 5000) throw new HttpError(400, 'Event details are too long.');
   if (!EVENT_TYPES.includes(eventType)) throw new HttpError(400, 'Invalid event type.');
   if (!FORM_TEMPLATES.includes(bookingFormTemplate)) throw new HttpError(400, 'Invalid registration form template.');
-  const registrationMode: RegistrationMode = value('registrationMode', registrationModeOf(existing)) === 'open' ? 'open' : 'slots';
-  const base = { eventName, venue, description, eventType, bookingFormTemplate, timeZone, startDate, endDate, registrationMode };
+  const mode = value('registrationMode', registrationModeOf(existing));
+  const registrationMode: RegistrationMode = mode === 'open' || mode === 'info' ? mode : 'slots';
+  const base = { eventName, venue, description, eventType, bookingFormTemplate, timeZone, startDate, endDate, registrationMode,
+    stand: undefined as string | undefined, links: undefined as EventLink[] | undefined };
 
-  if (registrationMode === 'open') {
-    // Registration only: dates and an optional limit on registrations, no schedule.
+  if (registrationMode === 'open' || registrationMode === 'info') {
+    // Registration only and information only: dates, no schedule. Past dates are allowed so that
+    // events we have already attended can be listed.
     if (!isTimeZone(timeZone)) throw new HttpError(400, 'Select a valid event timezone.');
     if (!isCalendarDate(startDate) || !isCalendarDate(endDate) || endDate < startDate) {
       throw new HttpError(400, 'Enter valid event dates with the end on or after the start.');
     }
     const days = Math.round((Date.parse(endDate) - Date.parse(startDate)) / 86_400_000) + 1;
-    if (days > MAX_OPEN_DAYS) throw new HttpError(400, `A registration-only event can run for at most ${MAX_OPEN_DAYS} days.`);
+    if (days > MAX_OPEN_DAYS) throw new HttpError(400, `An event without time slots can run for at most ${MAX_OPEN_DAYS} days.`);
+    if (registrationMode === 'info') {
+      const stand = value('stand');
+      if (stand.length > 120) throw new HttpError(400, 'Stand or booth details are too long.');
+      return { ...base, numberOfDays: days, schedules: [] as ScheduleInput[], capacity: undefined as number | undefined,
+        stand: stand || undefined, links: readLinks(value('links')) };
+    }
     const rawCapacity = value('capacity');
     const capacity = rawCapacity ? Number(rawCapacity) : undefined;
     if (capacity !== undefined && (!Number.isInteger(capacity) || capacity < 1 || capacity > MAX_CAPACITY)) {
@@ -264,7 +303,7 @@ export const createEvent: Handler = async (req) => {
     }
   });
   await batchPut(scheduleItems);
-  if (input.registrationMode === 'open') totalSlots = input.capacity ?? 0;
+  if (input.registrationMode !== 'slots') totalSlots = input.capacity ?? 0;
 
   const now = new Date().toISOString();
   const event: EventItem = {
@@ -272,6 +311,7 @@ export const createEvent: Handler = async (req) => {
     venue: input.venue, description: input.description, imageKey, numberOfDays: input.numberOfDays,
     startDate: input.startDate, endDate: input.endDate, timeZone: input.timeZone, status: 'ACTIVE',
     totalSlots, bookedSlots: 0, registrationMode: input.registrationMode, capacity: input.capacity,
+    ...(input.stand ? { stand: input.stand } : {}), ...(input.links?.length ? { links: input.links } : {}),
     createdBy: admin.username, createdAt: now, updatedAt: now,
   };
   await db.send(new PutCommand({
@@ -399,7 +439,10 @@ function planSchedule(eventId: string, event: EventItem, input: EventInput, days
   return { writes, deletes, totalSlots, scheduleChanged: before !== after };
 }
 
-const EDITABLE_FIELDS = ['eventName', 'eventType', 'bookingFormTemplate', 'venue', 'description', 'timeZone', 'startDate', 'endDate', 'numberOfDays', 'registrationMode', 'capacity'] as const;
+/** Empty values (absent, '' or []) compare equal, so clearing an already-empty field is not a change. */
+const comparable = (v: unknown) => JSON.stringify(v === undefined || v === '' || (Array.isArray(v) && !v.length) ? null : v);
+
+const EDITABLE_FIELDS = ['eventName', 'eventType', 'bookingFormTemplate', 'venue', 'description', 'timeZone', 'startDate', 'endDate', 'numberOfDays', 'registrationMode', 'capacity', 'stand', 'links'] as const;
 
 /**
  * PUT /api/events/:id — same multipart form as create. Booked slots are kept (see planSchedule).
@@ -452,8 +495,8 @@ export const updateEvent: Handler = async (req) => {
     if (input.registrationMode === 'open' && booked > 0 && input.timeZone !== eventTimeZone(event.timeZone)) {
       throw new HttpError(409, 'The timezone cannot change while this event has bookings.');
     }
-    // A registration-only event has no schedule: any day and slot items left from before are removed (none are booked).
-    const plan = input.registrationMode === 'open'
+    // Events without time slots have no schedule: any day and slot items left from before are removed (none are booked).
+    const plan = input.registrationMode !== 'slots'
       ? {
         writes: [] as (() => Promise<unknown>)[],
         deletes: [...days, ...slots].map((item) => () => db.send(new DeleteCommand({ TableName: TABLE_NAME, Key: { PK: item.PK, SK: item.SK } }))),
@@ -477,21 +520,26 @@ export const updateEvent: Handler = async (req) => {
       venue: input.venue, description: input.description, timeZone: input.timeZone, startDate: input.startDate,
       endDate: input.endDate, numberOfDays: input.numberOfDays, totalSlots: plan.totalSlots, registrationMode: input.registrationMode,
       ...(input.capacity !== undefined ? { capacity: input.capacity } : {}),
+      ...(input.stand ? { stand: input.stand } : {}),
+      ...(input.links?.length ? { links: input.links } : {}),
       GSI1SK: `${input.startDate}#${id}`, updatedAt: now, ...(imageKey ? { imageKey } : {}),
     };
     const names = Object.fromEntries(Object.keys(fields).map((f, i) => [`#f${i}`, f]));
     const values = Object.fromEntries(Object.values(fields).map((v, i) => [`:f${i}`, v]));
+    // Optional attributes the new form leaves empty are removed.
+    const cleared = (['capacity', 'stand', 'links'] as const).filter((f) => !(f in fields));
+    const clearedNames = Object.fromEntries(cleared.map((f) => [`#r_${f}`, f]));
     await db.send(new UpdateCommand({
       TableName: TABLE_NAME, Key: keys.event(id),
-      UpdateExpression: `SET ${Object.keys(names).map((n, i) => `${n} = :f${i}`).join(', ')} REMOVE editLock${input.capacity === undefined ? ', #capacity' : ''}`,
+      UpdateExpression: `SET ${Object.keys(names).map((n, i) => `${n} = :f${i}`).join(', ')} REMOVE ${['editLock', ...Object.keys(clearedNames)].join(', ')}`,
       ConditionExpression: 'editLock = :until',
-      ExpressionAttributeNames: input.capacity === undefined ? { ...names, '#capacity': 'capacity' } : names,
+      ExpressionAttributeNames: { ...names, ...clearedNames },
       ExpressionAttributeValues: { ...values, ':until': lockUntil },
     }));
     saved = true;
 
     const changed = [
-      ...EDITABLE_FIELDS.filter((f) => String(existing[f]) !== String(input[f])),
+      ...EDITABLE_FIELDS.filter((f) => comparable(existing[f]) !== comparable(input[f])),
       ...(plan.scheduleChanged ? ['schedule'] : []),
       ...(imageKey ? ['thumbnail'] : []),
     ];

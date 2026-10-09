@@ -25,8 +25,11 @@ function cancelledParts(err: unknown): boolean[] | null {
   return (err.CancellationReasons ?? []).map((r) => r.Code === 'ConditionalCheckFailed');
 }
 
+const INFO_ONLY = 'This event is listed for information only and does not take bookings.';
+
 function bookableEvent(event: EventCore | undefined): EventCore {
   if (!event) throw new HttpError(404, 'Event not found.');
+  if (event.registrationMode === 'info') throw new HttpError(409, INFO_ONLY);
   if (event.status === 'CANCELLED') throw new HttpError(409, 'This event has been cancelled. Tickets are not valid for admission.');
   if (eventStatus(event.startDate, event.endDate, new Date(), event.timeZone, event.status) === 'COMPLETED') {
     throw new HttpError(409, 'This event is not currently accepting bookings.');
@@ -62,7 +65,7 @@ export const eventSlots: Handler = async (req) => {
       timeZone, _id: event.eventId, eventName: event.eventName, venue: event.venue, description: event.description,
       startDate: `${event.startDate}T00:00:00.000Z`, endDate: `${event.endDate}T00:00:00.000Z`,
       status: eventStatus(event.startDate, event.endDate, new Date(), timeZone, event.status),
-      registrationMode: event.registrationMode === 'open' ? 'open' : 'slots',
+      registrationMode: event.registrationMode === 'open' || event.registrationMode === 'info' ? event.registrationMode : 'slots',
       capacity: event.registrationMode === 'open' ? event.capacity ?? null : null,
       remaining: event.registrationMode === 'open' && event.capacity !== undefined ? Math.max(0, event.capacity - (event.bookedSlots ?? 0)) : null,
     },
@@ -97,6 +100,7 @@ export const savePending: Handler = async (req) => {
   const details = readBookingDetails(body?.details);
   const event = await getEventCore(eventId);
   if (!event) return error(404, 'Event not found.');
+  if (event.registrationMode === 'info') return error(409, INFO_ONLY);
   const status = eventStatus(event.startDate, event.endDate, new Date(), event.timeZone, event.status);
   if (status === 'COMPLETED' || status === 'CANCELLED') return json(200, { success: true, saved: false, ended: true });
 

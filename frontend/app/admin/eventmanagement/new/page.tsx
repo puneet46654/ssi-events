@@ -36,7 +36,7 @@ import {
 } from 'framer-motion';
 
 import BookingTemplateSelector from '@/app/components/admin/booking-templates/BookingTemplateSelector';
-import RegistrationModePicker, { type RegistrationMode } from '@/app/components/admin/booking-templates/RegistrationModePicker';
+import RegistrationModePicker, { type EventLink, type RegistrationMode } from '@/app/components/admin/booking-templates/RegistrationModePicker';
 
 import {
   BookingFormTemplate,
@@ -385,6 +385,8 @@ export default function CreateNewEventPage() {
 
   const [timeZone, setTimeZone] = useState('');
   const [registrationMode, setRegistrationMode] = useState<RegistrationMode>('slots');
+  const [stand, setStand] = useState('');
+  const [links, setLinks] = useState<EventLink[]>([]);
   const [capacity, setCapacity] = useState('');
 
   const [
@@ -399,6 +401,7 @@ export default function CreateNewEventPage() {
     | 'conference'
     | 'mantram'
     | 'event'
+    | 'participation'
     | ''
   >('');
 
@@ -1038,6 +1041,13 @@ export default function CreateNewEventPage() {
       return;
     }
 
+    if (registrationMode === 'info') {
+      const badLink = links.find((l) => (l.label.trim() || l.url.trim()) && (!l.label.trim() || !/^https?:\/\/\S+\.\S+/i.test(l.url.trim())));
+      if (badLink) {
+        setFormError('Each link needs a label and a full web address starting with https://.');
+        return;
+      }
+    }
     if (registrationMode === 'open' && capacity && (!Number.isInteger(Number(capacity)) || Number(capacity) < 1)) {
       setFormError('Registration limit must be a whole number above zero, or blank for no limit.');
       return;
@@ -1082,6 +1092,10 @@ export default function CreateNewEventPage() {
       formData.set('timeZone', timeZone);
       formData.set('registrationMode', registrationMode);
       if (registrationMode === 'open') formData.set('capacity', capacity);
+      if (registrationMode === 'info') {
+        formData.set('stand', stand.trim());
+        formData.set('links', JSON.stringify(links.filter((l) => l.label.trim() || l.url.trim()).map((l) => ({ label: l.label.trim(), url: l.url.trim() }))));
+      }
 
       formData.set(
         'eventName',
@@ -1538,8 +1552,10 @@ export default function CreateNewEventPage() {
                   onChange={(
                     event,
                   ) => {
-                    const nextType = event.target.value as 'conference' | 'mantram' | 'event';
+                    const nextType = event.target.value as 'conference' | 'mantram' | 'event' | 'participation';
                     setEventType(nextType);
+                    // Conferences we attend are usually listed for information only.
+                    if (nextType === 'participation') setRegistrationMode('info');
                     // Each kind of event has its usual registration form; the admin can still change it below.
                     setBookingFormTemplate(DEFAULT_TEMPLATE_FOR_TYPE[nextType]);
 
@@ -1559,6 +1575,7 @@ export default function CreateNewEventPage() {
                   <option value="conference">SMRSC (conference)</option>
                   <option value="mantram">MantraM</option>
                   <option value="event">CME / Workshop</option>
+                  <option value="participation">Conferences (we attend)</option>
                 </select>
               </Field>
 
@@ -2021,6 +2038,10 @@ export default function CreateNewEventPage() {
                         onModeChange={(mode) => { setRegistrationMode(mode); setFormError(''); }}
                         capacity={capacity}
                         onCapacityChange={setCapacity}
+                        stand={stand}
+                        onStandChange={setStand}
+                        links={links}
+                        onLinksChange={setLinks}
                       />
                     </div>
                   </div>

@@ -2,8 +2,8 @@
 
 This guide explains how to use the SS Innovations Events website at **events.ssistudios.com**.
 
-- **Part A** is for attendees: finding an event, booking, managing your ticket and arriving at the venue.
-- **Part B** is for SS Innovations staff and administrators: creating events, managing bookings, checking people in, reports and user accounts.
+- **Part A** is for attendees: finding an event, booking, managing your ticket, arriving at the venue, and the conferences we attend.
+- **Part B** is for SS Innovations staff and administrators: creating events, listing conferences, managing bookings, checking people in, reports and user accounts.
 
 Numbered orange markers on each screenshot match the numbered steps beside it.
 
@@ -14,12 +14,12 @@ Numbered orange markers on each screenshot match the numbered steps beside it.
 ## A1. Find an event
 
 1. Open **events.ssistudios.com** on your phone or computer.
-2. Choose a category: **SMRSC**, **MantraM** or **CME / Workshop**. Each card shows how many events are open for registration.
+2. Choose a category: **SMRSC**, **MantraM**, **CME / Workshop** or **Conferences**. Each card shows what is currently open, for example "1 event open for registration".
 3. On the category page, tap the event you want to attend.
 
 ![Step 2: choose a category](a01-home.png) ![Step 3: open an event](a02-category.png)
 
-> **Note:** SMRSC registration takes place on the conference website. The SMRSC page will link to it as soon as registration opens.
+> **Note:** SMRSC registration takes place on the conference website. Until registration opens, the SMRSC card reads "Registration details to follow". A category with nothing open reads "No events open at present".
 
 ## A2. Book a time slot
 
@@ -109,7 +109,22 @@ Your place is released for someone else, the QR code stops working, and we email
 - Check-in opens **15 minutes before** your time slot.
 - If you arrive early or late and another slot has free seats, staff can move you into it and check you in.
 
-## A9. Common questions
+## A9. Conferences we attend
+
+The **Conferences** card lists the congresses and conferences where SS Innovations exhibits or presents. These events are for information only: there is nothing to book.
+
+1. **Current and upcoming**: conferences we are attending now or soon.
+2. **Recent conferences**: conferences we have attended, newest first.
+
+Open a conference to see its dates and venue, and:
+
+1. **Find us at**: our stand or booth at the venue.
+2. **More information**: links such as the conference website or our LinkedIn post.
+3. The main button opens the first of these links.
+
+![The Conferences page](a15-conferences.png) ![A conference we are attending](a16-conference-detail.png)
+
+## A10. Common questions
 
 | Question | Answer |
 | --- | --- |
@@ -166,7 +181,7 @@ Below are the latest bookings and the next events with how full they are. The pa
 
 ![Events Management](b03-events.png)
 
-2. Enter the event name, venue, description and image, and choose the **category** (SMRSC, MantraM or CME / Workshop).
+2. Enter the event name, venue, description and image, and choose the **category** (SMRSC, MantraM, CME / Workshop or Conferences).
 
 ![New event: event details](b04-new-event.png)
 
@@ -175,6 +190,7 @@ Below are the latest bookings and the next events with how full they are. The pa
 3. Choose the **Booking type**:
    - **Time slots**: attendees choose a time; check-in follows their slot.
    - **Registration only**: no time slots; one ticket valid for the event days. You can set a registration limit or leave it blank for no limit.
+   - **Information only**: no registration at all. Use this for conferences we attend (see B5).
 
 ![Booking type](b05-booking-type.png)
 
@@ -184,7 +200,24 @@ Below are the latest bookings and the next events with how full they are. The pa
 
 5. Select **Create Event**. The event appears on the website straight away.
 
-## B5. Edit, cancel or delete an event
+## B5. List a conference we attend
+
+Use this to publish a conference where SS Innovations exhibits or presents. Visitors see its details; nobody books.
+
+1. In **Events Management**, select **New Event**.
+2. Enter the conference name, venue and city, dates (start date and number of days) and a short description of our participation. Past dates are accepted, so conferences we have already attended can be listed.
+3. Choose the category **Conferences (we attend)**. The booking type changes to **Information only** automatically (1).
+4. Optionally, enter our **stand or booth** (2), for example "Hall 8, Stand C12".
+5. Optionally, select **Add link** to add up to four links (3), each with a label: the conference website, a LinkedIn post, a press release or a photo gallery. The first link becomes the main button on the event page.
+6. Select **Create Event**.
+
+![Information only: stand and links](b05b-info-fields.png)
+
+> **Tip:** You can add or replace the image, and add links such as a LinkedIn post after the event, at any time with **Edit Event**.
+
+> **Note:** Information-only events never appear on the check-in screen and cannot be booked. Once a conference has ended it moves to **Recent conferences** automatically.
+
+## B6. Edit, cancel or delete an event
 
 - To edit, open the event in **Events Management** and select **Edit Event**. Save your changes.
 - Times that people have booked cannot be moved or removed, and a slot's seats cannot be reduced below the number already booked.
@@ -199,7 +232,7 @@ To remove an event, select **Cancel event** (or delete):
 
 > **Important:** Cancelling an event with bookings cannot be undone. Check the event name before confirming.
 
-## B6. Manage bookings
+## B7. Manage bookings
 
 1. Open **Bookings**. Search by name, email, mobile, hospital or booking reference, or use the filters (event, date, status, attendance and more).
 2. **View** a booking.
@@ -214,7 +247,7 @@ On a booking's page you can correct details and **mark the attendee present or n
 
 > **Note:** "Pending" rows are people who filled in the form but did not choose a time. They have no ticket. You can delete them if needed.
 
-## B7. Check attendees in
+## B8. Check attendees in
 
 1. Open **Check-in** and choose today's event.
 2. Select **Start Camera** and point the camera at the ticket's QR code. Allow camera access when the browser asks.
@@ -241,7 +274,7 @@ The result appears straight away:
 
 > **Note:** You can check in only events that are live today. The attendance figures on the right update as people arrive.
 
-## B8. Reports and export
+## B9. Reports and export
 
 1. Open **Reports & Export**.
 2. Filter by event, registration dates and attendance.
@@ -251,11 +284,11 @@ The result appears straight away:
 
 The report shows bookings, attendance rate, QR and manual check-ins, seat use, and figures per event.
 
-## B9. Analytics
+## B10. Analytics
 
 **Analytics** shows website visits for the last 24 hours, 7 days or 30 days: page views, visitors, how many reach each booking step, which events are viewed most, where visitors came from, and the devices they use. **Live** shows who is on the site now. App ratings and comments from attendees appear at the bottom.
 
-## B10. Staff accounts (superadministrators)
+## B11. Staff accounts (superadministrators)
 
 1. Open **User & Access** and select **Add User**.
 
@@ -274,7 +307,7 @@ To change access, reset a password or deactivate someone, edit the user. Changes
 
 The **Admin Activity Log** on the same page lists every sign-in, failed sign-in and change, with who made it and when. Filter by person, action or date.
 
-## B11. Help
+## B12. Help
 
 | Situation | What to do |
 | --- | --- |

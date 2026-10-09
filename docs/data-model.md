@@ -66,7 +66,7 @@ If the request key already exists, it's a retry. The backend then returns the bo
 
 | Item | Attributes |
 | --- | --- |
-| Event | `eventId`, `eventName`, `eventType`, `bookingFormTemplate`, `venue`, `description`, `imageKey` (S3 key), `numberOfDays`, `startDate`/`endDate` (`YYYY-MM-DD`), `timeZone`, `status` (`ACTIVE` or `CANCELLED`; `LIVE`/`UPCOMING`/`COMPLETED` is computed when read), `totalSlots`, `bookedSlots`, `editLock` (epoch ms, present only while an edit runs), `registrationMode` (`slots` | `open`), `capacity` (open events, optional), `createdBy`, `createdAt`, `updatedAt` |
+| Event | `eventId`, `eventName`, `eventType`, `bookingFormTemplate`, `venue`, `description`, `imageKey` (S3 key), `numberOfDays`, `startDate`/`endDate` (`YYYY-MM-DD`), `timeZone`, `status` (`ACTIVE` or `CANCELLED`; `LIVE`/`UPCOMING`/`COMPLETED` is computed when read), `totalSlots`, `bookedSlots`, `editLock` (epoch ms, present only while an edit runs), `registrationMode` (`slots` | `open` | `info`), `capacity` (open events, optional), `stand` and `links` (`[{ label, url }]`, info events, optional), `createdBy`, `createdAt`, `updatedAt` |
 | Day schedule | `dayId`, `dayNumber`, `date`, `startTime`, `endTime`, `lunchEnabled`, `lunchStart`, `lunchEnd`, `slotDuration`, `slotGap`, `capacity`, `sameAsDay1` (numbers stored as numbers) |
 | Slot | `slotId`, `dayId`, `dayNumber`, `date`, `startTime`, `endTime`, `capacity`, `bookedCount` |
 | Admin user | `username`, `name`, `role` (`superadmin`, `admin` or `staff`), `permissions[]`, `canCreate`, `canDelete`, `isActive`, `passwordHash` + `passwordSalt` (scrypt, 64-byte key, 16-byte salt), `createdBy`, `createdAt`, `updatedAt`, `lastLoginAt` |

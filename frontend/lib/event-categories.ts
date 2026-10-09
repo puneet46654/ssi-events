@@ -1,8 +1,9 @@
 /**
- * The three kinds of event SS Innovations runs. `type` is the stored eventType; admins choose it
- * when they create an event, and the home page groups events by it.
+ * The kinds of event on the site. `type` is the stored eventType; admins choose it when they
+ * create an event, and the home page groups events by it. `participation` covers conferences
+ * where SS Innovations exhibits or presents; these are usually information-only listings.
  */
-export type EventCategoryType = 'conference' | 'mantram' | 'event';
+export type EventCategoryType = 'conference' | 'mantram' | 'event' | 'participation';
 
 export type EventCategory = {
   type: EventCategoryType;
@@ -20,6 +21,8 @@ export type EventCategory = {
    * "registration details to follow" notice; once it is, the card links straight there.
    */
   external?: { comingSoon: string; externalUrl?: string };
+  /** The page also lists past events of this kind under `pastHeading`, newest first. */
+  archive?: { pastHeading: string };
 };
 
 export const EVENT_CATEGORIES: EventCategory[] = [
@@ -78,6 +81,25 @@ export const EVENT_CATEGORIES: EventCategory[] = [
       listHeading: 'Upcoming programmes',
       empty: 'No CME programmes or workshops are open for registration at present. New programmes are published here as they are scheduled.',
     },
+  },
+  {
+    type: 'participation',
+    name: 'Conferences',
+    heading: 'Conferences',
+    description: 'Congresses and conferences where SS Innovations exhibits and presents.',
+    image: '/images/categories/conferences.webp',
+    imageAlt: '',
+    page: {
+      path: '/conferences',
+      title: 'Conferences',
+      intro: [
+        'SS Innovations takes part in leading surgical congresses and conferences around the world, with live demonstrations of the SSI Mantra surgical robotic system, scientific sessions and meetings with our clinical teams.',
+        'Below are the conferences we are attending and those we have attended recently, with where to find us and links to further information.',
+      ],
+      listHeading: 'Current and upcoming',
+      empty: 'No upcoming conferences are listed at present. New conferences are published here as they are confirmed.',
+    },
+    archive: { pastHeading: 'Recent conferences' },
   },
 ];
 

@@ -35,10 +35,11 @@ export const BOOKING_TEMPLATES: BookingTemplateDefinition[] = [
 ];
 
 /** The form each kind of event normally uses; admins can still choose another. */
-export const DEFAULT_TEMPLATE_FOR_TYPE: Record<'conference' | 'mantram' | 'event', BookingFormTemplate> = {
+export const DEFAULT_TEMPLATE_FOR_TYPE: Record<'conference' | 'mantram' | 'event' | 'participation', BookingFormTemplate> = {
   conference: 'practitioner-institutional',
   mantram: 'template-2',
   event: 'practitioner-institutional',
+  participation: 'practitioner-institutional',
 };
 
 export const BOOKING_TEMPLATE_VALUES =
