@@ -69,21 +69,21 @@ export default function AdminAnalyticsPage() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <h1 className="font-heading text-[22px] font-bold tracking-[-0.03em] text-secondary sm:text-[25px] lg:text-[27px]">Analytics</h1>
-          <p className="mt-1 max-w-[720px] text-[11px] leading-[18px] text-gray-500 sm:text-[13px] sm:leading-5">
+          <p className="mt-1 max-w-[720px] text-[13px] leading-[18px] text-gray-500 sm:text-[14px] sm:leading-5">
             Live visitors updating every 5 seconds, plus page views, the booking funnel and API performance for the selected period.
           </p>
         </div>
         <div className="flex gap-1 rounded-lg border border-gray-200 bg-white p-1 shadow-sm" role="tablist" aria-label="Time range">
           {RANGES.map(([key, text]) => (
             <button key={key} type="button" role="tab" aria-selected={range === key} onClick={() => setRange(key)}
-              className={`rounded-md px-3 py-1.5 text-[12px] font-semibold transition ${range === key ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+              className={`rounded-md px-3 py-1.5 text-[14px] font-semibold transition ${range === key ? 'bg-primary text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
               {text}
             </button>
           ))}
         </div>
       </div>
 
-      {error && <p role="alert" className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] text-red-700">{error}</p>}
+      {error && <p role="alert" className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[14px] text-red-700">{error}</p>}
 
       <LivePanel />
 
@@ -101,8 +101,8 @@ export default function AdminAnalyticsPage() {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data.series} margin={{ top: 10, right: 8, left: -18, bottom: 0 }}>
                 <CartesianGrid stroke="#edf0f2" vertical={false} />
-                <XAxis dataKey="t" tickFormatter={label} tick={{ fontSize: 11, fill: '#8a96a3' }} axisLine={false} tickLine={false} minTickGap={24} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#8a96a3' }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="t" tickFormatter={label} tick={{ fontSize: 12, fill: '#8a96a3' }} axisLine={false} tickLine={false} minTickGap={24} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#8a96a3' }} axisLine={false} tickLine={false} />
                 <Tooltip labelFormatter={value => label(String(value))} />
                 <Area type="monotone" dataKey="views" name="Page views" stroke={COLORS.primary} fill={COLORS.primary} fillOpacity={0.15} strokeWidth={2} />
                 <Area type="monotone" dataKey="visitors" name="Visitors" stroke={COLORS.secondary} fill={COLORS.secondary} fillOpacity={0.08} strokeWidth={2} />
@@ -118,7 +118,7 @@ export default function AdminAnalyticsPage() {
             <ul className="space-y-3">
               {data.funnel.map((step, index) => (
                 <li key={step.step}>
-                  <div className="flex items-center justify-between text-[12px]">
+                  <div className="flex items-center justify-between text-[14px]">
                     <span className="font-medium text-secondary">{index + 1}. {step.step}</span>
                     <span className="text-gray-500">
                       {number.format(step.sessions)}
@@ -140,7 +140,7 @@ export default function AdminAnalyticsPage() {
 
         <Panel title="Top pages">
           <Table loading={loading} empty={!data?.topPages.length} head={['Page', 'Views', 'Sessions']}
-            rows={(data?.topPages || []).map(row => [<code key="p" className="text-[11px]">{row.path}</code>, number.format(row.views), number.format(row.sessions)])} />
+            rows={(data?.topPages || []).map(row => [<code key="p" className="text-[13px]">{row.path}</code>, number.format(row.views), number.format(row.sessions)])} />
         </Panel>
 
         <Panel title="Referrers" subtitle="Where visits started">
@@ -165,7 +165,7 @@ export default function AdminAnalyticsPage() {
       <Panel title="API performance" subtitle="Response times as visitors experienced them (p50 = typical, p95 = slowest 5%)" className="mt-4">
         <Table loading={loading} empty={!data?.api.length} head={['Endpoint', 'Requests', 'p50', 'p95', 'Max', 'Errors']}
           rows={(data?.api || []).map(row => [
-            <code key="e" className="text-[11px]"><span className="text-gray-400">{row.method}</span> {row.endpoint}</code>,
+            <code key="e" className="text-[13px]"><span className="text-gray-400">{row.method}</span> {row.endpoint}</code>,
             number.format(row.count), `${number.format(row.p50)} ms`,
             <span key="p95" className={row.p95 > 3000 ? 'font-semibold text-red-600' : row.p95 > 1000 ? 'text-amber-600' : ''}>{number.format(row.p95)} ms</span>,
             `${number.format(row.max)} ms`,
@@ -174,7 +174,7 @@ export default function AdminAnalyticsPage() {
         {!!data?.statuses.length && (
           <div className="mt-3 flex flex-wrap gap-2">
             {data.statuses.map(row => (
-              <span key={String(row.status)} className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${Number(row.status) >= 500 || row.status === 'Network error' ? 'bg-red-50 text-red-700' : Number(row.status) >= 400 ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>
+              <span key={String(row.status)} className={`rounded-full px-2.5 py-1 text-[13px] font-semibold ${Number(row.status) >= 500 || row.status === 'Network error' ? 'bg-red-50 text-red-700' : Number(row.status) >= 400 ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>
                 {row.status}: {number.format(row.count)}
               </span>
             ))}
@@ -215,7 +215,7 @@ function LivePanel() {
     <section className="mt-5 rounded-xl border border-emerald-200 bg-white p-4 shadow-sm" aria-live="polite">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-emerald-700">
+          <p className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.04em] text-emerald-700">
             <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
@@ -223,7 +223,7 @@ function LivePanel() {
             Online now
           </p>
           <p className="mt-1 font-heading text-[40px] font-bold leading-none text-secondary">{live ? number.format(live.online) : '–'}</p>
-          <p className="mt-1 text-[11px] text-gray-400">
+          <p className="mt-1 text-[13px] text-gray-400">
             {live ? `${number.format(live.onlineTabs)} open tabs · ${devices || 'no one right now'}` : 'Connecting…'}
           </p>
         </div>
@@ -237,18 +237,18 @@ function LivePanel() {
               </BarChart>
             </ResponsiveContainer>
           )}
-          <p className="text-right text-[10px] text-gray-400">Page views per minute, last 30 min</p>
+          <p className="text-right text-[12px] text-gray-400">Page views per minute, last 30 min</p>
         </div>
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div>
-          <h3 className="text-[12px] font-semibold text-secondary">Pages being viewed right now</h3>
+          <h3 className="text-[14px] font-semibold text-secondary">Pages being viewed right now</h3>
           {live?.pagesNow.length ? (
             <ul className="mt-2 space-y-2">
               {live.pagesNow.map(row => (
                 <li key={row.page}>
-                  <div className="flex justify-between gap-2 text-[12px]">
+                  <div className="flex justify-between gap-2 text-[14px]">
                     <span className="truncate text-secondary">{row.page}</span>
                     <span className="shrink-0 font-semibold text-gray-600">{row.count}</span>
                   </div>
@@ -256,20 +256,20 @@ function LivePanel() {
                 </li>
               ))}
             </ul>
-          ) : <p className="mt-2 text-[12px] text-gray-400">{live ? 'Nobody is on the site right now.' : 'Loading…'}</p>}
+          ) : <p className="mt-2 text-[14px] text-gray-400">{live ? 'Nobody is on the site right now.' : 'Loading…'}</p>}
         </div>
         <div>
-          <h3 className="text-[12px] font-semibold text-secondary">Live activity</h3>
+          <h3 className="text-[14px] font-semibold text-secondary">Live activity</h3>
           {live?.recent.length ? (
             <ul className="mt-2 max-h-[220px] divide-y divide-gray-100 overflow-y-auto">
               {live.recent.map((row, index) => (
-                <li key={index} className="flex items-center justify-between gap-3 py-1.5 text-[12px]">
+                <li key={index} className="flex items-center justify-between gap-3 py-1.5 text-[14px]">
                   <span className="min-w-0 truncate text-secondary">{row.page}</span>
-                  <span className="shrink-0 text-[11px] text-gray-400">{[row.city, row.device].filter(Boolean).join(' · ')} · {ago(row.ts)}</span>
+                  <span className="shrink-0 text-[13px] text-gray-400">{[row.city, row.device].filter(Boolean).join(' · ')} · {ago(row.ts)}</span>
                 </li>
               ))}
             </ul>
-          ) : <p className="mt-2 text-[12px] text-gray-400">{live ? 'No page views in the last hour.' : 'Loading…'}</p>}
+          ) : <p className="mt-2 text-[14px] text-gray-400">{live ? 'No page views in the last hour.' : 'Loading…'}</p>}
         </div>
       </div>
     </section>
@@ -279,14 +279,14 @@ function LivePanel() {
 function Metric({ title, value, hint, loading, accent = false }: { title: string; value?: number | string; hint: string; loading: boolean; accent?: boolean }) {
   return (
     <article className="min-w-0 rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm sm:p-4">
-      <p className="flex items-center gap-1.5 truncate text-[9px] font-semibold uppercase tracking-[0.04em] text-gray-400 sm:text-[10px]">
+      <p className="flex items-center gap-1.5 truncate text-[12px] font-semibold uppercase tracking-[0.04em] text-gray-400 sm:text-[12px]">
         {accent && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" aria-hidden="true" />}
         {title}
       </p>
       <p className="mt-1.5 font-heading text-[22px] font-bold text-secondary">
         {loading && value === undefined ? <span className="inline-block h-6 w-12 animate-pulse rounded bg-gray-100" /> : typeof value === 'number' ? number.format(value) : value ?? '0'}
       </p>
-      <p className="mt-0.5 truncate text-[10px] text-gray-400 sm:text-[11px]">{hint}</p>
+      <p className="mt-0.5 truncate text-[12px] text-gray-400 sm:text-[13px]">{hint}</p>
     </article>
   );
 }
@@ -295,7 +295,7 @@ function Panel({ title, subtitle, className = '', children }: { title: string; s
   return (
     <section className={`min-w-0 rounded-xl border border-gray-200 bg-white p-4 shadow-sm ${className}`}>
       <h2 className="text-[14px] font-semibold text-secondary">{title}</h2>
-      {subtitle && <p className="mt-0.5 text-[11px] text-gray-400">{subtitle}</p>}
+      {subtitle && <p className="mt-0.5 text-[13px] text-gray-400">{subtitle}</p>}
       <div className="mt-3">{children}</div>
     </section>
   );
@@ -310,17 +310,17 @@ function Stars({ value }: { value: number }) {
 }
 
 function FeedbackSummary({ feedback, loading }: { feedback?: Analytics['feedback']; loading: boolean }) {
-  if (!feedback?.total) return loading ? <Empty loading /> : <p className="py-6 text-center text-[12px] text-gray-400">No feedback yet. Attendees are asked on My Tickets after booking.</p>;
+  if (!feedback?.total) return loading ? <Empty loading /> : <p className="py-6 text-center text-[14px] text-gray-400">No feedback yet. Attendees are asked on My Tickets after booking.</p>;
   const max = Math.max(...feedback.stars.map(row => row.count));
   return (
     <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
       <div>
         <p className="text-[34px] font-bold leading-none text-secondary">{feedback.average.toFixed(1)}</p>
         <p className="mt-1 text-[18px]"><Stars value={feedback.average} /></p>
-        <p className="mt-1 text-[12px] text-gray-500">{number.format(feedback.total)} rating{feedback.total === 1 ? '' : 's'}</p>
+        <p className="mt-1 text-[14px] text-gray-500">{number.format(feedback.total)} rating{feedback.total === 1 ? '' : 's'}</p>
         <ul className="mt-4 space-y-1.5">
           {feedback.stars.map(row => (
-            <li key={row.star} className="grid grid-cols-[28px_1fr_32px] items-center gap-2 text-[12px]">
+            <li key={row.star} className="grid grid-cols-[28px_1fr_32px] items-center gap-2 text-[14px]">
               <span className="text-gray-500">{row.star} ★</span>
               <Bar value={row.count} max={max || 1} color={COLORS.amber} />
               <span className="text-right text-gray-500">{number.format(row.count)}</span>
@@ -329,15 +329,15 @@ function FeedbackSummary({ feedback, loading }: { feedback?: Analytics['feedback
         </ul>
       </div>
       <div className="min-w-0">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Latest</p>
+        <p className="text-[13px] font-semibold uppercase tracking-wide text-gray-400">Latest</p>
         <ul className="mt-2 divide-y divide-gray-100">
           {feedback.latest.map((row, index) => (
             <li key={index} className="py-2.5">
-              <div className="flex items-center justify-between gap-2 text-[12px]">
+              <div className="flex items-center justify-between gap-2 text-[14px]">
                 <Stars value={row.rating} />
                 <span className="text-gray-400">{new Date(row.submittedAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
               </div>
-              {row.message ? <p className="mt-1 whitespace-pre-line text-[13px] text-secondary">{row.message}</p> : <p className="mt-1 text-[12px] italic text-gray-400">No comment</p>}
+              {row.message ? <p className="mt-1 whitespace-pre-line text-[14px] text-secondary">{row.message}</p> : <p className="mt-1 text-[14px] italic text-gray-400">No comment</p>}
             </li>
           ))}
         </ul>
@@ -361,7 +361,7 @@ function Breakdown({ rows, loading, color }: { rows?: Named[]; loading: boolean;
     <ul className="space-y-2.5">
       {rows.map(row => (
         <li key={row.name}>
-          <div className="flex justify-between gap-2 text-[12px]">
+          <div className="flex justify-between gap-2 text-[14px]">
             <span className="truncate text-secondary">{row.name}</span>
             <span className="shrink-0 text-gray-500">{number.format(row.count)}</span>
           </div>
@@ -391,5 +391,5 @@ function Table({ head, rows, loading, empty }: { head: string[]; rows: ReactNode
 function Empty({ loading }: { loading: boolean }) {
   return loading
     ? <div className="h-24 animate-pulse rounded-lg bg-gray-50" />
-    : <p className="py-6 text-center text-[12px] text-gray-400">No data for this period yet.</p>;
+    : <p className="py-6 text-center text-[14px] text-gray-400">No data for this period yet.</p>;
 }

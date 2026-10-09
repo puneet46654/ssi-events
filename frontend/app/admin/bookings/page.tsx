@@ -878,7 +878,7 @@ export default function AdminBookingsPage() {
                     rounded-full
                     bg-primary/[0.08]
                     px-2.5
-                    text-[11px]
+                    text-[13px]
                     font-semibold
                     text-primary
                   "
@@ -892,7 +892,7 @@ export default function AdminBookingsPage() {
               className="
                 mt-1
                 max-w-[720px]
-                text-[13px]
+                text-[14px]
                 leading-5
                 text-gray-500
               "
@@ -1256,11 +1256,11 @@ export default function AdminBookingsPage() {
             aria-expanded={showMoreFilters}
             aria-controls="booking-more-filters"
             onClick={() => setShowMoreFilters(open => !open)}
-            className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-primary hover:underline"
+            className="mt-3 inline-flex items-center gap-1.5 text-[14px] font-semibold text-primary hover:underline"
           >
             {showMoreFilters ? 'Hide filters' : 'More filters'}
             {extraInputCount > 0 && (
-              <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">{extraInputCount}</span>
+              <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[12px] text-primary">{extraInputCount}</span>
             )}
           </button>
 
@@ -1381,7 +1381,7 @@ export default function AdminBookingsPage() {
 
                 <p
                   className="
-                    text-[13px]
+                    text-[14px]
                     leading-5
                     text-red-700
                   "
@@ -1458,7 +1458,7 @@ export default function AdminBookingsPage() {
               <p
                 className="
                   mt-0.5
-                  text-[12px]
+                  text-[14px]
                   text-gray-500
                 "
               >
@@ -1471,7 +1471,7 @@ export default function AdminBookingsPage() {
             {!loading && (
               <p
                 className="
-                  text-[12px]
+                  text-[14px]
                   text-gray-500
                 "
               >
@@ -1659,7 +1659,7 @@ export default function AdminBookingsPage() {
                                 className="
                                   max-w-[180px]
                                   truncate
-                                  !text-[13px]
+                                  !text-[14px]
                                   !font-medium
                                   !text-gray-700
                                 "
@@ -1679,7 +1679,7 @@ export default function AdminBookingsPage() {
                                     mt-0.5
                                     max-w-[180px]
                                     truncate
-                                    !text-[11px]
+                                    !text-[13px]
                                     !text-gray-400
                                   "
                                 >
@@ -1719,7 +1719,7 @@ export default function AdminBookingsPage() {
                             <p
                               className="
                                 truncate
-                                !text-[13px]
+                                !text-[14px]
                                 !font-medium
                                 !text-gray-700
                               "
@@ -1737,7 +1737,7 @@ export default function AdminBookingsPage() {
                                 className="
                                   mt-0.5
                                   truncate
-                                  !text-[11px]
+                                  !text-[13px]
                                   !text-gray-400
                                 "
                               >
@@ -1921,7 +1921,7 @@ export default function AdminBookingsPage() {
             <>
             {canDelete && (
               <div className="flex flex-wrap items-center gap-3">
-                <label className="inline-flex items-center gap-2 text-[12px] font-medium text-gray-500">
+                <label className="inline-flex items-center gap-2 text-[14px] font-medium text-gray-500">
                   <input type="checkbox" checked={allSelected} disabled={bulkDeleting} onChange={toggleAll} className="h-4 w-4 accent-primary" />
                   Select all on this page
                 </label>
@@ -1986,7 +1986,7 @@ export default function AdminBookingsPage() {
                     >
                       <p
                         className="
-                          !text-[11px]
+                          !text-[13px]
                           !font-medium
                           !text-gray-400
                         "
@@ -1995,7 +1995,7 @@ export default function AdminBookingsPage() {
                       </p>
 
                       {booking.pending ? (
-                        <p className="mt-0.5 text-[13px] font-semibold text-gray-400">—</p>
+                        <p className="mt-0.5 text-[14px] font-semibold text-gray-400">—</p>
                       ) : (
                       <button
                         type="button"
@@ -2007,7 +2007,7 @@ export default function AdminBookingsPage() {
                         className="
                           mt-0.5
                           cursor-pointer
-                          text-[13px]
+                          text-[14px]
                           font-semibold
                           text-secondary
                         "
@@ -2073,7 +2073,7 @@ export default function AdminBookingsPage() {
                           className="
                             mt-0.5
                             truncate
-                            !text-[12px]
+                            !text-[14px]
                             !text-gray-500
                           "
                         >
@@ -2090,7 +2090,7 @@ export default function AdminBookingsPage() {
                           <p
                             className="
                               mt-0.5
-                              !text-[12px]
+                              !text-[14px]
                               !text-gray-400
                             "
                           >
@@ -2114,7 +2114,7 @@ export default function AdminBookingsPage() {
                     >
                       <p
                         className="
-                          !text-[11px]
+                          !text-[13px]
                           !font-medium
                           !text-gray-400
                         "
@@ -2125,7 +2125,7 @@ export default function AdminBookingsPage() {
                       <p
                         className="
                           mt-1
-                          !text-[13px]
+                          !text-[14px]
                           !font-medium
                           !text-gray-700
                         "
@@ -2398,7 +2398,7 @@ export default function AdminBookingsPage() {
                   <p
                     className="
                       mt-1
-                      text-[13px]
+                      text-[14px]
                       leading-5
                       text-gray-500
                     "
@@ -2422,7 +2422,7 @@ export default function AdminBookingsPage() {
               >
                 <p
                   className="
-                    !text-[12px]
+                    !text-[14px]
                     !text-gray-500
                   "
                 >
@@ -2432,7 +2432,7 @@ export default function AdminBookingsPage() {
                 <p
                   className="
                     mt-0.5
-                    !text-[13px]
+                    !text-[14px]
                     !font-semibold
                     !text-secondary
                   "
@@ -2445,7 +2445,7 @@ export default function AdminBookingsPage() {
                 <p
                   className="
                     mt-1
-                    !text-[12px]
+                    !text-[14px]
                     !text-gray-500
                   "
                 >
@@ -2595,7 +2595,7 @@ function StatCard({
         >
           <p
             className="
-              !text-[11px]
+              !text-[13px]
               !font-medium
               !text-gray-500
             "
@@ -2638,7 +2638,7 @@ function StatCard({
 
               <span
                 className="
-                  text-[11px]
+                  text-[13px]
                   text-gray-400
                 "
               >
@@ -2747,12 +2747,12 @@ function Avatar({
             ? `
                 h-11
                 w-11
-                text-[13px]
+                text-[14px]
               `
             : `
                 h-8
                 w-8
-                text-[11px]
+                text-[13px]
               `
         }
       `}
@@ -2906,7 +2906,7 @@ function MobileAction({
 
         border
 
-        text-[12px]
+        text-[14px]
         font-semibold
 
         transition-colors
@@ -2958,7 +2958,7 @@ function MobileInfo({
     >
       <p
         className="
-          !text-[11px]
+          !text-[13px]
           !text-gray-400
         "
       >
@@ -2968,7 +2968,7 @@ function MobileInfo({
       <p
         className="
           mt-1
-          !text-[12px]
+          !text-[14px]
           !font-medium
           !text-gray-700
         "
@@ -3030,7 +3030,7 @@ function Pagination({
     >
       <p
         className="
-          !text-[12px]
+          !text-[14px]
           !text-gray-500
         "
       >
@@ -3091,7 +3091,7 @@ function Pagination({
               <span
                 className="
                   px-1
-                  text-[12px]
+                  text-[14px]
                   text-gray-400
                 "
               >
@@ -3139,7 +3139,7 @@ function Pagination({
               <span
                 className="
                   px-1
-                  text-[12px]
+                  text-[14px]
                   text-gray-400
                 "
               >
@@ -3220,7 +3220,7 @@ function PaginationButton({
 
         px-2
 
-        text-[12px]
+        text-[14px]
         font-medium
 
         transition-colors
@@ -3304,7 +3304,7 @@ function EmptyState({
         className="
           mt-1
           max-w-[300px]
-          !text-[12px]
+          !text-[14px]
           !leading-5
           !text-gray-500
         "
@@ -3341,7 +3341,7 @@ function BulkBar({ count, confirming, deleting, onDelete, onCancel }: {
   count: number; confirming: boolean; deleting: boolean; onDelete: () => void; onCancel: () => void;
 }) {
   return (
-    <div role="status" className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-primary/[0.04] px-3 py-2 text-[12px]">
+    <div role="status" className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-primary/[0.04] px-3 py-2 text-[14px]">
       <span className="font-semibold text-secondary">{count} selected</span>
       <button type="button" disabled={deleting} onClick={onDelete}
         className="inline-flex h-8 items-center rounded-md bg-red-600 px-3 font-semibold text-white transition hover:bg-red-700 disabled:opacity-50">

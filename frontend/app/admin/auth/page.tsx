@@ -486,7 +486,7 @@ export default function AdminAuthManagementPage() {
             Users & Access
           </h1>
 
-          <p className="mt-1 max-w-[650px] text-[11px] leading-[18px] text-gray-500 sm:text-[13px] sm:leading-5">
+          <p className="mt-1 max-w-[650px] text-[13px] leading-[18px] text-gray-500 sm:text-[14px] sm:leading-5">
             Manage admin accounts, roles and permissions.
           </p>
         </div>
@@ -506,7 +506,7 @@ export default function AdminAuthManagementPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleOpenCreate}
-              className="flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[13px] font-semibold text-white transition hover:bg-primary-dark"
+              className="flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[14px] font-semibold text-white transition hover:bg-primary-dark"
             >
               <UserPlus className="h-4 w-4" />
               <span>Add User</span>
@@ -527,7 +527,7 @@ export default function AdminAuthManagementPage() {
             placeholder="Search by name or @username..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9 w-full rounded-xl border border-gray-200 bg-[#F6F8FB] pl-9 pr-4 text-xs font-medium text-secondary outline-none transition focus:border-primary/50 focus:bg-white focus:ring-2 focus:ring-primary/10"
+            className="h-9 w-full rounded-xl border border-gray-200 bg-[#F6F8FB] pl-9 pr-4 text-sm font-medium text-secondary outline-none transition focus:border-primary/50 focus:bg-white focus:ring-2 focus:ring-primary/10"
           />
         </div>
 
@@ -536,7 +536,7 @@ export default function AdminAuthManagementPage() {
           <select aria-label="Filter users by privileges"
             value={privilegeFilter}
             onChange={(e) => setPrivilegeFilter(e.target.value as 'all' | 'view_only' | 'can_create' | 'can_delete')}
-            className="h-9 rounded-xl border border-gray-200 bg-[#F6F8FB] px-3 text-xs font-semibold text-secondary outline-none transition focus:border-primary/50 focus:bg-white"
+            className="h-9 rounded-xl border border-gray-200 bg-[#F6F8FB] px-3 text-sm font-semibold text-secondary outline-none transition focus:border-primary/50 focus:bg-white"
           >
             <option value="all">All Privileges</option>
             <option value="view_only">View only</option>
@@ -548,7 +548,7 @@ export default function AdminAuthManagementPage() {
           <select aria-label="Filter users by role"
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value as 'all' | AdminRole)}
-            className="h-9 rounded-xl border border-gray-200 bg-[#F6F8FB] px-3 text-xs font-semibold text-secondary outline-none transition focus:border-primary/50 focus:bg-white"
+            className="h-9 rounded-xl border border-gray-200 bg-[#F6F8FB] px-3 text-sm font-semibold text-secondary outline-none transition focus:border-primary/50 focus:bg-white"
           >
             <option value="all">All Roles</option>
             <option value="admin">Admin</option>
@@ -559,7 +559,7 @@ export default function AdminAuthManagementPage() {
 
       {/* Error banner */}
       {error && (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-600">
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-600">
           {error}
         </div>
       )}
@@ -571,13 +571,13 @@ export default function AdminAuthManagementPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <span className="h-8 w-8 animate-spin rounded-full border-[3px] border-primary/20 border-t-primary" />
-            <p className="mt-3 text-xs font-medium text-gray-500">Retrieving users from MongoDB...</p>
+            <p className="mt-3 text-sm font-medium text-gray-500">Retrieving users from MongoDB...</p>
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="py-16 text-center">
             <Shield className="mx-auto h-10 w-10 text-gray-300" />
             <p className="mt-3 text-sm font-semibold text-secondary">No matching accounts found</p>
-            <p className="text-xs text-gray-400">Try adjusting your filters or search query.</p>
+            <p className="text-sm text-gray-400">Try adjusting your filters or search query.</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
@@ -603,24 +603,24 @@ export default function AdminAuthManagementPage() {
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span className="font-semibold text-secondary text-sm">{user.name}</span>
                         {isSelf && (
-                          <span className="rounded-md bg-primary/10 px-1.5 py-0.2 text-[9px] font-bold uppercase text-primary">
+                          <span className="rounded-md bg-primary/10 px-1.5 py-0.2 text-[12px] font-bold uppercase text-primary">
                             You
                           </span>
                         )}
                         <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                          className={`rounded-full px-2 py-0.5 text-[12px] font-bold uppercase tracking-wider ${
                             'bg-gray-100 text-gray-700 border border-gray-200'
                           }`}
                         >
                           {user.role}
                         </span>
                         {!user.isActive && (
-                          <span className="rounded-md bg-red-50 px-1.5 py-0.2 text-[9px] font-bold uppercase text-red-600">
+                          <span className="rounded-md bg-red-50 px-1.5 py-0.2 text-[12px] font-bold uppercase text-red-600">
                             Inactive
                           </span>
                         )}
                       </div>
-                      <p className="mt-0.5 text-xs text-gray-500">
+                      <p className="mt-0.5 text-sm text-gray-500">
                         Username: <span className="font-mono font-semibold text-secondary">{user.username}</span>
                         {user.email && <> · <span className="text-secondary">{user.email}</span></>}
                       </p>
@@ -632,24 +632,24 @@ export default function AdminAuthManagementPage() {
                     {/* Action capability pills */}
                     <div className="flex flex-wrap items-center gap-1.5">
                       {isSuper ? (
-                        <span className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-gray-600">
+                        <span className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-0.5 text-[12px] font-semibold text-gray-600">
                           <span>Full access</span>
                         </span>
                       ) : isViewOnly ? (
-                        <span className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-gray-600">
+                        <span className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-0.5 text-[12px] font-semibold text-gray-600">
                           <Eye className="h-3 w-3" />
                           <span>View only</span>
                         </span>
                       ) : (
                         <>
                           {userCanCreate && (
-                            <span className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-gray-600">
+                            <span className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-0.5 text-[12px] font-semibold text-gray-600">
                               <Check className="h-3 w-3" />
                               <span>Create / Edit</span>
                             </span>
                           )}
                           {userCanDelete && (
-                            <span className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-gray-600">
+                            <span className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-0.5 text-[12px] font-semibold text-gray-600">
                               <Trash2 className="h-3 w-3" />
                               <span>Can Delete</span>
                             </span>
@@ -661,7 +661,7 @@ export default function AdminAuthManagementPage() {
                     {/* Sidebar feature pills */}
                     <div className="flex flex-wrap items-center gap-1">
                       {isSuper ? (
-                        <span className="text-[10px] text-gray-400 font-medium">All pages</span>
+                        <span className="text-[12px] text-gray-400 font-medium">All pages</span>
                       ) : (
                         AVAILABLE_PERMISSIONS.map((perm) => {
                           if (!user.permissions.includes(perm.id)) return null;
@@ -669,7 +669,7 @@ export default function AdminAuthManagementPage() {
                           return (
                             <span
                               key={perm.id}
-                              className="inline-flex items-center gap-1 rounded-md bg-gray-100/90 px-1.5 py-0.5 text-[10px] font-medium text-gray-600"
+                              className="inline-flex items-center gap-1 rounded-md bg-gray-100/90 px-1.5 py-0.5 text-[12px] font-medium text-gray-600"
                               title={perm.description}
                             >
                               <Icon className="h-2.5 w-2.5 text-gray-500" />
@@ -685,7 +685,7 @@ export default function AdminAuthManagementPage() {
                   <div className="flex items-center gap-2 self-end sm:self-center">
                     <button
                       onClick={() => handleOpenEdit(user)}
-                      className="flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-xs font-semibold text-secondary transition hover:border-primary/50 hover:text-primary active:scale-95"
+                      className="flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-secondary transition hover:border-primary/50 hover:text-primary active:scale-95"
                     >
                       <Edit3 className="h-3.5 w-3.5" />
                       <span>Edit Access</span>
@@ -718,7 +718,7 @@ export default function AdminAuthManagementPage() {
             <h2 className="flex items-center gap-2 text-base font-bold text-secondary">
               Admin Activity Log
             </h2>
-            <p className="text-[11px] text-gray-500">
+            <p className="text-[13px] text-gray-500">
               Latest 200 admin actions.
             </p>
           </div>
@@ -736,7 +736,7 @@ export default function AdminAuthManagementPage() {
           <select aria-label="Filter activity by admin"
             value={logAdminFilter}
             onChange={(e) => setLogAdminFilter(e.target.value)}
-            className="h-9 rounded-xl border border-gray-200 bg-[#F6F8FB] px-3 text-xs font-semibold text-secondary outline-none transition focus:border-primary/50 focus:bg-white"
+            className="h-9 rounded-xl border border-gray-200 bg-[#F6F8FB] px-3 text-sm font-semibold text-secondary outline-none transition focus:border-primary/50 focus:bg-white"
           >
             <option value="">All Admins</option>
             {users.map((u) => (
@@ -749,7 +749,7 @@ export default function AdminAuthManagementPage() {
           <select aria-label="Filter activity by action"
             value={logActionFilter}
             onChange={(e) => setLogActionFilter(e.target.value)}
-            className="h-9 rounded-xl border border-gray-200 bg-[#F6F8FB] px-3 text-xs font-semibold text-secondary outline-none transition focus:border-primary/50 focus:bg-white"
+            className="h-9 rounded-xl border border-gray-200 bg-[#F6F8FB] px-3 text-sm font-semibold text-secondary outline-none transition focus:border-primary/50 focus:bg-white"
           >
             <option value="">All Actions</option>
             {ACTIVITY_ACTIONS.map((a) => (
@@ -759,25 +759,25 @@ export default function AdminAuthManagementPage() {
             ))}
           </select>
 
-          <label className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
+          <label className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-500">
             From
             <input
               type="date"
               value={logFromDate}
               max={logToDate || undefined}
               onChange={(e) => setLogFromDate(e.target.value)}
-              className="h-9 rounded-xl border border-gray-200 bg-[#F6F8FB] px-2.5 text-xs font-semibold text-secondary outline-none transition focus:border-primary/50 focus:bg-white"
+              className="h-9 rounded-xl border border-gray-200 bg-[#F6F8FB] px-2.5 text-sm font-semibold text-secondary outline-none transition focus:border-primary/50 focus:bg-white"
             />
           </label>
 
-          <label className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
+          <label className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-500">
             To
             <input
               type="date"
               value={logToDate}
               min={logFromDate || undefined}
               onChange={(e) => setLogToDate(e.target.value)}
-              className="h-9 rounded-xl border border-gray-200 bg-[#F6F8FB] px-2.5 text-xs font-semibold text-secondary outline-none transition focus:border-primary/50 focus:bg-white"
+              className="h-9 rounded-xl border border-gray-200 bg-[#F6F8FB] px-2.5 text-sm font-semibold text-secondary outline-none transition focus:border-primary/50 focus:bg-white"
             />
           </label>
 
@@ -790,7 +790,7 @@ export default function AdminAuthManagementPage() {
                 setLogFromDate('');
                 setLogToDate('');
               }}
-              className="text-[11px] font-semibold text-primary hover:underline"
+              className="text-[13px] font-semibold text-primary hover:underline"
             >
               Clear filters
             </button>
@@ -798,7 +798,7 @@ export default function AdminAuthManagementPage() {
         </div>
 
         {logsError && (
-          <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-600">
+          <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-600">
             {logsError}
           </div>
         )}
@@ -809,11 +809,11 @@ export default function AdminAuthManagementPage() {
               <span className="h-6 w-6 animate-spin rounded-full border-[3px] border-primary/20 border-t-primary" />
             </div>
           ) : logs.length === 0 ? (
-            <p className="py-12 text-center text-xs text-gray-400">No activity found for these filters.</p>
+            <p className="py-12 text-center text-sm text-gray-400">No activity found for these filters.</p>
           ) : (
             <div className="max-h-[480px] overflow-auto">
-              <table className="w-full min-w-[640px] text-left text-xs">
-                <thead className="sticky top-0 bg-gray-50 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+              <table className="w-full min-w-[640px] text-left text-sm">
+                <thead className="sticky top-0 bg-gray-50 text-[12px] font-bold uppercase tracking-wider text-gray-400">
                   <tr>
                     <th className="px-4 py-2.5">Date &amp; Time</th>
                     <th className="px-4 py-2.5">Admin</th>
@@ -834,7 +834,7 @@ export default function AdminAuthManagementPage() {
                         </td>
                         <td className="px-4 py-2.5">
                           <span
-                            className={`inline-block whitespace-nowrap rounded-md border px-2 py-0.5 text-[10px] font-bold ${
+                            className={`inline-block whitespace-nowrap rounded-md border px-2 py-0.5 text-[12px] font-bold ${
                               meta?.className || 'bg-gray-100 text-gray-700 border-gray-200'
                             }`}
                           >
@@ -891,7 +891,7 @@ export default function AdminAuthManagementPage() {
               </div>
 
               {formError && (
-                <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-600">
+                <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-600">
                   {formError}
                 </div>
               )}
@@ -900,7 +900,7 @@ export default function AdminAuthManagementPage() {
                 {/* Full Name & Username */}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="user-full-name" className="block text-[11px] font-bold uppercase tracking-[0.08em] text-secondary/70">
+                    <label htmlFor="user-full-name" className="block text-[13px] font-bold uppercase tracking-[0.08em] text-secondary/70">
                       Full Name
                     </label>
                     <input id="user-full-name"
@@ -909,12 +909,12 @@ export default function AdminAuthManagementPage() {
                       placeholder="e.g. Puneet Shukla"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="mt-1 h-10 w-full rounded-xl border border-gray-200 bg-[#F6F8FB] px-3.5 text-xs font-medium text-secondary outline-none transition focus:border-primary/50 focus:bg-white focus:ring-2 focus:ring-primary/10"
+                      className="mt-1 h-10 w-full rounded-xl border border-gray-200 bg-[#F6F8FB] px-3.5 text-sm font-medium text-secondary outline-none transition focus:border-primary/50 focus:bg-white focus:ring-2 focus:ring-primary/10"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="user-username" className="block text-[11px] font-bold uppercase tracking-[0.08em] text-secondary/70">
+                    <label htmlFor="user-username" className="block text-[13px] font-bold uppercase tracking-[0.08em] text-secondary/70">
                       Login ID / Username
                     </label>
                     <input id="user-username"
@@ -928,13 +928,13 @@ export default function AdminAuthManagementPage() {
                           username: e.target.value.toLowerCase().replace(/[^a-z0-9_.-]/g, ''),
                         })
                       }
-                      className="mt-1 h-10 w-full rounded-xl border border-gray-200 bg-[#F6F8FB] px-3.5 text-xs font-medium text-secondary outline-none transition focus:border-primary/50 focus:bg-white disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="mt-1 h-10 w-full rounded-xl border border-gray-200 bg-[#F6F8FB] px-3.5 text-sm font-medium text-secondary outline-none transition focus:border-primary/50 focus:bg-white disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="user-email" className="block text-[11px] font-bold uppercase tracking-[0.08em] text-secondary/70">
+                  <label htmlFor="user-email" className="block text-[13px] font-bold uppercase tracking-[0.08em] text-secondary/70">
                     Email (optional)
                   </label>
                   <input id="user-email"
@@ -943,21 +943,21 @@ export default function AdminAuthManagementPage() {
                     placeholder="e.g. name@ssinnovations.org"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="mt-1 h-10 w-full rounded-xl border border-gray-200 bg-[#F6F8FB] px-3.5 text-xs font-medium text-secondary outline-none transition focus:border-primary/50 focus:bg-white focus:ring-2 focus:ring-primary/10"
+                    className="mt-1 h-10 w-full rounded-xl border border-gray-200 bg-[#F6F8FB] px-3.5 text-sm font-medium text-secondary outline-none transition focus:border-primary/50 focus:bg-white focus:ring-2 focus:ring-primary/10"
                   />
-                  <p className="mt-1 text-[11px] text-gray-500">The user can sign in with this email instead of the login ID.</p>
+                  <p className="mt-1 text-[13px] text-gray-500">The user can sign in with this email instead of the login ID.</p>
                 </div>
 
                 {/* Password */}
                 <div>
                   <div className="flex items-center justify-between">
-                    <label htmlFor="user-password" className="block text-[11px] font-bold uppercase tracking-[0.08em] text-secondary/70">
+                    <label htmlFor="user-password" className="block text-[13px] font-bold uppercase tracking-[0.08em] text-secondary/70">
                       {editingUserId ? 'New Password (optional)' : 'Password'}
                     </label>
                     <button
                       type="button"
                       onClick={generateRandomPassword}
-                      className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline"
+                      className="inline-flex items-center gap-1 text-[12px] font-semibold text-primary hover:underline"
                     >
                       Generate
                     </button>
@@ -969,7 +969,7 @@ export default function AdminAuthManagementPage() {
                       placeholder={editingUserId ? 'Enter a new password to change it' : 'At least 12 characters'}
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="h-10 w-full rounded-xl border border-gray-200 bg-[#F6F8FB] px-3.5 pr-10 text-xs font-medium text-secondary outline-none transition focus:border-primary/50 focus:bg-white focus:ring-2 focus:ring-primary/10"
+                      className="h-10 w-full rounded-xl border border-gray-200 bg-[#F6F8FB] px-3.5 pr-10 text-sm font-medium text-secondary outline-none transition focus:border-primary/50 focus:bg-white focus:ring-2 focus:ring-primary/10"
                     />
                     <button
                       type="button"
@@ -984,7 +984,7 @@ export default function AdminAuthManagementPage() {
 
                 {/* Role */}
                 <div>
-                  <p id="user-role-label" className="block text-[11px] font-bold uppercase tracking-[0.08em] text-secondary/70">
+                  <p id="user-role-label" className="block text-[13px] font-bold uppercase tracking-[0.08em] text-secondary/70">
                     User Role
                   </p>
                   <div role="group" aria-labelledby="user-role-label" className="mt-1 grid grid-cols-2 gap-2">
@@ -994,7 +994,7 @@ export default function AdminAuthManagementPage() {
                         type="button"
                         aria-pressed={formData.role === r}
                         onClick={() => handleRoleChange(r)}
-                        className={`rounded-xl border py-2 text-xs font-semibold capitalize transition ${
+                        className={`rounded-xl border py-2 text-sm font-semibold capitalize transition ${
                           formData.role === r
                             ? 'border-primary bg-primary/10 text-primary shadow-sm'
                             : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'
@@ -1012,11 +1012,11 @@ export default function AdminAuthManagementPage() {
                 <div className="rounded-2xl border border-gray-200/90 bg-[#F8FAFC] p-3.5">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-secondary">Permissions</p>
+                      <p className="text-sm font-bold text-secondary">Permissions</p>
                     </div>
 
                     <span
-                      className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase ${
+                      className={`rounded-md px-2 py-0.5 text-[12px] font-bold uppercase ${
                         'bg-gray-100 text-gray-700'
                       }`}
                     >
@@ -1029,14 +1029,14 @@ export default function AdminAuthManagementPage() {
                   </div>
 
                   {formData.role === 'superadmin' ? (
-                    <p className="mt-2 text-[11px] text-gray-600">Superadmins have full access.</p>
+                    <p className="mt-2 text-[13px] text-gray-600">Superadmins have full access.</p>
                   ) : (
                     <div className="mt-3 space-y-2.5">
                       {/* Toggle 1: Create & Edit */}
                       <div className="flex items-center justify-between rounded-xl border border-gray-200/80 bg-white p-2.5">
                         <div className="pr-2">
-                          <p className="text-xs font-semibold text-secondary">Can create & edit</p>
-                          <p className="text-[10px] text-gray-400">
+                          <p className="text-sm font-semibold text-secondary">Can create & edit</p>
+                          <p className="text-[12px] text-gray-400">
                             Events, bookings and attendance
                           </p>
                         </div>
@@ -1059,8 +1059,8 @@ export default function AdminAuthManagementPage() {
                       {/* Toggle 2: Delete */}
                       <div className="flex items-center justify-between rounded-xl border border-gray-200/80 bg-white p-2.5">
                         <div className="pr-2">
-                          <p className="text-xs font-semibold text-secondary">Can delete</p>
-                          <p className="text-[10px] text-gray-400">
+                          <p className="text-sm font-semibold text-secondary">Can delete</p>
+                          <p className="text-[12px] text-gray-400">
                             Events, bookings and users
                           </p>
                         </div>
@@ -1088,7 +1088,7 @@ export default function AdminAuthManagementPage() {
                 ============================================================ */}
                 <div>
                   <div className="flex items-center justify-between">
-                    <p className="block text-[11px] font-bold uppercase tracking-[0.08em] text-secondary/70">
+                    <p className="block text-[13px] font-bold uppercase tracking-[0.08em] text-secondary/70">
                       Page access
                     </p>
                     {formData.role !== 'superadmin' && (
@@ -1101,7 +1101,7 @@ export default function AdminAuthManagementPage() {
                               permissions: AVAILABLE_PERMISSIONS.map((p) => p.id),
                             })
                           }
-                          className="text-[10px] font-semibold text-primary hover:underline"
+                          className="text-[12px] font-semibold text-primary hover:underline"
                         >
                           Select All
                         </button>
@@ -1114,7 +1114,7 @@ export default function AdminAuthManagementPage() {
                               permissions: ['dashboard'],
                             })
                           }
-                          className="text-[10px] font-semibold text-gray-500 hover:underline"
+                          className="text-[12px] font-semibold text-gray-500 hover:underline"
                         >
                           Reset
                         </button>
@@ -1123,7 +1123,7 @@ export default function AdminAuthManagementPage() {
                   </div>
 
                   {formData.role === 'superadmin' ? (
-                    <div className="mt-1.5 rounded-xl border border-gray-200 bg-gray-50 p-2.5 text-[11px] text-gray-600">
+                    <div className="mt-1.5 rounded-xl border border-gray-200 bg-gray-50 p-2.5 text-[13px] text-gray-600">
                       Superadmins can access every page.
                     </div>
                   ) : (
@@ -1149,11 +1149,11 @@ export default function AdminAuthManagementPage() {
                               {isChecked && <CheckCircle2 className="h-3 w-3" />}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="flex items-center gap-1.5 text-xs font-semibold text-secondary">
+                              <p className="flex items-center gap-1.5 text-sm font-semibold text-secondary">
                                 <Icon className="h-3.5 w-3.5 text-primary" />
                                 {perm.label}
                               </p>
-                              <p className="text-[10px] text-gray-400 line-clamp-1">{perm.description}</p>
+                              <p className="text-[12px] text-gray-400 line-clamp-1">{perm.description}</p>
                             </div>
                           </div>
                         );
@@ -1165,8 +1165,8 @@ export default function AdminAuthManagementPage() {
                 {/* Account Active Status */}
                 <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-[#F6F8FB] p-2.5">
                   <div>
-                    <p className="text-xs font-semibold text-secondary">Account Enabled</p>
-                    <p className="text-[10px] text-gray-400">Permit this user to log in</p>
+                    <p className="text-sm font-semibold text-secondary">Account Enabled</p>
+                    <p className="text-[12px] text-gray-400">Permit this user to log in</p>
                   </div>
                   <button
                     type="button"
@@ -1189,14 +1189,14 @@ export default function AdminAuthManagementPage() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="h-9 rounded-xl px-4 text-xs font-semibold text-gray-600 transition hover:bg-gray-100"
+                    className="h-9 rounded-xl px-4 text-sm font-semibold text-gray-600 transition hover:bg-gray-100"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="flex h-9 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-xs font-semibold text-white transition hover:bg-primary-dark disabled:opacity-60"
+                    className="flex h-9 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:opacity-60"
                   >
                     {isSaving ? (
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -1222,11 +1222,11 @@ export default function AdminAuthManagementPage() {
           />
           <div className="relative w-full max-w-[380px] rounded-2xl border border-gray-200 bg-white p-6 shadow-xl">
             <h4 className="text-sm font-bold text-secondary">Login details</h4>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-sm text-gray-500">
               Share these with the user now. The password can&apos;t be shown again — use Edit to set a new one if it&apos;s lost.
             </p>
 
-            <dl className="mt-4 space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-3 text-xs">
+            <dl className="mt-4 space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm">
               <div className="flex justify-between gap-3">
                 <dt className="text-gray-500">Username</dt>
                 <dd className="font-mono font-semibold text-secondary">{savedCredentials.username}</dd>
@@ -1241,14 +1241,14 @@ export default function AdminAuthManagementPage() {
               <button
                 type="button"
                 onClick={() => setSavedCredentials(null)}
-                className="h-9 rounded-xl px-4 text-xs font-semibold text-gray-600 hover:bg-gray-100"
+                className="h-9 rounded-xl px-4 text-sm font-semibold text-gray-600 hover:bg-gray-100"
               >
                 Done
               </button>
               <button
                 type="button"
                 onClick={copyCredentials}
-                className="h-9 rounded-xl bg-primary px-4 text-xs font-semibold text-white hover:bg-primary-dark"
+                className="h-9 rounded-xl bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-dark"
               >
                 {copied ? 'Copied' : 'Copy details'}
               </button>
@@ -1283,11 +1283,11 @@ export default function AdminAuthManagementPage() {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-secondary">Confirm Delete User</h4>
-                  <p className="text-xs text-gray-500">Permanent action</p>
+                  <p className="text-sm text-gray-500">Permanent action</p>
                 </div>
               </div>
 
-              <p className="mt-4 text-xs text-gray-600">
+              <p className="mt-4 text-sm text-gray-600">
                 Are you sure you want to permanently delete user{' '}
                 <strong className="text-secondary">@{userToDelete.username}</strong> ({userToDelete.name})?
               </p>
@@ -1296,7 +1296,7 @@ export default function AdminAuthManagementPage() {
                 <button
                   type="button"
                   onClick={() => setUserToDelete(null)}
-                  className="h-9 rounded-xl px-4 text-xs font-semibold text-gray-600 hover:bg-gray-100"
+                  className="h-9 rounded-xl px-4 text-sm font-semibold text-gray-600 hover:bg-gray-100"
                 >
                   Cancel
                 </button>
@@ -1304,7 +1304,7 @@ export default function AdminAuthManagementPage() {
                   type="button"
                   onClick={handleDeleteConfirm}
                   disabled={isDeleting}
-                  className="flex h-9 items-center justify-center rounded-xl bg-red-600 px-4 text-xs font-semibold text-white shadow-[0_6px_16px_rgba(239,68,68,0.25)] hover:bg-red-700 disabled:opacity-60"
+                  className="flex h-9 items-center justify-center rounded-xl bg-red-600 px-4 text-sm font-semibold text-white shadow-[0_6px_16px_rgba(239,68,68,0.25)] hover:bg-red-700 disabled:opacity-60"
                 >
                   {isDeleting ? 'Deleting...' : 'Delete User'}
                 </button>

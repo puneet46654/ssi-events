@@ -679,12 +679,12 @@ export default function EventsManagementPage() {
 
               max-w-[650px]
 
-              text-[11px]
+              text-[13px]
               leading-[18px]
 
               text-gray-500
 
-              sm:text-[13px]
+              sm:text-[14px]
               sm:leading-5
             "
           >
@@ -739,7 +739,7 @@ export default function EventsManagementPage() {
 
               px-3
 
-              text-[10px]
+              text-[12px]
               font-semibold
 
               text-secondary
@@ -754,7 +754,7 @@ export default function EventsManagementPage() {
               disabled:opacity-50
 
               sm:px-4
-              sm:text-[11px]
+              sm:text-[13px]
             "
           >
             <RefreshIcon
@@ -790,7 +790,7 @@ export default function EventsManagementPage() {
 
                 px-3.5
 
-                text-[10px]
+                text-[12px]
                 font-semibold
 
                 text-white
@@ -803,7 +803,7 @@ export default function EventsManagementPage() {
 
                 sm:w-auto
                 sm:px-4
-                sm:text-[11px]
+                sm:text-[13px]
               "
             >
               <PlusIcon />
@@ -1026,7 +1026,7 @@ export default function EventsManagementPage() {
                 pl-9
                 pr-9
 
-                text-[11px]
+                text-[13px]
 
                 text-secondary
 
@@ -1041,7 +1041,7 @@ export default function EventsManagementPage() {
                 focus:ring-2
                 focus:ring-primary/10
 
-                sm:text-[12px]
+                sm:text-[14px]
               "
             />
 
@@ -1083,12 +1083,12 @@ export default function EventsManagementPage() {
             className="
               shrink-0
 
-              text-[9px]
+              text-[12px]
               font-medium
 
               text-gray-400
 
-              sm:text-[10px]
+              sm:text-[12px]
             "
           >
             {filteredEvents.length}{' '}
@@ -1152,13 +1152,13 @@ export default function EventsManagementPage() {
 
                       px-2.5
 
-                      text-[10px]
+                      text-[12px]
                       font-semibold
 
                       transition-colors
 
                       sm:px-3
-                      sm:text-[11px]
+                      sm:text-[13px]
 
                       ${
                         active
@@ -1239,7 +1239,7 @@ export default function EventsManagementPage() {
               px-3.5
               py-3
 
-              text-[11px]
+              text-[13px]
 
               text-emerald-700
             "
@@ -1319,7 +1319,7 @@ export default function EventsManagementPage() {
 
                 break-words
 
-                text-[11px]
+                text-[13px]
                 leading-5
 
                 text-red-700
@@ -1337,7 +1337,7 @@ export default function EventsManagementPage() {
             className="
               shrink-0
 
-              text-[10px]
+              text-[12px]
               font-semibold
 
               text-red-700
@@ -1423,7 +1423,7 @@ export default function EventsManagementPage() {
                 className="
                   mt-3
 
-                  text-[13px]
+                  text-[14px]
                   font-semibold
 
                   text-secondary
@@ -1436,7 +1436,7 @@ export default function EventsManagementPage() {
                 className="
                   mt-1
 
-                  text-[10px]
+                  text-[12px]
                   leading-5
 
                   text-gray-500
@@ -1474,7 +1474,7 @@ export default function EventsManagementPage() {
                     px-3
                     py-2
 
-                    text-[10px]
+                    text-[12px]
                     font-semibold
 
                     text-secondary
@@ -1577,7 +1577,7 @@ export default function EventsManagementPage() {
 
               pt-4
 
-              text-[9px]
+              text-[12px]
 
               text-gray-400
 
@@ -1585,7 +1585,7 @@ export default function EventsManagementPage() {
               sm:items-center
               sm:justify-between
 
-              sm:text-[10px]
+              sm:text-[12px]
             "
           >
             <span>
@@ -1882,7 +1882,7 @@ function EventCard({
               px-2
               py-1
 
-              text-[8px]
+              text-[12px]
               font-semibold
 
               uppercase
@@ -1997,12 +1997,12 @@ function EventCard({
                 className="
                   line-clamp-2
 
-                  text-[10px]
+                  text-[12px]
                   leading-[17px]
 
                   text-gray-500
 
-                  sm:text-[11px]
+                  sm:text-[13px]
                 "
               >
                 {description}
@@ -2041,7 +2041,7 @@ function EventCard({
                 <div>
                   <p
                     className="
-                      text-[8px]
+                      text-[12px]
                       font-semibold
 
                       uppercase
@@ -2058,7 +2058,7 @@ function EventCard({
                     className="
                       mt-1
 
-                      text-[11px]
+                      text-[13px]
                       font-semibold
 
                       text-secondary
@@ -2076,7 +2076,7 @@ function EventCard({
                 >
                   <p
                     className="
-                      text-[13px]
+                      text-[14px]
                       font-bold
 
                       text-secondary
@@ -2085,7 +2085,7 @@ function EventCard({
                     {booked}
                     <span
                       className="
-                        text-[9px]
+                        text-[12px]
                         font-medium
                         text-gray-400
                       "
@@ -2099,7 +2099,7 @@ function EventCard({
                     className="
                       mt-0.5
 
-                      text-[8px]
+                      text-[12px]
                       text-gray-400
                     "
                   >
@@ -2166,7 +2166,7 @@ function EventCard({
               >
                 <span
                   className="
-                    text-[8px]
+                    text-[12px]
                     font-semibold
 
                     text-gray-400
@@ -2211,7 +2211,7 @@ function EventCard({
 
                   px-3
 
-                  text-[10px]
+                  text-[12px]
                   font-semibold
 
                   text-secondary
@@ -2254,7 +2254,7 @@ function EventCard({
 
                   px-3
 
-                  text-[10px]
+                  text-[12px]
                   font-semibold
 
                   text-gray-400
@@ -2351,7 +2351,7 @@ function SummaryCard({
         >
           <p
             className="
-              text-[8px]
+              text-[12px]
               font-bold
 
               uppercase
@@ -2360,7 +2360,7 @@ function SummaryCard({
 
               text-gray-400
 
-              sm:text-[9px]
+              sm:text-[12px]
             "
           >
             {label}
@@ -2395,11 +2395,11 @@ function SummaryCard({
 
               truncate
 
-              text-[8px]
+              text-[12px]
 
               text-gray-400
 
-              sm:text-[9px]
+              sm:text-[12px]
             "
           >
             {description}
@@ -2483,7 +2483,7 @@ function MetaBox({
       >
         <p
           className="
-            text-[7px]
+            text-[12px]
             font-semibold
 
             uppercase
@@ -2502,7 +2502,7 @@ function MetaBox({
 
             truncate
 
-            text-[9px]
+            text-[12px]
             font-medium
 
             text-gray-600
@@ -2525,7 +2525,7 @@ function StatusLabel({
   status:
     IEvent['status'];
 }) {
-  if (status === 'CANCELLED') return <span className="rounded-full bg-red-50 px-2 py-1 text-[10px] font-bold text-red-700">Cancelled</span>;
+  if (status === 'CANCELLED') return <span className="rounded-full bg-red-50 px-2 py-1 text-[12px] font-bold text-red-700">Cancelled</span>;
   if (
     status ===
     'LIVE'
@@ -2547,7 +2547,7 @@ function StatusLabel({
           px-2
           py-1
 
-          text-[8px]
+          text-[12px]
           font-bold
 
           uppercase
@@ -2594,7 +2594,7 @@ function StatusLabel({
           px-2
           py-1
 
-          text-[8px]
+          text-[12px]
           font-bold
 
           uppercase
@@ -2624,7 +2624,7 @@ function StatusLabel({
         px-2
         py-1
 
-        text-[8px]
+        text-[12px]
         font-bold
 
         uppercase
@@ -2820,7 +2820,7 @@ function DeleteModal({
                 className="
                   mt-1
 
-                  text-[10px]
+                  text-[12px]
                   leading-[17px]
 
                   text-gray-500
@@ -2867,7 +2867,7 @@ function DeleteModal({
 
                 bg-white
 
-                text-[10px]
+                text-[12px]
                 font-semibold
 
                 text-secondary
@@ -2900,7 +2900,7 @@ function DeleteModal({
 
                 bg-red-600
 
-                text-[10px]
+                text-[12px]
                 font-semibold
 
                 text-white

@@ -445,7 +445,7 @@ export default function AuthLayout({
             >
               <span
                 className="
-                  text-[10px]
+                  text-[12px]
                   font-bold
                   uppercase
                   tracking-[0.23em]

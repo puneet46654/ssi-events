@@ -19,14 +19,14 @@ export default function BookingTemplateSelector({
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-semibold text-secondary">
+        <label className="block text-sm font-semibold text-secondary">
           Registration Form
           <span className="ml-1 text-red-500">
             *
           </span>
         </label>
 
-        <p className="mt-1 text-xs leading-5 text-gray-500">
+        <p className="mt-1 text-sm leading-5 text-gray-500">
           Select which form the attendee will complete
           while booking this event.
         </p>
@@ -105,7 +105,7 @@ export default function BookingTemplateSelector({
                     place-items-center
                     rounded-lg
                     border
-                    text-xs
+                    text-sm
                     font-bold
                     transition-all
 
@@ -145,17 +145,17 @@ export default function BookingTemplateSelector({
                     </p>
 
                     {template.available ? (
-                      <span className="rounded-full bg-green-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-green-700">
+                      <span className="rounded-full bg-green-50 px-2 py-0.5 text-[12px] font-bold uppercase tracking-wide text-green-700">
                         Available
                       </span>
                     ) : (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-gray-500">
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[12px] font-bold uppercase tracking-wide text-gray-500">
                         Coming Later
                       </span>
                     )}
                   </div>
 
-                  <p className="mt-1 text-[11px] leading-4 text-gray-500">
+                  <p className="mt-1 text-[13px] leading-4 text-gray-500">
                     {
                       template.description
                     }

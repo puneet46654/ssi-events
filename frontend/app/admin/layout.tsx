@@ -447,7 +447,7 @@ export default function AdminLayout({
 
                 font-heading
 
-                text-[13px]
+                text-[14px]
                 font-bold
 
                 tracking-[-0.02em]
@@ -464,7 +464,7 @@ export default function AdminLayout({
               className="
                 hidden
 
-                text-[9px]
+                text-[12px]
                 font-medium
 
                 text-gray-400

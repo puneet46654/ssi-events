@@ -55,7 +55,7 @@ const inputClass = `
   px-3
   sm:px-3.5
 
-  text-[13px]
+  text-[14px]
   sm:text-sm
 
   font-medium
@@ -83,8 +83,8 @@ const inputClass = `
 const labelClass = `
   mb-1.5
   block
-  text-[9px]
-  sm:text-[10px]
+  text-[12px]
+  sm:text-[12px]
   font-semibold
   uppercase
   tracking-[0.035em]
@@ -514,11 +514,11 @@ export default function MantramTemplate({
                   truncate
                   whitespace-nowrap
 
-                  text-[11px]
+                  text-[13px]
                   font-semibold
                   text-secondary
 
-                  sm:text-[12px]
+                  sm:text-[14px]
                 "
               >
                 SSInnovations Events
@@ -575,7 +575,7 @@ export default function MantramTemplate({
                 bg-red-50
                 px-3.5
                 py-3
-                text-xs
+                text-sm
                 font-medium
                 leading-5
                 text-red-700
@@ -985,7 +985,7 @@ export default function MantramTemplate({
                 border-primary
                 bg-white
                 px-4
-                text-[13px]
+                text-[14px]
                 font-semibold
                 text-primary
                 transition-all
@@ -1016,7 +1016,7 @@ export default function MantramTemplate({
                 rounded-xl
                 bg-primary
                 px-4
-                text-[13px]
+                text-[14px]
                 font-semibold
                 text-white
                 shadow-[0_8px_20px_rgba(40,63,143,0.18)]
@@ -1123,7 +1123,7 @@ function PhoneCountrySelector({
           border-gray-200
           bg-white
           px-2.5
-          text-[12px]
+          text-[14px]
           font-semibold
           text-secondary
           outline-none
@@ -1227,20 +1227,20 @@ function PhoneCountrySelector({
                     </span>
 
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[11px] font-semibold text-secondary sm:text-xs">
+                      <span className="block truncate text-[13px] font-semibold text-secondary sm:text-sm">
                         {
                           country.name
                         }
                       </span>
 
-                      <span className="text-[9px] text-gray-400 sm:text-[10px]">
+                      <span className="text-[12px] text-gray-400 sm:text-[12px]">
                         {
                           country.iso2
                         }
                       </span>
                     </span>
 
-                    <span className="shrink-0 text-[11px] font-semibold text-primary sm:text-xs">
+                    <span className="shrink-0 text-[13px] font-semibold text-primary sm:text-sm">
                       {
                         country.callingCode
                       }
@@ -1321,7 +1321,7 @@ function CountrySelector({
           border-gray-200
           bg-white
           px-3
-          text-[13px]
+          text-[14px]
           font-medium
           text-secondary
           outline-none
@@ -1437,13 +1437,13 @@ function CountrySelector({
                     </span>
 
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[11px] font-semibold text-secondary sm:text-xs">
+                      <span className="block truncate text-[13px] font-semibold text-secondary sm:text-sm">
                         {
                           country.name
                         }
                       </span>
 
-                      <span className="text-[9px] text-gray-400 sm:text-[10px]">
+                      <span className="text-[12px] text-gray-400 sm:text-[12px]">
                         {
                           country.iso2
                         }
@@ -1595,7 +1595,7 @@ function SearchBox({
             bg-gray-50
             pl-9
             pr-3
-            text-[11px]
+            text-[13px]
             text-secondary
             outline-none
             transition-all
@@ -1606,7 +1606,7 @@ function SearchBox({
             focus:ring-2
             focus:ring-primary/10
             sm:h-10
-            sm:text-xs
+            sm:text-sm
           "
         />
       </div>
@@ -1671,10 +1671,10 @@ function LoadingText({
         gap-2
         px-3
         py-5
-        text-[11px]
+        text-[13px]
         text-gray-500
         sm:py-6
-        sm:text-xs
+        sm:text-sm
       "
     >
       <span

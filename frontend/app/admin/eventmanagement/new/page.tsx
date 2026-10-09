@@ -113,7 +113,7 @@ const inputClass = `
 
   px-3
 
-  text-[11px]
+  text-[13px]
   font-medium
 
   text-secondary
@@ -136,7 +136,7 @@ const inputClass = `
   disabled:bg-gray-50
   disabled:text-gray-400
 
-  sm:text-[12px]
+  sm:text-[14px]
 `;
 
 const selectClass = `
@@ -161,7 +161,7 @@ const secondaryButton = `
 
   px-3.5
 
-  text-[10px]
+  text-[12px]
   font-semibold
 
   text-secondary
@@ -194,7 +194,7 @@ const primaryButton = `
 
   px-4
 
-  text-[10px]
+  text-[12px]
   font-semibold
 
   text-white
@@ -1388,7 +1388,7 @@ export default function CreateNewEventPage() {
                 min-w-0
                 flex-1
 
-                text-[10px]
+                text-[12px]
                 font-medium
 
                 leading-4
@@ -1407,7 +1407,7 @@ export default function CreateNewEventPage() {
               className="
                 shrink-0
 
-                text-[9px]
+                text-[12px]
                 font-semibold
 
                 text-red-600
@@ -1854,7 +1854,7 @@ export default function CreateNewEventPage() {
                               min-w-0
                               truncate
 
-                              text-[8px]
+                              text-[12px]
                               font-medium
 
                               text-white/90
@@ -1880,7 +1880,7 @@ export default function CreateNewEventPage() {
 
                               px-2
 
-                              text-[8px]
+                              text-[12px]
                               font-semibold
 
                               text-secondary
@@ -1927,7 +1927,7 @@ export default function CreateNewEventPage() {
                           className="
                             mt-1.5
 
-                            text-[9px]
+                            text-[12px]
                             font-semibold
 
                             text-secondary
@@ -1940,7 +1940,7 @@ export default function CreateNewEventPage() {
                           className="
                             mt-0.5
 
-                            text-[7px]
+                            text-[12px]
 
                             text-gray-400
                           "
@@ -2094,7 +2094,7 @@ export default function CreateNewEventPage() {
               >
                 <h2
                   className="
-                    text-[11px]
+                    text-[13px]
                     font-semibold
 
                     text-secondary
@@ -2107,7 +2107,7 @@ export default function CreateNewEventPage() {
                   className="
                     mt-0.5
 
-                    text-[7px]
+                    text-[12px]
 
                     text-gray-400
                   "
@@ -2142,7 +2142,7 @@ export default function CreateNewEventPage() {
 
                   px-2.5
 
-                  text-[8px]
+                  text-[12px]
                   font-semibold
 
                   text-primary
@@ -2271,7 +2271,7 @@ export default function CreateNewEventPage() {
                         >
                           <span
                             className={`
-                              text-[8px]
+                              text-[12px]
                               font-bold
 
                               ${
@@ -2306,7 +2306,7 @@ export default function CreateNewEventPage() {
                         >
                           <span
                             className="
-                              text-[7px]
+                              text-[12px]
 
                               text-gray-400
                             "
@@ -2335,7 +2335,7 @@ export default function CreateNewEventPage() {
 
                           <span
                             className="
-                              text-[7px]
+                              text-[12px]
                               font-medium
 
                               text-gray-500
@@ -2430,7 +2430,7 @@ export default function CreateNewEventPage() {
                     >
                       <h3
                         className="
-                          text-[13px]
+                          text-[14px]
                           font-semibold
 
                           text-secondary
@@ -2443,7 +2443,7 @@ export default function CreateNewEventPage() {
 
                       <span
                         className="
-                          text-[8px]
+                          text-[12px]
 
                           text-gray-400
                         "
@@ -2473,7 +2473,7 @@ export default function CreateNewEventPage() {
                               px-2
                               py-0.5
 
-                              text-[7px]
+                              text-[12px]
                               font-semibold
 
                               text-primary
@@ -2510,7 +2510,7 @@ export default function CreateNewEventPage() {
                       <div>
                         <p
                           className="
-                            text-[8px]
+                            text-[12px]
                             font-semibold
 
                             text-secondary
@@ -2521,7 +2521,7 @@ export default function CreateNewEventPage() {
 
                         <p
                           className="
-                            text-[7px]
+                            text-[12px]
 
                             text-gray-400
                           "
@@ -2793,7 +2793,7 @@ export default function CreateNewEventPage() {
                             className="
                               truncate
 
-                              text-[8px]
+                              text-[12px]
                               font-medium
 
                               text-secondary
@@ -2937,7 +2937,7 @@ export default function CreateNewEventPage() {
                       <div>
                         <p
                           className="
-                            text-[9px]
+                            text-[12px]
                             font-semibold
 
                             text-secondary
@@ -2950,7 +2950,7 @@ export default function CreateNewEventPage() {
                           className="
                             mt-0.5
 
-                            text-[7px]
+                            text-[12px]
 
                             text-gray-400
                           "
@@ -2977,7 +2977,7 @@ export default function CreateNewEventPage() {
                           px-2
                           py-1
 
-                          text-[8px]
+                          text-[12px]
                           font-semibold
 
                           text-primary
@@ -2998,7 +2998,7 @@ export default function CreateNewEventPage() {
                             px-2
                             py-1
 
-                            text-[8px]
+                            text-[12px]
                             font-semibold
 
                             text-secondary
@@ -3062,7 +3062,7 @@ export default function CreateNewEventPage() {
 
                               px-2.5
 
-                              text-[8px]
+                              text-[12px]
                               font-medium
 
                               text-gray-600
@@ -3099,7 +3099,7 @@ export default function CreateNewEventPage() {
                     >
                       <p
                         className="
-                          text-[9px]
+                          text-[12px]
                           font-medium
 
                           text-red-600
@@ -3112,7 +3112,7 @@ export default function CreateNewEventPage() {
                         className="
                           mt-0.5
 
-                          text-[7px]
+                          text-[12px]
 
                           text-red-400
                         "
@@ -3178,7 +3178,7 @@ function CardHeader({
 
       <h2
         className="
-          text-[11px]
+          text-[13px]
           font-semibold
 
           text-secondary
@@ -3215,7 +3215,7 @@ function SubHeading({
 
       <p
         className="
-          text-[9px]
+          text-[12px]
           font-semibold
 
           text-secondary
@@ -3260,12 +3260,12 @@ function Field({
       >
         <label htmlFor={fieldId}
           className="
-            text-[8px]
+            text-[12px]
             font-semibold
 
             text-secondary
 
-            sm:text-[9px]
+            sm:text-[12px]
           "
         >
           {label}
@@ -3287,7 +3287,7 @@ function Field({
             className="
               shrink-0
 
-              text-[7px]
+              text-[12px]
 
               text-gray-400
             "
@@ -3330,7 +3330,7 @@ function ScheduleField({
       >
         <label htmlFor={fieldId}
           className="
-            text-[8px]
+            text-[12px]
             font-semibold
 
             text-secondary
@@ -3342,7 +3342,7 @@ function ScheduleField({
         {suffix && (
           <span
             className="
-              text-[7px]
+              text-[12px]
 
               text-gray-400
             "

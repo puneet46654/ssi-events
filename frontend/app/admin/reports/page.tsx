@@ -928,7 +928,7 @@ export default function ReportsPage() {
         </p>
       </div>
 
-      {report && <p className="report-filter-summary text-xs text-gray-600" data-testid="report-filter-summary">
+      {report && <p className="report-filter-summary text-sm text-gray-600" data-testid="report-filter-summary">
         Displayed report: {report.eventOptions.find(event => event.id === report.filters.eventId)?.eventName || 'All events'};
         registered {report.filters.from || 'any date'} to {report.filters.to || 'any date'};
         attendance {report.filters.attendance}; timezone {report.timeZone}.
@@ -985,12 +985,12 @@ export default function ReportsPage() {
 
                 max-w-[720px]
 
-                text-[11px]
+                text-[13px]
                 leading-[18px]
 
                 text-gray-500
 
-                sm:text-[13px]
+                sm:text-[14px]
                 sm:leading-5
               "
             >
@@ -1151,7 +1151,7 @@ export default function ReportsPage() {
               className="
                 shrink-0
 
-                text-[10px]
+                text-[12px]
                 font-semibold
 
                 text-gray-500
@@ -1284,7 +1284,7 @@ export default function ReportsPage() {
             autoDetect
             className="form-select w-full"
           />
-          <p className="text-xs text-gray-500">Displayed report timezone: {report?.timeZone || DEFAULT_TIME_ZONE}</p>
+          <p className="text-sm text-gray-500">Displayed report timezone: {report?.timeZone || DEFAULT_TIME_ZONE}</p>
 
           <FilterField
             label="Registered From"
@@ -1467,13 +1467,13 @@ export default function ReportsPage() {
             px-3
             py-3
 
-            text-[12px]
+            text-[14px]
             leading-5
 
             text-red-700
 
             sm:px-4
-            sm:text-[13px]
+            sm:text-[14px]
 
             print:hidden
           "
@@ -1677,7 +1677,7 @@ export default function ReportsPage() {
                     20
                   }
                   tick={{
-                    fontSize: 9,
+                    fontSize: 12,
                     fill: '#77838d',
                   }}
                   axisLine={
@@ -1696,7 +1696,7 @@ export default function ReportsPage() {
                     40
                   }
                   tick={{
-                    fontSize: 9,
+                    fontSize: 12,
                     fill: '#77838d',
                   }}
                   axisLine={
@@ -1716,7 +1716,7 @@ export default function ReportsPage() {
                 <Legend
                   wrapperStyle={{
                     fontSize:
-                      '10px',
+                      '12px',
                   }}
                 />
 
@@ -1829,7 +1829,7 @@ export default function ReportsPage() {
                       0
                     }
                     tick={{
-                      fontSize: 8,
+                      fontSize: 12,
                       fill: '#77838d',
                     }}
                     axisLine={
@@ -1848,7 +1848,7 @@ export default function ReportsPage() {
                       38
                     }
                     tick={{
-                      fontSize: 9,
+                      fontSize: 12,
                       fill: '#77838d',
                     }}
                     axisLine={
@@ -1868,7 +1868,7 @@ export default function ReportsPage() {
                   <Legend
                     wrapperStyle={{
                       fontSize:
-                        '10px',
+                        '12px',
                     }}
                   />
 
@@ -1954,7 +1954,7 @@ export default function ReportsPage() {
                     ]}
                     unit="%"
                     tick={{
-                      fontSize: 9,
+                      fontSize: 12,
                       fill: '#77838d',
                     }}
                     axisLine={
@@ -1972,7 +1972,7 @@ export default function ReportsPage() {
                       90
                     }
                     tick={{
-                      fontSize: 8,
+                      fontSize: 12,
                       fill: '#77838d',
                     }}
                     axisLine={
@@ -2225,7 +2225,7 @@ export default function ReportsPage() {
                             className="
                               mt-0.5
                               truncate
-                              text-[10px]
+                              text-[12px]
                               text-gray-400
                             "
                           >
@@ -2361,12 +2361,12 @@ export default function ReportsPage() {
               className="
                 mt-0.5
 
-                text-[10px]
+                text-[12px]
                 leading-4
 
                 text-gray-500
 
-                sm:text-[11px]
+                sm:text-[13px]
               "
             >
               Full registration
@@ -2379,10 +2379,10 @@ export default function ReportsPage() {
             report && (
               <p
                 className="
-                  text-[10px]
+                  text-[12px]
                   text-gray-500
 
-                  sm:text-[11px]
+                  sm:text-[13px]
 
                   print:hidden
                 "
@@ -2534,7 +2534,7 @@ export default function ReportsPage() {
                           className="
                             font-mono
 
-                            text-[11px]
+                            text-[13px]
                             font-semibold
 
                             text-secondary
@@ -2562,7 +2562,7 @@ export default function ReportsPage() {
                           className="
                             mt-0.5
 
-                            text-[10px]
+                            text-[12px]
                             text-gray-400
                           "
                         >
@@ -2592,7 +2592,7 @@ export default function ReportsPage() {
                         <p
                           className="
                             mt-0.5
-                            text-[10px]
+                            text-[12px]
                             text-gray-400
                           "
                         >
@@ -2614,7 +2614,7 @@ export default function ReportsPage() {
                         <p
                           className="
                             mt-0.5
-                            text-[10px]
+                            text-[12px]
                             text-gray-400
                           "
                         >
@@ -2641,7 +2641,7 @@ export default function ReportsPage() {
                         <p
                           className="
                             mt-0.5
-                            text-[10px]
+                            text-[12px]
                             text-gray-400
                           "
                         >
@@ -2664,7 +2664,7 @@ export default function ReportsPage() {
                         <p
                           className="
                             mt-0.5
-                            text-[10px]
+                            text-[12px]
                             text-gray-400
                           "
                         >
@@ -2791,14 +2791,14 @@ export default function ReportsPage() {
 
           pb-2
 
-          text-[9px]
+          text-[12px]
           leading-4
 
           text-gray-400
 
           sm:flex-row
           sm:justify-between
-          sm:text-[10px]
+          sm:text-[12px]
         "
       >
         <span>
@@ -2865,7 +2865,7 @@ function HeaderAction({
 
         px-2.5
 
-        text-[11px]
+        text-[13px]
         font-semibold
 
         transition-all
@@ -2874,7 +2874,7 @@ function HeaderAction({
         disabled:opacity-45
 
         sm:px-3
-        sm:text-[12px]
+        sm:text-[14px]
 
         ${
           primary
@@ -3023,7 +3023,7 @@ function MetricCard({
             className="
               truncate
 
-              text-[9px]
+              text-[12px]
               font-semibold
 
               uppercase
@@ -3032,7 +3032,7 @@ function MetricCard({
 
               text-gray-400
 
-              sm:text-[10px]
+              sm:text-[12px]
             "
           >
             {title}
@@ -3086,11 +3086,11 @@ function MetricCard({
 
               truncate
 
-              text-[9px]
+              text-[12px]
 
               text-gray-400
 
-              sm:text-[10px]
+              sm:text-[12px]
             "
           >
             {subtitle}
@@ -3149,7 +3149,7 @@ function ChartHeader({
     >
       <h2
         className="
-          text-[13px]
+          text-[14px]
           font-semibold
 
           text-secondary
@@ -3164,12 +3164,12 @@ function ChartHeader({
         className="
           mt-0.5
 
-          text-[9px]
+          text-[12px]
           leading-4
 
           text-gray-500
 
-          sm:text-[10px]
+          sm:text-[12px]
         "
       >
         {description}
@@ -3220,12 +3220,12 @@ function SectionHeader({
         className="
           mt-0.5
 
-          text-[10px]
+          text-[12px]
           leading-4
 
           text-gray-500
 
-          sm:text-[11px]
+          sm:text-[13px]
         "
       >
         {description}
@@ -3348,7 +3348,7 @@ function DonutCard({
                 <Legend
                   wrapperStyle={{
                     fontSize:
-                      '10px',
+                      '12px',
                   }}
                 />
               </PieChart>
@@ -3391,7 +3391,7 @@ function DonutCard({
                 className="
                   mt-0.5
 
-                  text-[8px]
+                  text-[12px]
                   font-medium
 
                   uppercase
@@ -3400,7 +3400,7 @@ function DonutCard({
 
                   text-gray-400
 
-                  sm:text-[9px]
+                  sm:text-[12px]
                 "
               >
                 {
@@ -3455,7 +3455,7 @@ function EventPerformanceCard({
             className="
               break-words
 
-              text-[13px]
+              text-[14px]
               font-semibold
 
               text-secondary
@@ -3472,7 +3472,7 @@ function EventPerformanceCard({
 
               break-words
 
-              text-[10px]
+              text-[12px]
               leading-4
 
               text-gray-400
@@ -3556,7 +3556,7 @@ function EventPerformanceCard({
           gap-x-4
           gap-y-1
 
-          text-[10px]
+          text-[12px]
           text-gray-500
         "
       >
@@ -3630,7 +3630,7 @@ function BookingMobileCard({
 
               font-mono
 
-              text-[9px]
+              text-[12px]
               font-semibold
 
               text-primary
@@ -3664,7 +3664,7 @@ function BookingMobileCard({
               className="
                 mt-0.5
 
-                text-[10px]
+                text-[12px]
                 leading-4
 
                 text-gray-400
@@ -3709,7 +3709,7 @@ function BookingMobileCard({
       >
         <p
           className="
-            text-[9px]
+            text-[12px]
             font-medium
 
             uppercase
@@ -3728,7 +3728,7 @@ function BookingMobileCard({
 
             break-words
 
-            text-[12px]
+            text-[14px]
             font-semibold
 
             text-gray-700
@@ -3746,7 +3746,7 @@ function BookingMobileCard({
 
               break-words
 
-              text-[10px]
+              text-[12px]
               leading-4
 
               text-gray-400
@@ -3884,7 +3884,7 @@ function MobileData({
     >
       <p
         className="
-          text-[9px]
+          text-[12px]
           font-medium
 
           uppercase
@@ -3903,7 +3903,7 @@ function MobileData({
 
           break-words
 
-          text-[11px]
+          text-[13px]
           font-medium
 
           leading-4
@@ -3941,7 +3941,7 @@ function MobileLine({
         className="
           shrink-0
 
-          text-[9px]
+          text-[12px]
           text-gray-400
         "
       >
@@ -3955,7 +3955,7 @@ function MobileLine({
           break-all
 
           text-right
-          text-[10px]
+          text-[12px]
           font-medium
 
           text-gray-600
@@ -4000,7 +4000,7 @@ function SmallStat({
     >
       <p
         className="
-          text-[8px]
+          text-[12px]
           font-medium
 
           uppercase
@@ -4061,7 +4061,7 @@ function MobileRate({
       >
         <span
           className="
-            text-[9px]
+            text-[12px]
             text-gray-400
           "
         >
@@ -4070,7 +4070,7 @@ function MobileRate({
 
         <span
           className="
-            text-[10px]
+            text-[12px]
             font-semibold
 
             text-secondary
@@ -4311,11 +4311,11 @@ function MobilePagination({
         className="
           text-center
 
-          text-[10px]
+          text-[12px]
           text-gray-500
 
           sm:text-left
-          sm:text-[11px]
+          sm:text-[13px]
         "
       >
         Showing{' '}
@@ -4373,7 +4373,7 @@ function MobilePagination({
 
             text-center
 
-            text-[10px]
+            text-[12px]
 
             text-gray-500
           "
@@ -4440,7 +4440,7 @@ function QuickButton({
         px-2.5
         py-1.5
 
-        text-[9px]
+        text-[12px]
         font-medium
 
         text-gray-600
@@ -4452,7 +4452,7 @@ function QuickButton({
         hover:text-primary
 
         sm:px-3
-        sm:text-[10px]
+        sm:text-[12px]
       "
     >
       {children}
@@ -4761,10 +4761,10 @@ function ChartEmpty() {
           className="
             mt-2
 
-            text-[10px]
+            text-[12px]
             text-gray-500
 
-            sm:text-[11px]
+            sm:text-[13px]
           "
         >
           No data available
@@ -4815,7 +4815,7 @@ function MobileEmpty({
 
           max-w-[260px]
 
-          text-[11px]
+          text-[13px]
           leading-5
 
           text-gray-500
@@ -5126,7 +5126,7 @@ const tooltipStyle = {
     '0 8px 25px rgba(15,23,41,0.08)',
 
   fontSize:
-    '10px',
+    '12px',
 };
 
 /* ============================================================
