@@ -8,6 +8,7 @@ import { marked } from 'marked';
 import hljs from 'highlight.js';
 import { chromium } from 'playwright-core';
 import * as D from 'docx';
+import JSZip from 'jszip';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, '../..');
@@ -28,8 +29,13 @@ const META = {
   repo: 'gitlab.com/naveen-ssi/ssi-events',
   owner: 'SS Innovations',
 };
-// Print palette: black text, grey rules, the brand blue only for the logo and links.
-const BRAND = '283F8F', INK = '1A1A1A', MUTED = '595959', RULE = 'BFBFBF', CODE_BG = 'F4F4F4';
+// Black and white: black text, grey borders and header fills. Only the note boxes carry a light tint.
+// Roboto for body text, Poppins for headings (fonts/, SIL OFL 1.1).
+const INK = '1A1A1A', MUTED = '595959', RULE = 'BFBFBF', HEAD_BG = 'F2F2F2', NOTE_BG = 'F7F7F7', CODE_BG = 'F4F4F4';
+const fontFile = (name) => fs.readFileSync(path.join(HERE, 'fonts', `${name}.ttf`));
+const FONT_FACES = [['Roboto', 400, 'normal', 'Roboto-Regular'], ['Roboto', 400, 'italic', 'Roboto-Italic'], ['Roboto', 700, 'normal', 'Roboto-Bold'],
+  ['Roboto', 700, 'italic', 'Roboto-BoldItalic'], ['Poppins', 500, 'normal', 'Poppins-Medium'], ['Poppins', 600, 'normal', 'Poppins-SemiBold']]
+  .map(([family, weight, style, file]) => `@font-face{font-family:'${family}';font-weight:${weight};font-style:${style};src:url(data:font/ttf;base64,${fontFile(file).toString('base64')}) format('truetype');}`).join('\n');
 const LOGO = fs.readFileSync(path.join(REPO, 'frontend/public/logos/ssii-logo.png'));
 
 /* ---------- Source ---------- */
@@ -99,7 +105,8 @@ function pngSize(file) {
   const b = fs.readFileSync(file);
   return { width: b.readUInt32BE(16), height: b.readUInt32BE(20) };
 }
-const CALLOUTS = { 'Tip:': ['tip'], 'Note:': ['note'], 'Important:': ['important'] };
+// Conventional light fills: notes blue, tips green, important warnings amber.
+const CALLOUTS = { 'Tip:': ['tip', 'EAF6EC', 'A8D5B0'], 'Note:': ['note', 'EAF2FB', 'A9C4E4'], 'Important:': ['important', 'FFF4D6', 'E5C46A'] };
 function calloutOf(t) {
   const first = t.tokens?.[0];
   const lead = first?.tokens?.[0];
@@ -137,58 +144,56 @@ renderer.image = ({ href, text }) => {
 renderer.blockquote = function ({ tokens: t }) {
   const c = calloutOf({ tokens: t });
   if (!c) return `<blockquote>${this.parser.parse(t)}</blockquote>`;
-  return `<div class="callout ${c.kind[0]}"><div class="label">${c.label}</div><div class="text">${this.parser.parseInline(c.rest).replace(/^\s+/, '')}${t.length > 1 ? this.parser.parse(t.slice(1)) : ''}</div></div>`;
+  return `<div class="callout ${c.kind[0]}"><span class="label">${c.label}:</span> ${this.parser.parseInline(c.rest).replace(/^\s+/, '')}${t.length > 1 ? this.parser.parse(t.slice(1)) : ''}</div>`;
 };
 const bodyHtml = marked.parser(tokens, { renderer });
 const toc = tokens.filter((t) => t.type === 'heading' && t.depth <= 2)
   .map((t) => `<li class="toc-${t.depth}"><a href="#${slug(t.text)}">${t.text.replace(/`/g, '')}</a></li>`).join('');
-const hljsCss = Object.entries(COLORS).map(([k, c]) => `.hljs-${k.replace('.', '.')}{color:#${c}}`).join('')
-  + '.hljs-title.function_{color:#8250DF}.hljs-title.class_{color:#953800}.hljs-comment{font-style:italic}';
+// Code is set in black; comments in grey italics.
+const hljsCss = '.hljs-comment{color:#6E6E6E;font-style:italic}';
 
 const html = `<!doctype html><html><head><meta charset="utf-8"><title>${META.title} — ${META.subtitle}</title><style>
+${FONT_FACES}
 @page { size: A4; margin: 24mm 20mm 22mm 20mm; }
 * { box-sizing: border-box; }
-body { font-family: Cambria, Georgia, 'Times New Roman', serif; color: #${INK}; font-size: 10.5pt; line-height: 1.5; }
-h1, h2, h3, h4, h5, th, figcaption, .callout .label, .cover, .toc, table { font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; }
+body { font-family: Roboto, Arial, sans-serif; color: #${INK}; font-size: 10pt; line-height: 1.55; }
+h1, h2, h3, h4, h5, .cover h1, .cover h2 { font-family: Poppins, Arial, sans-serif; font-weight: 600; }
 .cover { height: 244mm; display: flex; flex-direction: column; page-break-after: always; }
 .cover .logo { height: 13mm; }
-.cover .title { margin-top: 62mm; border-top: 2.2pt solid #${INK}; padding-top: 7mm; }
-.cover h1 { font-size: 30pt; font-weight: 700; margin: 0 0 3mm; color: #${INK}; letter-spacing: -0.2pt; border: 0; padding: 0; page-break-before: auto; }
-.cover h2 { font-size: 16pt; font-weight: 400; margin: 0; color: #${MUTED}; border: 0; padding: 0; }
-.cover table.meta { margin-top: auto; width: 100%; font-size: 9pt; border-top: 1pt solid #${INK}; border-bottom: 1pt solid #${INK}; }
-.cover table.meta td { border: 0; border-bottom: 0.5pt solid #D9D9D9; padding: 4pt 0; background: none !important; }
-.cover table.meta tr:last-child td { border-bottom: 0; }
-.cover table.meta td:first-child { width: 32mm; color: #${MUTED}; }
+.cover .title { margin-top: 70mm; }
+.cover h1 { font-size: 30pt; margin: 0 0 2mm; color: #${INK}; border: 0; padding: 0; page-break-before: auto; }
+.cover h2 { font-size: 16pt; font-weight: 500; margin: 0; color: #${MUTED}; border: 0; padding: 0; }
+.cover table.meta { margin-top: auto; width: 100%; }
+.cover table.meta td:first-child { width: 38mm; background: #${HEAD_BG}; font-weight: 700; }
 .control { page-break-after: always; }
-h1 { font-size: 20pt; font-weight: 700; color: #${INK}; margin: 0 0 14pt; padding-bottom: 5pt; border-bottom: 1pt solid #${INK}; page-break-before: always; }
+h1 { font-size: 20pt; color: #${INK}; margin: 0 0 12pt; padding-bottom: 4pt; border-bottom: 1px solid #${RULE}; page-break-before: always; }
 .control h1, .toc h1 { page-break-before: auto; }
 h2, h3, h4 { break-after: avoid; page-break-after: avoid; }
-h2 { font-size: 13pt; font-weight: 700; color: #${INK}; margin: 20pt 0 6pt; }
-h3 { font-size: 11pt; font-weight: 700; margin: 14pt 0 4pt; color: #${INK}; }
-h4 { font-size: 10pt; font-weight: 700; margin: 12pt 0 3pt; color: #${INK}; text-transform: uppercase; letter-spacing: 0.4pt; } h5 { font-size: 10pt; margin: 10pt 0 3pt; }
-p { margin: 0 0 7pt; } ul, ol { margin: 0 0 8pt; padding-left: 20pt; } li { margin: 2pt 0; } ol > li::marker { font-family: Arial, sans-serif; font-weight: 700; }
-a { color: #${INK}; text-decoration: underline; text-decoration-color: #${RULE}; }
-code { font-family: Consolas, 'Courier New', monospace; font-size: 9pt; background: none; padding: 0; color: #${INK}; }
-pre.code { position: relative; background: #${CODE_BG}; border: 0.5pt solid #${RULE}; padding: 8pt 10pt; margin: 6pt 0 10pt; white-space: pre-wrap; word-break: break-word; page-break-inside: avoid; }
-pre.code code { font-size: 8.4pt; line-height: 1.45; color: #24292F; }
-pre.code .lang { position: absolute; top: 3pt; right: 7pt; font-family: Arial, sans-serif; font-size: 6.5pt; color: #8C8C8C; text-transform: uppercase; letter-spacing: 0.5pt; }
-table { width: 100%; border-collapse: collapse; margin: 6pt 0 12pt; font-size: 8.8pt; line-height: 1.4; page-break-inside: auto; border-top: 1.2pt solid #${INK}; border-bottom: 1.2pt solid #${INK}; }
-th { text-align: left; font-weight: 700; padding: 4pt 6pt; border-bottom: 0.6pt solid #${INK}; color: #${INK}; }
-td { border-bottom: 0.4pt solid #D9D9D9; padding: 4pt 6pt; vertical-align: top; } tr { page-break-inside: avoid; } tbody tr:last-child td { border-bottom: 0; }
-.toc ol { list-style: none; padding: 0; } .toc li { margin: 0; padding: 3pt 0; border-bottom: 0.4pt solid #E6E6E6; }
-.toc .toc-1 { font-weight: 700; margin-top: 8pt; border-bottom: 0.6pt solid #${INK}; } .toc .toc-2 { padding-left: 12mm; font-size: 9.5pt; }
-.toc a { text-decoration: none; }
+h2 { font-size: 13.5pt; color: #${INK}; margin: 18pt 0 6pt; }
+h3 { font-size: 11.5pt; margin: 14pt 0 4pt; color: #${INK}; }
+h4 { font-size: 10.5pt; margin: 12pt 0 3pt; color: #${INK}; } h5 { font-size: 10pt; margin: 10pt 0 3pt; }
+p { margin: 0 0 7pt; } ul, ol { margin: 0 0 8pt; padding-left: 20pt; } li { margin: 2pt 0; }
+a { color: #${INK}; text-decoration: underline; }
+code { font-family: Consolas, 'Courier New', monospace; font-size: 9pt; background: #${CODE_BG}; padding: 0 2pt; color: #${INK}; }
+pre.code { position: relative; background: #${CODE_BG}; border: 1px solid #${RULE}; padding: 8pt 10pt; margin: 6pt 0 10pt; white-space: pre-wrap; word-break: break-word; page-break-inside: avoid; }
+pre.code code { background: none; padding: 0; font-size: 8.4pt; line-height: 1.45; color: #${INK}; }
+pre.code .lang { position: absolute; top: 3pt; right: 7pt; font-size: 6.5pt; color: #8C8C8C; text-transform: uppercase; }
+table { width: 100%; border-collapse: collapse; margin: 6pt 0 12pt; font-size: 9pt; line-height: 1.4; page-break-inside: auto; }
+th, td { border: 1px solid #${RULE}; padding: 5pt 7pt; vertical-align: top; text-align: left; }
+th { background: #${HEAD_BG}; font-weight: 700; } tr { page-break-inside: avoid; }
+.toc ol { list-style: none; padding: 0; } .toc li { margin: 0; padding: 2pt 0; }
+.toc .toc-1 { font-weight: 700; margin-top: 8pt; } .toc .toc-2 { padding-left: 8mm; }
 figure { margin: 8pt 0 12pt; text-align: center; page-break-inside: avoid; }
-figure img { border: 0.5pt solid #A6A6A6; }
+figure img { border: 1px solid #${RULE}; }
 figure.phone img { width: 56mm; } figure.wide img { width: 100%; }
 .figrow { display: flex; justify-content: center; gap: 10mm; page-break-inside: avoid; } .figrow figure { margin: 6pt 0 10pt; flex: 0 1 auto; } .figrow figure.phone img { width: 48mm; }
 .figrow figure figcaption { max-width: 52mm; margin-left: auto; margin-right: auto; }
-figcaption { font-size: 8.3pt; color: #${MUTED}; margin-top: 4pt; line-height: 1.35; }
+figcaption { font-size: 8.5pt; color: #${MUTED}; margin-top: 4pt; line-height: 1.35; }
 figcaption b { color: #${INK}; }
-.callout { display: flex; gap: 10pt; margin: 8pt 0 12pt; padding: 6pt 0; border-top: 0.75pt solid #${INK}; border-bottom: 0.75pt solid #${INK}; page-break-inside: avoid; }
-.callout .label { flex: 0 0 24mm; font-size: 7.8pt; font-weight: 700; letter-spacing: 0.8pt; text-transform: uppercase; padding-top: 1.5pt; }
-.callout .text { flex: 1; } .callout .text p:last-child { margin-bottom: 0; }
-.callout.important { border-top-width: 2pt; }
+.callout { border: 1px solid #${RULE}; background: #${NOTE_BG}; padding: 7pt 10pt; margin: 8pt 0 12pt; page-break-inside: avoid; }
+${Object.values(CALLOUTS).map(([kind, fill, edge]) => `.callout.${kind} { background: #${fill}; border-color: #${edge}; }`).join(' ')}
+.callout .label { font-weight: 700; }
+.callout p:last-child { margin-bottom: 0; }
 ${hljsCss}
 </style></head><body>
 <section class="cover"><div><img class="logo" src="data:image/png;base64,${LOGO.toString('base64')}" alt="SS Innovations"></div>
@@ -213,15 +218,15 @@ const pdfPath = path.join(OUT, `${META.file}.pdf`);
 await page.pdf({
   path: pdfPath, format: 'A4', printBackground: true, displayHeaderFooter: true,
   margin: { top: '24mm', bottom: '22mm', left: '20mm', right: '20mm' },
-  headerTemplate: `<div style="font-size:7.5pt;color:#595959;width:100%;margin:0 20mm;padding-bottom:3pt;border-bottom:0.5pt solid #8C8C8C;display:flex;justify-content:space-between;font-family:Arial"><span>${META.title}: ${META.subtitle}</span><span>${META.docNo} &nbsp;Version ${META.version}</span></div>`,
-  footerTemplate: `<div style="font-size:7.5pt;color:#595959;width:100%;margin:0 20mm;padding-top:3pt;border-top:0.5pt solid #8C8C8C;display:flex;justify-content:space-between;font-family:Arial"><span>${META.owner} &middot; Internal</span><span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>`,
+  headerTemplate: `<div style="font-size:7.5pt;color:#595959;width:100%;margin:0 20mm;padding-bottom:3pt;border-bottom:0.5pt solid #BFBFBF;display:flex;justify-content:space-between;font-family:Roboto,Arial"><span>${META.title}: ${META.subtitle}</span><span>${META.docNo} &nbsp;Version ${META.version}</span></div>`,
+  footerTemplate: `<div style="font-size:7.5pt;color:#595959;width:100%;margin:0 20mm;padding-top:3pt;border-top:0.5pt solid #BFBFBF;display:flex;justify-content:space-between;font-family:Roboto,Arial"><span>${META.owner} &middot; Internal</span><span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>`,
 });
 await browser.close();
 console.log('PDF', pdfPath);
 
 /* ---------- DOCX ---------- */
 
-const FONT = 'Cambria', HFONT = 'Arial', MONO = 'Consolas';
+const FONT = 'Roboto', HFONT = 'Poppins SemiBold', MONO = 'Consolas';
 const decode = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'").replace(/&amp;/g, '&');
 
 /** hljs HTML → coloured runs, one array per line. */
@@ -235,7 +240,7 @@ function codeRuns(code, lang) {
     const cls = [...stack].reverse().find((c) => COLORS[c]);
     decode(m[2]).split('\n').forEach((part, i) => {
       if (i > 0) lines.push([]);
-      if (part) lines.at(-1).push(new D.TextRun({ text: part, font: MONO, size: 16, color: cls ? COLORS[cls] : '24292F', italics: cls === 'comment' }));
+      if (part) lines.at(-1).push(new D.TextRun({ text: part, font: MONO, size: 16, color: cls === 'comment' ? '6E6E6E' : INK, italics: cls === 'comment' }));
     });
   }
   return lines;
@@ -246,13 +251,13 @@ function inlineRuns(toks, base = {}) {
   for (const t of toks || []) {
     if (t.type === 'text' || t.type === 'escape') {
       if (t.tokens) runs.push(...inlineRuns(t.tokens, base));
-      else runs.push(new D.TextRun({ text: decode(t.text), font: FONT, size: 20, ...base }));
+      else runs.push(new D.TextRun({ text: decode(t.text), font: FONT, ...base }));
     } else if (t.type === 'strong') runs.push(...inlineRuns(t.tokens, { ...base, bold: true }));
     else if (t.type === 'em') runs.push(...inlineRuns(t.tokens, { ...base, italics: true }));
     else if (t.type === 'codespan') runs.push(new D.TextRun({ text: decode(t.text), font: MONO, size: 18, color: INK }));
     else if (t.type === 'link') runs.push(new D.ExternalHyperlink({ link: t.href, children: inlineRuns(t.tokens, { ...base, underline: {} }) }));
     else if (t.type === 'br') runs.push(new D.TextRun({ break: 1 }));
-    else if (t.raw) runs.push(new D.TextRun({ text: decode(t.raw), font: FONT, size: 20, ...base }));
+    else if (t.raw) runs.push(new D.TextRun({ text: decode(t.raw), font: FONT, ...base }));
   }
   return runs;
 }
@@ -260,34 +265,32 @@ function inlineRuns(toks, base = {}) {
 const CONTENT_WIDTH = 9026; // A4 width minus 1" margins, in DXA
 const NONE = { style: D.BorderStyle.NONE, size: 0, color: 'FFFFFF' };
 const rule = (size, color = INK) => ({ style: D.BorderStyle.SINGLE, size, color });
+const GRID = { style: D.BorderStyle.SINGLE, size: 4, color: RULE };
+const gridBorders = { top: GRID, bottom: GRID, left: GRID, right: GRID };
 function table(t) {
   const cols = t.header.length;
   const weights = t.header.map((h, i) => Math.max(4, Math.min(60, Math.max(h.text.length, ...t.rows.map((r) => (r[i]?.text || '').length)))));
   const total = weights.reduce((a, b) => a + b, 0);
   const widths = weights.map((w) => Math.round((w / total) * CONTENT_WIDTH));
   widths[cols - 1] += CONTENT_WIDTH - widths.reduce((a, b) => a + b, 0);
-  const last = t.rows.length - 1;
-  const cell = (c, i, header, ri) => new D.TableCell({
+  const cell = (c, i, header) => new D.TableCell({
     width: { size: widths[i], type: D.WidthType.DXA },
-    margins: { top: 60, bottom: 60, left: 90, right: 90 },
-    borders: {
-      top: header ? rule(10) : NONE, left: NONE, right: NONE,
-      bottom: header ? rule(5) : ri === last ? rule(10) : rule(3, 'D9D9D9'),
-    },
-    children: [new D.Paragraph({ children: inlineRuns(c.tokens, header ? { bold: true, size: 17, font: HFONT } : { size: 17, font: HFONT }) })],
+    shading: header ? { type: D.ShadingType.CLEAR, fill: HEAD_BG, color: 'auto' } : undefined,
+    margins: { top: 70, bottom: 70, left: 110, right: 110 },
+    borders: gridBorders,
+    children: [new D.Paragraph({ children: inlineRuns(c.tokens, header ? { bold: true, size: 18 } : { size: 18 }) })],
   });
   return new D.Table({
     width: { size: CONTENT_WIDTH, type: D.WidthType.DXA }, columnWidths: widths,
-    borders: { top: NONE, bottom: NONE, left: NONE, right: NONE, insideHorizontal: NONE, insideVertical: NONE },
     rows: [new D.TableRow({ tableHeader: true, children: t.header.map((c, i) => cell(c, i, true)) }),
-      ...t.rows.map((r, ri) => new D.TableRow({ cantSplit: true, children: r.map((c, i) => cell(c, i, false, ri)) }))],
+      ...t.rows.map((r) => new D.TableRow({ cantSplit: true, children: r.map((c, i) => cell(c, i, false)) }))],
   });
 }
 
 let docxFigure = 0;
 const caption = (text) => { docxFigure += 1; return [
-  new D.TextRun({ text: `Figure ${docxFigure}`, bold: true, size: 16, font: HFONT, color: INK }),
-  new D.TextRun({ text: `  ${text}`, size: 16, font: HFONT, color: MUTED })]; };
+  new D.TextRun({ text: `Figure ${docxFigure}`, bold: true, size: 17, color: INK }),
+  new D.TextRun({ text: `  ${text}`, size: 17, color: MUTED })]; };
 const picture = (file, w, text, href) => { const { width, height } = pngSize(file); return new D.ImageRun({ type: 'png', data: fs.readFileSync(file),
   transformation: { width: w, height: Math.round((w * height) / width) }, altText: { title: text, description: text, name: href },
   outline: { type: 'solidFill', solidFillType: 'rgb', value: 'A6A6A6' } }); };
@@ -297,7 +300,7 @@ const body = [];
 function block(t, level = 0) {
   switch (t.type) {
     case 'heading':
-      body.push(new D.Paragraph({ heading: HEADINGS[Math.min(t.depth, 5)], pageBreakBefore: t.depth === 1, children: inlineRuns(t.tokens) }));
+      body.push(new D.Paragraph({ heading: HEADINGS[Math.min(t.depth, 5)], pageBreakBefore: t.depth === 1, children: inlineRuns(t.tokens, { font: HFONT }) }));
       break;
     case 'paragraph': {
       const imgs = t.tokens.filter((x) => x.type === 'image');
@@ -357,18 +360,17 @@ function block(t, level = 0) {
     case 'blockquote': {
       const c = calloutOf(t);
       if (!c) { for (const sub of t.tokens) block(sub, level); break; }
-      // Ruled panel: label column and text, rules above and below (heavier above for Important).
-      const top = rule(c.kind[0] === 'important' ? 16 : 6), bottom = rule(6);
-      const LABEL_W = 1400;
-      const cellOf = (w, children, extra = {}) => new D.TableCell({ width: { size: w, type: D.WidthType.DXA },
-        margins: { top: 90, bottom: 90, left: 0, right: 120 }, borders: { top, bottom, left: NONE, right: NONE }, children, ...extra });
+      // A plain bordered box with a light fill; the label leads the text.
       body.push(new D.Table({
-        width: { size: CONTENT_WIDTH, type: D.WidthType.DXA }, columnWidths: [LABEL_W, CONTENT_WIDTH - LABEL_W],
-        borders: { top: NONE, bottom: NONE, left: NONE, right: NONE, insideHorizontal: NONE, insideVertical: NONE },
-        rows: [new D.TableRow({ cantSplit: true, children: [
-          cellOf(LABEL_W, [new D.Paragraph({ children: [new D.TextRun({ text: c.label.toUpperCase(), bold: true, font: HFONT, size: 15, characterSpacing: 16 })] })]),
-          cellOf(CONTENT_WIDTH - LABEL_W, [new D.Paragraph({ children: inlineRuns(c.rest.length && c.rest[0].type === 'text' ? [{ ...c.rest[0], text: c.rest[0].text.replace(/^\s+/, ''), tokens: undefined }, ...c.rest.slice(1)] : c.rest) })]),
-        ] })],
+        width: { size: CONTENT_WIDTH, type: D.WidthType.DXA }, columnWidths: [CONTENT_WIDTH],
+        rows: [new D.TableRow({ cantSplit: true, children: [new D.TableCell({
+          width: { size: CONTENT_WIDTH, type: D.WidthType.DXA },
+          shading: { type: D.ShadingType.CLEAR, fill: c.kind[1], color: 'auto' },
+          margins: { top: 100, bottom: 100, left: 160, right: 160 },
+          borders: Object.fromEntries(['top', 'bottom', 'left', 'right'].map((side) => [side, { style: D.BorderStyle.SINGLE, size: 4, color: c.kind[2] }])),
+          children: [new D.Paragraph({ children: [new D.TextRun({ text: `${c.label}: `, bold: true }),
+            ...inlineRuns(c.rest.length && c.rest[0].type === 'text' ? [{ ...c.rest[0], text: c.rest[0].text.replace(/^\s+/, ''), tokens: undefined }, ...c.rest.slice(1)] : c.rest)] })],
+        })] })],
       }), new D.Paragraph({ spacing: { after: 100 }, children: [] }));
       break;
     }
@@ -384,20 +386,17 @@ const simpleTable = (header, rows, widths) => table({
   rows: rows.map((r) => r.map((c) => ({ text: c, tokens: [{ type: 'text', text: c }] }))),
 });
 
-const metaRow = (k, v, lastRow) => new D.TableRow({ children: [[k, 2000, MUTED], [v, 7026, INK]].map(([text, w, color]) => new D.TableCell({
-  width: { size: w, type: D.WidthType.DXA }, margins: { top: 70, bottom: 70, left: 0, right: 0 },
-  borders: { top: NONE, left: NONE, right: NONE, bottom: lastRow ? rule(8) : rule(3, 'D9D9D9') },
-  children: [new D.Paragraph({ children: [new D.TextRun({ text, color, font: HFONT, size: 18 })] })] })) });
+const metaRow = (k, v) => new D.TableRow({ children: [[k, 2200, true], [v, 6826, false]].map(([text, w, head]) => new D.TableCell({
+  width: { size: w, type: D.WidthType.DXA }, margins: { top: 70, bottom: 70, left: 110, right: 110 }, borders: gridBorders,
+  shading: head ? { type: D.ShadingType.CLEAR, fill: HEAD_BG, color: 'auto' } : undefined,
+  children: [new D.Paragraph({ children: [new D.TextRun({ text, bold: head, size: 19 })] })] })) });
 const metaRows = [['Document number', META.docNo], ['Version', META.version], ['Issue date', META.date], ['System', META.url], ['Owner', META.owner], ['Classification', 'Internal']];
 const logoSize = (() => { const { width, height } = pngSize(path.join(REPO, 'frontend/public/logos/ssii-logo.png')); return { width: Math.round((48 * width) / height), height: 48 }; })();
 const cover = [
   new D.Paragraph({ children: [new D.ImageRun({ type: 'png', data: LOGO, transformation: logoSize, altText: { title: 'SS Innovations', description: 'SS Innovations logo', name: 'logo' } })] }),
-  new D.Paragraph({ spacing: { before: 3400, after: 0 }, border: { top: { style: D.BorderStyle.SINGLE, size: 18, color: INK, space: 12 } }, children: [] }),
-  new D.Paragraph({ spacing: { after: 100 }, children: [new D.TextRun({ text: META.title, font: HFONT, size: 60, bold: true, color: INK })] }),
-  new D.Paragraph({ spacing: { after: 3600 }, children: [new D.TextRun({ text: META.subtitle, font: HFONT, size: 32, color: MUTED })] }),
-  new D.Table({ width: { size: 9026, type: D.WidthType.DXA }, columnWidths: [2000, 7026],
-    borders: { top: rule(8), bottom: NONE, left: NONE, right: NONE, insideHorizontal: NONE, insideVertical: NONE },
-    rows: metaRows.map(([k, v], i) => metaRow(k, v, i === metaRows.length - 1)) }),
+  new D.Paragraph({ spacing: { before: 3800, after: 100 }, children: [new D.TextRun({ text: META.title, font: HFONT, size: 60, color: INK })] }),
+  new D.Paragraph({ spacing: { after: 3600 }, children: [new D.TextRun({ text: META.subtitle, font: 'Poppins Medium', size: 32, color: MUTED })] }),
+  new D.Table({ width: { size: 9026, type: D.WidthType.DXA }, columnWidths: [2200, 6826], rows: metaRows.map(([k, v]) => metaRow(k, v)) }),
   new D.Paragraph({ children: [new D.PageBreak()] }),
   new D.Paragraph({ heading: D.HeadingLevel.HEADING_1, children: [new D.TextRun('Document control')] }),
   simpleTable(['Version', 'Date', 'Description'], [[META.version, META.date, META.issue]]),
@@ -410,15 +409,17 @@ const cover = [
 const doc = new D.Document({
   creator: META.owner, title: `${META.title} — ${META.subtitle}`, description: META.docNo,
   features: { updateFields: true },
+  fonts: [['Roboto', 'Roboto-Regular'], ['Poppins SemiBold', 'Poppins-SemiBold'], ['Poppins Medium', 'Poppins-Medium']]
+    .map(([name, file]) => ({ name, data: fontFile(file), characterSet: D.CharacterSet.ANSI })),
   styles: {
-    default: { document: { run: { font: FONT, size: 21, color: INK }, paragraph: { spacing: { line: 276 } } } },
+    default: { document: { run: { font: FONT, size: 20, color: INK }, paragraph: { spacing: { line: 276 } } } },
     paragraphStyles: [
-      { id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 40, bold: true, color: INK, font: HFONT },
-        paragraph: { spacing: { before: 0, after: 240 }, outlineLevel: 0, border: { bottom: { style: D.BorderStyle.SINGLE, size: 8, color: INK, space: 4 } } } },
-      { id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 26, bold: true, color: INK, font: HFONT }, paragraph: { spacing: { before: 360, after: 100 }, outlineLevel: 1, keepNext: true } },
-      { id: 'Heading3', name: 'Heading 3', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 22, bold: true, color: INK, font: HFONT }, paragraph: { spacing: { before: 240, after: 80 }, outlineLevel: 2, keepNext: true } },
-      { id: 'Heading4', name: 'Heading 4', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 19, bold: true, color: INK, font: HFONT, allCaps: true }, paragraph: { spacing: { before: 200, after: 60 }, outlineLevel: 3, keepNext: true } },
-      { id: 'Heading5', name: 'Heading 5', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 20, bold: true, color: INK, font: HFONT }, paragraph: { spacing: { before: 160, after: 60 }, outlineLevel: 4, keepNext: true } },
+      { id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 40, color: INK, font: HFONT },
+        paragraph: { spacing: { before: 0, after: 240 }, outlineLevel: 0, border: { bottom: { style: D.BorderStyle.SINGLE, size: 4, color: RULE, space: 4 } } } },
+      { id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 26, color: INK, font: HFONT }, paragraph: { spacing: { before: 360, after: 100 }, outlineLevel: 1, keepNext: true } },
+      { id: 'Heading3', name: 'Heading 3', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 22, color: INK, font: HFONT }, paragraph: { spacing: { before: 240, after: 80 }, outlineLevel: 2, keepNext: true } },
+      { id: 'Heading4', name: 'Heading 4', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 19, color: INK, font: HFONT }, paragraph: { spacing: { before: 200, after: 60 }, outlineLevel: 3, keepNext: true } },
+      { id: 'Heading5', name: 'Heading 5', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 20, color: INK, font: HFONT }, paragraph: { spacing: { before: 160, after: 60 }, outlineLevel: 4, keepNext: true } },
     ],
   },
   numbering: { config: [
@@ -428,15 +429,22 @@ const doc = new D.Document({
   sections: [{
     properties: { titlePage: true, page: { size: { width: 11906, height: 16838 }, margin: { top: 1440, bottom: 1300, left: 1440, right: 1440 } } },
     headers: { default: new D.Header({ children: [new D.Paragraph({ tabStops: [{ type: D.TabStopType.RIGHT, position: 9026 }],
-      border: { bottom: { style: D.BorderStyle.SINGLE, size: 4, color: '8C8C8C', space: 3 } },
-      children: [new D.TextRun({ text: `${META.title}: ${META.subtitle}`, size: 15, color: MUTED, font: HFONT }), new D.TextRun({ text: `\t${META.docNo}  Version ${META.version}`, size: 15, color: MUTED, font: HFONT })] })] }) },
+      border: { bottom: { style: D.BorderStyle.SINGLE, size: 4, color: RULE, space: 3 } },
+      children: [new D.TextRun({ text: `${META.title}: ${META.subtitle}`, size: 15, color: MUTED }), new D.TextRun({ text: `\t${META.docNo}  Version ${META.version}`, size: 15, color: MUTED })] })] }) },
     footers: { default: new D.Footer({ children: [new D.Paragraph({ tabStops: [{ type: D.TabStopType.RIGHT, position: 9026 }],
-      border: { top: { style: D.BorderStyle.SINGLE, size: 4, color: '8C8C8C', space: 3 } },
-      children: [new D.TextRun({ text: `${META.owner} · Internal`, size: 15, color: MUTED, font: HFONT }),
-        new D.TextRun({ children: ['\tPage ', D.PageNumber.CURRENT, ' of ', D.PageNumber.TOTAL_PAGES], size: 15, color: MUTED, font: HFONT })] })] }) },
+      border: { top: { style: D.BorderStyle.SINGLE, size: 4, color: RULE, space: 3 } },
+      children: [new D.TextRun({ text: `${META.owner} · Internal`, size: 15, color: MUTED }),
+        new D.TextRun({ children: ['\tPage ', D.PageNumber.CURRENT, ' of ', D.PageNumber.TOTAL_PAGES], size: 15, color: MUTED })] })] }) },
     children: [...cover, ...body],
   }],
 });
 const docxPath = path.join(OUT, `${META.file}.docx`);
-fs.writeFileSync(docxPath, await D.Packer.toBuffer(doc));
+// Word expects upper-case font keys and the embed setting before it uses the embedded fonts.
+const zip = await JSZip.loadAsync(await D.Packer.toBuffer(doc));
+const fontTable = await zip.file('word/fontTable.xml').async('string');
+zip.file('word/fontTable.xml', fontTable.replace(/w:fontKey="(\{[^"]+\})"/g, (_, key) => `w:fontKey="${key.toUpperCase()}"`));
+const settings = await zip.file('word/settings.xml').async('string');
+// Schema order: the embed settings follow w:displayBackgroundShape.
+if (!settings.includes('embedTrueTypeFonts')) zip.file('word/settings.xml', settings.replace('<w:displayBackgroundShape/>', '<w:displayBackgroundShape/><w:embedTrueTypeFonts/><w:saveSubsetFonts/>'));
+fs.writeFileSync(docxPath, await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' }));
 console.log('DOCX', docxPath);
