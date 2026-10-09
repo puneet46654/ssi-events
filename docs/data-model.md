@@ -46,11 +46,12 @@ Key builders live in `backend/src/db/table.ts`. Keep this file and that one in s
 
 ## Booking without overselling
 
-A booking is one `TransactWriteItems` with three parts. Either all three are written or none are.
+A booking is one `TransactWriteItems` with four parts. Either all four are written or none are.
 
 1. **Update the slot:** `bookedCount = bookedCount + 1`, on condition `bookedCount < capacity`.
 2. **Put the booking:** on condition `attribute_not_exists(PK)`.
 3. **Put the request key:** `REQUEST#<hash>` → bookingId, on condition `attribute_not_exists(PK)`.
+4. **Update the event:** `bookedSlots = bookedSlots + 1`. The event item keeps `totalSlots` and `bookedSlots`, so the catalogue (`GET /api/events`) needs one query and never sums slots.
 
 If the request key already exists, it's a retry. The backend then returns the booking that was already confirmed instead of creating a second one. If the slot is full, the backend returns `409`. Cancelling or rescheduling reverses the slot counters in the same kind of transaction.
 
