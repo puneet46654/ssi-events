@@ -83,3 +83,7 @@ If the request key already exists, it's a retry. The backend then returns the bo
 | Booking (implemented) | `bookingId`, `eventId`, `slotId`, `slotSK` (the slot item's sort key), `dayId`, `dayNumber`, `date`, `startTime`, `endTime`, `details`, `phone`, `email`, `requestKeyHash`, `requestFingerprint`, `attendanceStatus`, `checkedInAt`, `checkedInBy`, `checkInMethod`, `createdAt`, `updatedAt`, `lastEmail` (outcome of the latest ticket email) |
 | Pending booking (implemented) | `eventId`, `draftId`, `details`, `phone`, `email`, `expiresAt`, `ttl`, `updatedAt` |
 | Booking request key (implemented) | `bookingId`, `fingerprint`, `createdAt`; removed when the booking is cancelled |
+| Analytics event (implemented) | `kind` (`pageview` / `api`), `ts`, `visitorId`, `sessionId` (random IDs from the browser), `path` (grouped), `eventId`, `referrer` (host only), `device`, `browser`, `os`, and for API calls `method`, `status`, `ms`; `ttl` 90 days |
+| Live presence (implemented) | `SK` = session ID; `visitorId`, `path`, `eventId`, `lastSeen`, `device`; `ttl` 2 minutes (online = `lastSeen` within 45 s) |
+| Feedback (implemented) | `FEEDBACK#APP` / `<timestamp>#<id>`: `rating`, `message`, `submittedAt`. `FEEDBACK#APP` / `SESSION#<sha256 of session ID>`: marks a browser that has rated |
+
