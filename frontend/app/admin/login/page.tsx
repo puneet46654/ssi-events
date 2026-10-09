@@ -149,7 +149,7 @@ export default function AdminLoginPage() {
       !password
     ) {
       setError(
-        'Enter your login ID and password.',
+        'Enter your login ID or email, and your password.',
       );
 
       return;
@@ -306,7 +306,7 @@ export default function AdminLoginPage() {
               text-secondary/65
             "
           >
-            Login ID
+            Login ID or email
           </label>
 
           <input
@@ -314,7 +314,7 @@ export default function AdminLoginPage() {
             type="text"
             name="username"
             autoComplete="username"
-            placeholder="Enter login ID"
+            placeholder="Enter your login ID or email"
             value={
               credentials.username
             }

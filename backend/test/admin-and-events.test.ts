@@ -86,7 +86,7 @@ test('wrong password, unknown user and inactive user all get the same 401', asyn
   for (const [u, p] of [['bob', 'nope'], ['nobody', 'Correct-Horse-9'], ['carol', 'Correct-Horse-9']]) {
     const res = await login(u!, p!);
     assert.equal(res.statusCode, 401);
-    assert.equal(JSON.parse(res.body as string).error, 'Invalid login ID or password.');
+    assert.equal(JSON.parse(res.body as string).error, 'Invalid login ID, email or password.');
   }
 });
 

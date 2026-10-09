@@ -1,10 +1,10 @@
-import { DeleteCommand, PutCommand, QueryCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
+import { DeleteCommand, PutCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import { TransactionCanceledException } from '@aws-sdk/client-dynamodb';
-import { db, keys, lists, TABLE_NAME } from '../db/table.js';
+import { db, keys, TABLE_NAME } from '../db/table.js';
 import { error, HttpError, json } from '../http.js';
 import { logActivity } from '../lib/activity.js';
 import {
-  ADMIN_PERMISSIONS, adminRecord, getAdmin, requireAdmin, type AdminItem, type AdminPermission, type AdminRole,
+  ADMIN_PERMISSIONS, adminRecord, allAdmins, getAdmin, isAdminEmail, requireAdmin, type AdminItem, type AdminPermission, type AdminRole,
 } from '../lib/admins.js';
 import { assertSameOrigin, jsonBody } from '../lib/body.js';
 import { hashPassword, passwordProblem } from '../lib/passwords.js';
@@ -17,7 +17,7 @@ const ROLES: AdminRole[] = ['superadmin', 'admin', 'staff'];
 const ASSIGNABLE = ADMIN_PERMISSIONS.filter((p) => p !== 'auth');
 
 type UserBody = {
-  username?: unknown; name?: unknown; password?: unknown; role?: unknown;
+  username?: unknown; name?: unknown; email?: unknown; password?: unknown; role?: unknown;
   permissions?: unknown; canCreate?: unknown; canDelete?: unknown; isActive?: unknown;
 };
 
@@ -27,26 +27,23 @@ const isConditionFailure = (err: unknown) => (err as { name?: string })?.name ==
 function publicUser(a: AdminItem) {
   const superadmin = a.role === 'superadmin';
   return {
-    _id: a.username, username: a.username, name: a.name, role: a.role,
+    _id: a.username, username: a.username, name: a.name, email: a.email ?? '', role: a.role,
     permissions: superadmin ? [...ADMIN_PERMISSIONS] : a.permissions.filter((p) => p !== 'auth'),
     canCreate: superadmin || a.canCreate, canDelete: superadmin || a.canDelete, isActive: a.isActive,
     createdBy: a.createdBy, lastLoginAt: a.lastLoginAt, createdAt: a.createdAt, updatedAt: a.updatedAt,
   };
 }
 
-async function allAdmins(): Promise<AdminItem[]> {
-  const items: AdminItem[] = [];
-  let ExclusiveStartKey: Record<string, unknown> | undefined;
-  do {
-    const page = await db.send(new QueryCommand({
-      TableName: TABLE_NAME, IndexName: 'GSI1',
-      KeyConditionExpression: 'GSI1PK = :pk', ExpressionAttributeValues: { ':pk': lists.admins },
-      ExclusiveStartKey,
-    }));
-    items.push(...(page.Items ?? []) as AdminItem[]);
-    ExclusiveStartKey = page.LastEvaluatedKey;
-  } while (ExclusiveStartKey);
-  return items;
+/** Optional email: blank clears it; otherwise valid and not used by another admin. */
+async function readEmail(value: unknown, self?: string): Promise<string | undefined> {
+  if (value === undefined || value === null) return undefined;
+  const email = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (!email) return '';
+  if (!isAdminEmail(email)) throw new HttpError(400, 'Enter a valid email address.');
+  if ((await allAdmins()).some((a) => a.email === email && a.username !== self)) {
+    throw new HttpError(409, 'That email address is already used by another admin.');
+  }
+  return email;
 }
 
 /** Role and access from the form. Superadmins always get everything. */
@@ -101,12 +98,13 @@ export const createUser: Handler = async (req) => {
   const username = typeof body.username === 'string' ? body.username.trim().toLowerCase() : '';
   if (!USERNAME.test(username)) throw new HttpError(400, 'Login ID: 3-40 characters, using a-z, 0-9, dot, hyphen or underscore.');
   const name = readName(body.name);
+  const email = await readEmail(body.email);
   const access = readAccess(body);
   const { hash, salt } = await readPassword(body.password);
 
   const now = new Date().toISOString();
   const user: AdminItem = {
-    username, name, ...access, isActive: body.isActive !== false,
+    username, name, ...(email ? { email } : {}), ...access, isActive: body.isActive !== false,
     passwordHash: hash, passwordSalt: salt, createdBy: session.username, createdAt: now, updatedAt: now,
   };
   try {
@@ -122,7 +120,7 @@ export const createUser: Handler = async (req) => {
   return json(201, { success: true, user: publicUser(user) });
 };
 
-const AUDITED = ['username', 'name', 'role', 'permissions', 'canCreate', 'canDelete', 'isActive'] as const;
+const AUDITED = ['username', 'name', 'email', 'role', 'permissions', 'canCreate', 'canDelete', 'isActive'] as const;
 const ACCESS_FIELDS = ['role', 'permissions', 'canCreate', 'canDelete'];
 
 /**
@@ -148,11 +146,13 @@ export const updateUser: Handler = async (req) => {
   }
   await keepOneSuperadmin(user, access.role === 'superadmin' && isActive);
 
+  const email = await readEmail(body.email, user.username);
   const reset = typeof body.password === 'string' && body.password.length > 0;
   const credentials = reset ? await readPassword(body.password) : null;
   const updated: AdminItem = {
     ...user, username, ...access, isActive,
     name: body.name === undefined ? user.name : readName(body.name),
+    ...(email === undefined ? {} : { email: email || undefined }),
     ...(credentials ? { passwordHash: credentials.hash, passwordSalt: credentials.salt } : {}),
     updatedAt: new Date().toISOString(),
   };

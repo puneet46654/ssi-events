@@ -50,6 +50,7 @@ type ManagedUser = {
   _id: string;
   username: string;
   name: string;
+  email?: string;
   role: AdminRole;
   permissions: AdminPermission[];
   canCreate?: boolean;
@@ -135,6 +136,7 @@ export default function AdminAuthManagementPage() {
   const [formData, setFormData] = useState<{
     name: string;
     username: string;
+    email: string;
     password: string;
     role: AdminRole;
     permissions: AdminPermission[];
@@ -144,6 +146,7 @@ export default function AdminAuthManagementPage() {
   }>({
     name: '',
     username: '',
+    email: '',
     password: '',
     role: 'admin',
     permissions: ['dashboard', 'bookings'],
@@ -267,6 +270,7 @@ export default function AdminAuthManagementPage() {
     setFormData({
       name: '',
       username: '',
+      email: '',
       password: '',
       role: 'admin',
       permissions: ['dashboard', 'bookings', 'check-in'],
@@ -285,6 +289,7 @@ export default function AdminAuthManagementPage() {
     setFormData({
       name: user.name,
       username: user.username,
+      email: user.email || '',
       password: '',
       role: user.role,
       permissions: [...user.permissions],
@@ -381,6 +386,7 @@ export default function AdminAuthManagementPage() {
       };
 
       bodyPayload.username = formData.username.trim().toLowerCase();
+      bodyPayload.email = formData.email.trim().toLowerCase();
       if (formData.password) {
         bodyPayload.password = formData.password;
       }
@@ -439,7 +445,8 @@ export default function AdminAuthManagementPage() {
       const matchesSearch =
         !search.trim() ||
         u.name.toLowerCase().includes(search.toLowerCase()) ||
-        u.username.toLowerCase().includes(search.toLowerCase());
+        u.username.toLowerCase().includes(search.toLowerCase()) ||
+        (u.email || '').toLowerCase().includes(search.toLowerCase());
       const matchesRole = roleFilter === 'all' || u.role === roleFilter;
 
       let matchesPrivilege = true;
@@ -615,6 +622,7 @@ export default function AdminAuthManagementPage() {
                       </div>
                       <p className="mt-0.5 text-xs text-gray-500">
                         Username: <span className="font-mono font-semibold text-secondary">{user.username}</span>
+                        {user.email && <> · <span className="text-secondary">{user.email}</span></>}
                       </p>
                     </div>
                   </div>
@@ -923,6 +931,21 @@ export default function AdminAuthManagementPage() {
                       className="mt-1 h-10 w-full rounded-xl border border-gray-200 bg-[#F6F8FB] px-3.5 text-xs font-medium text-secondary outline-none transition focus:border-primary/50 focus:bg-white disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label htmlFor="user-email" className="block text-[11px] font-bold uppercase tracking-[0.08em] text-secondary/70">
+                    Email (optional)
+                  </label>
+                  <input id="user-email"
+                    type="email"
+                    autoComplete="off"
+                    placeholder="e.g. name@ssinnovations.org"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="mt-1 h-10 w-full rounded-xl border border-gray-200 bg-[#F6F8FB] px-3.5 text-xs font-medium text-secondary outline-none transition focus:border-primary/50 focus:bg-white focus:ring-2 focus:ring-primary/10"
+                  />
+                  <p className="mt-1 text-[11px] text-gray-500">The user can sign in with this email instead of the login ID.</p>
                 </div>
 
                 {/* Password */}

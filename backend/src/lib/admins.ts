@@ -25,6 +25,8 @@ export type AdminItem = {
   updatedAt: string;
   lastLoginAt?: string;
   createdBy?: string;
+  /** Optional; lower-case and unique among admins. Accepted at sign-in in place of the login ID. */
+  email?: string;
 };
 
 export type AdminProfile = Pick<AdminItem, 'username' | 'name' | 'role' | 'permissions' | 'canCreate' | 'canDelete'>;
@@ -62,6 +64,31 @@ export function profileOf(admin: AdminItem): AdminProfile {
     canCreate: superadmin || admin.canCreate,
     canDelete: superadmin || admin.canDelete,
   };
+}
+
+export const isAdminEmail = (value: unknown): value is string =>
+  typeof value === 'string' && value.length <= 254 && /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(value);
+
+/** Every admin account (a handful), via the ADMINS listing. */
+export async function allAdmins(): Promise<AdminItem[]> {
+  const items: AdminItem[] = [];
+  let ExclusiveStartKey: Record<string, unknown> | undefined;
+  do {
+    const page = await db.send(new QueryCommand({
+      TableName: TABLE_NAME, IndexName: 'GSI1',
+      KeyConditionExpression: 'GSI1PK = :pk', ExpressionAttributeValues: { ':pk': lists.admins },
+      ExclusiveStartKey,
+    }));
+    items.push(...(page.Items ?? []) as AdminItem[]);
+    ExclusiveStartKey = page.LastEvaluatedKey;
+  } while (ExclusiveStartKey);
+  return items;
+}
+
+/** The account for a login ID, or for an email address when the input contains "@". */
+export async function findAdminForLogin(identifier: string): Promise<AdminItem | undefined> {
+  if (!identifier.includes('@')) return getAdmin(identifier);
+  return (await allAdmins()).find((a) => a.email === identifier);
 }
 
 export async function getAdmin(username: string): Promise<AdminItem | undefined> {
