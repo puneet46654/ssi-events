@@ -6,6 +6,7 @@ import { collectAnalytics } from './routes/analytics.js';
 import { cancelBooking, createBooking, eventSlots, getOwnBooking, myTickets, rescheduleBooking, savePending } from './routes/bookings.js';
 import { listActivity } from './routes/admin-activity.js';
 import { attendanceSummary, checkIn } from './routes/admin-attendance.js';
+import { reports } from './routes/admin-reports.js';
 import { deleteAdminBooking, deletePendingBooking, getAdminBooking, listBookings, updateAdminBooking } from './routes/admin-bookings.js';
 import { createUser, deleteUser, listUsers, updateUser } from './routes/admin-users.js';
 import { createEvent, deleteEvent, eventImage, getEvent, listEvents, updateEvent } from './routes/events.js';
@@ -47,7 +48,8 @@ export const router = new Router()
   .patch('/api/admin/bookings/:id', updateAdminBooking)
   .delete('/api/admin/bookings/:id', deleteAdminBooking)
   .get('/api/admin/attendance', attendanceSummary)
-  .post('/api/admin/attendance', checkIn);
+  .post('/api/admin/attendance', checkIn)
+  .get('/api/admin/reports', reports);
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<Response> {
   try {
