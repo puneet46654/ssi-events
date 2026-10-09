@@ -80,6 +80,6 @@ If the request key already exists, it's a retry. The backend then returns the bo
 
 **Event creation** writes the day and slot items first, in batches of 25, and the event item last. A create that fails midway leaves no event in the catalogue; its orphaned day and slot items are never read.
 
-| Booking (implemented) | `bookingId`, `eventId`, `slotId`, `slotSK` (the slot item's sort key), `dayId`, `dayNumber`, `date`, `startTime`, `endTime`, `details`, `phone`, `email`, `requestKeyHash`, `requestFingerprint`, `attendanceStatus`, `checkedInAt`, `checkedInBy`, `checkInMethod`, `createdAt`, `updatedAt` |
+| Booking (implemented) | `bookingId`, `eventId`, `slotId`, `slotSK` (the slot item's sort key), `dayId`, `dayNumber`, `date`, `startTime`, `endTime`, `details`, `phone`, `email`, `requestKeyHash`, `requestFingerprint`, `attendanceStatus`, `checkedInAt`, `checkedInBy`, `checkInMethod`, `createdAt`, `updatedAt`, `lastEmail` (outcome of the latest ticket email) |
 | Pending booking (implemented) | `eventId`, `draftId`, `details`, `phone`, `email`, `expiresAt`, `ttl`, `updatedAt` |
 | Booking request key (implemented) | `bookingId`, `fingerprint`, `createdAt`; removed when the booking is cancelled |
