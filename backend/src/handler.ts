@@ -1,6 +1,7 @@
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import { error, HttpError, type Response } from './http.js';
 import { Router } from './router.js';
+import { isCancelNoticeJob, runCancelNotices, type CancelNoticeJob } from './lib/cancel-notices.js';
 import { login, logout, session } from './routes/admin-auth.js';
 import { collectAnalytics } from './routes/analytics.js';
 import { cancelBooking, createBooking, eventSlots, getOwnBooking, myTickets, rescheduleBooking, savePending } from './routes/bookings.js';
@@ -59,7 +60,11 @@ export const router = new Router()
   .get('/api/feedback', feedbackStatus)
   .post('/api/feedback', submitFeedback);
 
-export async function handler(event: APIGatewayProxyEventV2): Promise<Response> {
+export async function handler(event: APIGatewayProxyEventV2): Promise<Response>;
+export async function handler(event: CancelNoticeJob): Promise<void>;
+export async function handler(event: APIGatewayProxyEventV2 | CancelNoticeJob): Promise<Response | void> {
+  // Background work the API hands to itself (see lib/cancel-notices.ts), not an HTTP request.
+  if (isCancelNoticeJob(event)) return runCancelNotices(event);
   try {
     return await router.handle(event);
   } catch (err) {

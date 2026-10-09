@@ -5,6 +5,7 @@ import { bumpRealtime, logActivity } from '../lib/activity.js';
 import { requireAdmin } from '../lib/admins.js';
 import { assertSameOrigin, formBody } from '../lib/body.js';
 import { eventStatus, eventTimeZone } from '../lib/dates.js';
+import { startCancelNotices } from '../lib/cancel-notices.js';
 import { EDIT_LOCK_MS, NOT_EDIT_LOCKED } from '../lib/event-lock.js';
 import { isId, newId } from '../lib/ids.js';
 import { loadImage, sanitizeImage, storeImage } from '../lib/images.js';
@@ -480,6 +481,7 @@ export const deleteEvent: Handler = async (req) => {
   if (!event) return error(404, 'Event not found.');
 
   let cancelled = event.status === 'CANCELLED';
+  let notifying = false;
   if (!cancelled) {
     try {
       // The event item goes first, and only while unbooked; without it no booking can be created.
@@ -506,16 +508,20 @@ export const deleteEvent: Handler = async (req) => {
       const children = await eventChildren<Record<string, unknown>>(id, '');
       await batchWrite(children.map((c) => ({ DeleteRequest: { Key: { PK: c.PK, SK: c.SK } } })));
     }
+    notifying = cancelled && await startCancelNotices(id, admin.username);
     await Promise.all([
       bumpRealtime('events'), bumpRealtime('bookings'), bumpRealtime('attendance'),
       logActivity({
         admin: admin.username, action: cancelled ? 'update' : 'delete', resource: 'event', resourceId: id,
-        details: { eventName: event.eventName, cancelled },
+        details: { eventName: event.eventName, cancelled, ...(cancelled ? { attendeesNotified: notifying } : {}) },
       }),
     ]);
   }
   return json(200, {
     success: true, cancelled,
-    message: cancelled ? 'Event cancelled. Booking history is preserved; tickets are no longer valid for admission.' : 'Event deleted successfully.',
+    message: !cancelled ? 'Event deleted successfully.'
+      : notifying ? 'Event cancelled. Attendees are being notified by email; booking history is preserved and tickets are no longer valid for admission.'
+      : 'Event cancelled. Booking history is preserved; tickets are no longer valid for admission.',
+    attendeesNotified: notifying,
   });
 };
