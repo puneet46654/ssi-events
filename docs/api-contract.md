@@ -77,11 +77,13 @@ The public catalogue, soonest first. `cache-control: public, s-maxage=5, stale-w
 `200`:
 ```json
 { "success": true, "events": [{
-  "_id": "01JA...", "eventName": "...", "eventType": "conference | mantram | event",
+  "_id": "01JA...", "eventName": "...", "eventType": "conference | mantram | event | participation",
   "bookingFormTemplate": "practitioner-institutional | template-2 | template-3",
   "venue": "...", "description": "...", "imageUrl": "/api/events/<id>/image?v=<ms> or empty",
   "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD", "timeZone": "Asia/Kolkata",
   "totalSlots": 40, "bookedSlots": 3, "status": "UPCOMING | LIVE | COMPLETED | CANCELLED",
+  "registrationMode": "slots | open | info", "capacity": null,
+  "stand": "info events, else empty", "links": [{ "label": "LinkedIn post", "url": "https://..." }],
   "createdAt": "ISO", "updatedAt": "ISO" }] }
 ```
 `status` is computed from the event's dates in its own timezone at request time. `CANCELLED` always wins.
@@ -156,7 +158,7 @@ Requires `events` permission plus `canCreate`. Body: `multipart/form-data` with 
 | Field | Value |
 | --- | --- |
 | `eventName` | max 200 characters |
-| `eventType` | `conference`, `mantram` or `event` |
+| `eventType` | `conference` (SMRSC), `mantram`, `event` (CME / workshop) or `participation` (conferences we attend) |
 | `bookingFormTemplate` | `practitioner-institutional`, `template-2` or `template-3` |
 | `venue` | max 300 characters |
 | `description` | max 5000 characters |
@@ -165,10 +167,14 @@ Requires `events` permission plus `canCreate`. Body: `multipart/form-data` with 
 | `numberOfDays` | 1-10 |
 | `daySchedules` | JSON array, one entry per day: `{ date, startTime "HH:mm", endTime, lunchEnabled, lunchStart, lunchEnd, slotDuration (min), slotGap (min), capacity 1-20, sameAsDay1 }` |
 | `thumbnail` | optional JPG/PNG/WebP, max 4 MB and 25 megapixels |
-| `registrationMode` | `slots` (default) or `open`. `open`: registration only, no schedule; `daySchedules` is ignored |
+| `registrationMode` | `slots` (default), `open` or `info`. `open`: registration only, no schedule. `info`: information only, no booking. `daySchedules` is ignored for both |
 | `capacity` | `open` only: maximum registrations, 1-100000; empty = no limit |
+| `stand` | `info` only, optional: max 120 characters, e.g. `Hall 8, Stand C12` |
+| `links` | `info` only, optional: JSON array of up to 4 `{ label (max 60), url (http/https, max 500) }`; empty rows are ignored |
 
 Registration-only (`open`) events: dates up to 31 days, no day or slot items. `totalSlots` = `capacity` (0 when unlimited). Bookings omit `dayScheduleId`/`slotId`; the event's `bookedSlots < capacity` is checked in the booking transaction (`409 Registration for this event is full.`). Attendees can cancel until the event ends; reschedule returns `409`. Check-in is allowed any time while the event is live. `registrationMode` and `capacity` cannot be lowered below existing registrations or switched once anyone has registered (`409`).
+
+Information-only (`info`) events: dates up to 31 days and may be in the past (to list events already attended), no day or slot items, `totalSlots` 0. `POST /api/bookings` and `POST /api/bookings/pending` return `409 This event is listed for information only and does not take bookings.` They are not offered for check-in. Switching an event to another registration type removes `stand` and `links`.
 
 **Validation:**
 - Schedule dates must be ascending and inside the event dates.

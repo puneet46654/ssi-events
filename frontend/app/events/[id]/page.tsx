@@ -82,9 +82,12 @@ interface EventDetails {
     | 'COMPLETED'
     | 'CANCELLED';
 
-  /** `open`: registration only, no time slots; `capacity` null means no limit. */
-  registrationMode?: 'slots' | 'open';
+  /** `open`: registration only, no time slots; `capacity` null means no limit. `info`: no booking. */
+  registrationMode?: 'slots' | 'open' | 'info';
   capacity?: number | null;
+  /** Info events: where to find us, and labelled links (conference website, LinkedIn post). */
+  stand?: string;
+  links?: { label: string; url: string }[];
   totalSlots: number;
 
   bookedSlots: number;
@@ -306,6 +309,8 @@ export default function EventDetailsPage() {
     );
   }
 
+  const infoOnly = event.registrationMode === 'info';
+  const links = infoOnly ? event.links ?? [] : [];
   const registrationOnly = event.registrationMode === 'open';
   const unlimited = registrationOnly && !event.capacity;
   const canBook =
@@ -499,7 +504,7 @@ export default function EventDetailsPage() {
                 >
                   {event.eventName}
                 </h1>
-                <p className="mt-1 text-xs text-gray-500">All event times: {eventTimeZone(event.timeZone)}</p>
+                {!infoOnly && <p className="mt-1 text-xs text-gray-500">All event times: {eventTimeZone(event.timeZone)}</p>}
 
                 <div
                   className="
@@ -537,6 +542,12 @@ export default function EventDetailsPage() {
                 </div>
               </div>
 
+              {infoOnly ? (event.stand ? (
+                <div className="rounded-xl border border-gray-200 bg-[#FAFBFC] p-4">
+                  <p className="text-[14px] font-medium text-gray-500">Find us at</p>
+                  <p className="mt-1.5 text-[18px] font-bold tracking-[-0.01em] text-secondary">{event.stand}</p>
+                </div>
+              ) : null) : (
               <div
                 className="
                   hidden
@@ -582,6 +593,7 @@ export default function EventDetailsPage() {
                   {unlimited ? 'registration, no limit' : registrationOnly ? 'registration places remaining' : 'booking places remaining'}
                 </p>
               </div>
+              )}
             </div>
 
             <div
@@ -628,6 +640,24 @@ export default function EventDetailsPage() {
                 {event.description}
               </p>
             </section>
+
+            {links.length > 0 && (
+              <section className="mt-6">
+                <h2 className="font-heading text-[17px] font-bold text-secondary sm:text-lg">More information</h2>
+                <ul className="mt-3 flex flex-wrap gap-2">
+                  {links.map((link) => (
+                    <li key={link.url}>
+                      <a href={link.url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex h-10 items-center gap-1.5 rounded-full border border-gray-300 bg-white px-4 text-[14px] font-medium text-secondary transition-colors hover:border-primary hover:text-primary">
+                        {link.label}
+                        <span aria-hidden="true">↗</span>
+                        <span className="sr-only"> (opens in a new tab)</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </div>
         </motion.article>
 
@@ -643,6 +673,12 @@ export default function EventDetailsPage() {
             md:grid
           "
         >
+          {infoOnly ? (links[0] ? (
+            <a href={links[0].url} target="_blank" rel="noopener noreferrer"
+              className="btn-primary flex h-12 items-center justify-center rounded-full text-[16px] font-medium text-white">
+              {links[0].label}
+            </a>
+          ) : <span />) : (
           <Link
             href={
               canBook
@@ -679,6 +715,7 @@ export default function EventDetailsPage() {
             {canBook
               ? bookLabel : remainingCapacity === 0 && (event.status === 'LIVE' || event.status === 'UPCOMING') ? 'Fully booked' : 'Booking closed'}
           </Link>
+          )}
 
           <button
             type="button"
@@ -746,7 +783,12 @@ export default function EventDetailsPage() {
             space-y-2
           "
         >
-          {canBook ? (
+          {infoOnly ? (links[0] ? (
+            <a href={links[0].url} target="_blank" rel="noopener noreferrer"
+              className="btn-primary flex h-12 w-full items-center justify-center rounded-full text-[16px] font-medium text-white">
+              {links[0].label}
+            </a>
+          ) : null) : canBook ? (
             <Link
               href={`/events/${event._id}/book`}
               className="

@@ -42,7 +42,7 @@ export type SlotItem = {
 export type EventCore = {
   eventId: string; eventName: string; venue: string; description: string; imageKey?: string;
   startDate: string; endDate: string; timeZone: string; status: string; updatedAt: string;
-  /** `open`: registration only, no time slots (see routes/events.ts). */
+  /** `open`: registration only, no time slots. `info`: no booking at all (see routes/events.ts). */
   registrationMode?: string; capacity?: number; bookedSlots?: number;
 };
 

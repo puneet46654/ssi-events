@@ -37,7 +37,7 @@ import {
 } from 'framer-motion';
 
 import BookingTemplateSelector from '@/app/components/admin/booking-templates/BookingTemplateSelector';
-import RegistrationModePicker, { type RegistrationMode } from '@/app/components/admin/booking-templates/RegistrationModePicker';
+import RegistrationModePicker, { type EventLink, type RegistrationMode } from '@/app/components/admin/booking-templates/RegistrationModePicker';
 
 import {
   BookingFormTemplate,
@@ -72,6 +72,8 @@ type EventResponse = {
   timeZone?: string;
   registrationMode?: RegistrationMode;
   capacity?: number | null;
+  stand?: string;
+  links?: EventLink[];
   bookedSlots?: number;
   _id: string;
 
@@ -80,7 +82,8 @@ type EventResponse = {
   eventType:
     | 'conference'
     | 'mantram'
-    | 'event';
+    | 'event'
+    | 'participation';
 
   bookingFormTemplate?: BookingFormTemplate;
 
@@ -489,6 +492,8 @@ export default function EditEventPage() {
 
   const [timeZone, setTimeZone] = useState('');
   const [registrationMode, setRegistrationMode] = useState<RegistrationMode>('slots');
+  const [stand, setStand] = useState('');
+  const [links, setLinks] = useState<EventLink[]>([]);
   const [capacity, setCapacity] = useState('');
   const [bookedCount, setBookedCount] = useState(0);
 
@@ -504,6 +509,7 @@ export default function EditEventPage() {
     | 'conference'
     | 'mantram'
     | 'event'
+    | 'participation'
     | ''
   >('');
 
@@ -663,7 +669,9 @@ export default function EditEventPage() {
 
         if (event.status === 'CANCELLED') throw new Error('Cancelled events are kept for history and cannot be edited.');
         setTimeZone(eventTimeZone(event.timeZone));
-        setRegistrationMode(event.registrationMode === 'open' ? 'open' : 'slots');
+        setRegistrationMode(event.registrationMode === 'open' || event.registrationMode === 'info' ? event.registrationMode : 'slots');
+        setStand(event.stand ?? '');
+        setLinks(event.links ?? []);
         setCapacity(event.capacity ? String(event.capacity) : '');
         setBookedCount(event.bookedSlots || 0);
 
@@ -1361,6 +1369,13 @@ export default function EditEventPage() {
       return;
     }
 
+    if (registrationMode === 'info') {
+      const badLink = links.find((l) => (l.label.trim() || l.url.trim()) && (!l.label.trim() || !/^https?:\/\/\S+\.\S+/i.test(l.url.trim())));
+      if (badLink) {
+        setFormError('Each link needs a label and a full web address starting with https://.');
+        return;
+      }
+    }
     if (registrationMode === 'open' && capacity && (!Number.isInteger(Number(capacity)) || Number(capacity) < 1)) {
       setFormError('Registration limit must be a whole number above zero, or blank for no limit.');
       return;
@@ -1403,6 +1418,10 @@ export default function EditEventPage() {
       formData.set('timeZone', timeZone);
       formData.set('registrationMode', registrationMode);
       if (registrationMode === 'open') formData.set('capacity', capacity);
+      if (registrationMode === 'info') {
+        formData.set('stand', stand.trim());
+        formData.set('links', JSON.stringify(links.filter((l) => l.label.trim() || l.url.trim()).map((l) => ({ label: l.label.trim(), url: l.url.trim() }))));
+      }
 
       formData.set(
         'eventName',
@@ -2025,7 +2044,7 @@ export default function EditEventPage() {
                   onChange={(
                     event,
                   ) => {
-                    const nextType = event.target.value as 'conference' | 'mantram' | 'event';
+                    const nextType = event.target.value as 'conference' | 'mantram' | 'event' | 'participation';
                     setEventType(nextType);
                     // Each kind of event has its usual registration form; the admin can still change it below.
                     setBookingFormTemplate(DEFAULT_TEMPLATE_FOR_TYPE[nextType]);
@@ -2039,6 +2058,7 @@ export default function EditEventPage() {
                   <option value="conference">SMRSC (conference)</option>
                   <option value="mantram">MantraM</option>
                   <option value="event">CME / Workshop</option>
+                  <option value="participation">Conferences (we attend)</option>
                 </select>
               </Field>
 
@@ -2514,6 +2534,10 @@ export default function EditEventPage() {
                         onModeChange={(mode) => { setRegistrationMode(mode); setFormError(''); }}
                         capacity={capacity}
                         onCapacityChange={setCapacity}
+                        stand={stand}
+                        onStandChange={setStand}
+                        links={links}
+                        onLinksChange={setLinks}
                         locked={bookedCount > 0}
                       />
                     </div>

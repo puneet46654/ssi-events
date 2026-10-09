@@ -41,7 +41,8 @@ interface IEvent {
   eventType:
     | 'conference'
     | 'mantram'
-    | 'event';
+    | 'event'
+    | 'participation';
 
   venue: string;
 
@@ -74,6 +75,7 @@ type EventTab =
   | 'SMRSC'
   | 'MantraM'
   | 'CME / Workshops'
+  | 'Conferences'
   | 'Live'
   | 'Upcoming'
   | 'Completed';
@@ -89,6 +91,7 @@ const tabs: EventTab[] = [
   'SMRSC',
   'MantraM',
   'CME / Workshops',
+  'Conferences',
   'Live',
   'Upcoming',
   'Completed',
@@ -438,6 +441,10 @@ export default function EventsManagementPage() {
 
           if (activeTab === 'CME / Workshops') {
             matchesTab = event.eventType === 'event';
+          }
+
+          if (activeTab === 'Conferences') {
+            matchesTab = event.eventType === 'participation';
           }
 
           if (

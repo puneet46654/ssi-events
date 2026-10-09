@@ -14,6 +14,7 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
   const category = categoryOf(type);
   const page = category.page;
   const [events, setEvents] = useState<IEvent[] | null>(null);
+  const [pastEvents, setPastEvents] = useState<IEvent[]>([]);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -21,12 +22,16 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
       const response = await fetch('/api/events', { cache: 'no-store' });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error();
-      setEvents((data.events as IEvent[])
-        .filter((e) => e.eventType === type && (e.status === 'UPCOMING' || e.status === 'LIVE'))
+      const ofType = (data.events as IEvent[]).filter((e) => e.eventType === type);
+      setEvents(ofType
+        .filter((e) => e.status === 'UPCOMING' || e.status === 'LIVE')
         .sort((a, b) => String(a.startDate).localeCompare(String(b.startDate))));
+      setPastEvents(ofType
+        .filter((e) => e.status === 'COMPLETED')
+        .sort((a, b) => String(b.startDate).localeCompare(String(a.startDate))));
       setError('');
     } catch {
-      setError('We could not load the visits just now. Please try again.');
+      setError('We could not load the events just now. Please try again.');
     }
   }, [type]);
 
@@ -82,6 +87,15 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
           )}
         </div>
       </section>
+      )}
+
+      {category.archive && pastEvents.length > 0 && (
+        <section aria-labelledby="category-past" className="mt-10 md:mt-14">
+          <h2 id="category-past" className="text-[20px] font-semibold text-secondary md:text-[24px]">{category.archive.pastHeading}</h2>
+          <div className="mt-4">
+            <UpcomingGrid events={pastEvents} completed />
+          </div>
+        </section>
       )}
     </main>
   );

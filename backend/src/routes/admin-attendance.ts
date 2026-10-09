@@ -58,7 +58,8 @@ async function openSlotsNow(b: BookingItem, timeZone: string) {
  */
 export const attendanceSummary: Handler = async (req) => {
   await requireAdmin(req, 'check-in');
-  const live = (await allEvents()).filter(isLive).sort((a, b) => a.startDate.localeCompare(b.startDate));
+  // Information-only events issue no tickets, so there is nothing to check in.
+  const live = (await allEvents()).filter((e) => isLive(e) && e.registrationMode !== 'info').sort((a, b) => a.startDate.localeCompare(b.startDate));
   const events = live.map((e) => ({
     id: e.eventId, eventName: e.eventName, venue: e.venue,
     startDate: `${e.startDate}T00:00:00.000Z`, endDate: `${e.endDate}T00:00:00.000Z`, timeZone: eventTimeZone(e.timeZone),

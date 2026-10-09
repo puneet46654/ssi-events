@@ -28,7 +28,9 @@ const META = {
   repo: 'gitlab.com/naveen-ssi/ssi-events',
   owner: 'SS Innovations',
 };
-const BRAND = '283F8F', INK = '0F1729', MUTED = '5B6275', RULE = 'D9DDE7', CODE_BG = 'F6F8FA';
+// Print palette: black text, grey rules, the brand blue only for the logo and links.
+const BRAND = '283F8F', INK = '1A1A1A', MUTED = '595959', RULE = 'BFBFBF', CODE_BG = 'F4F4F4';
+const LOGO = fs.readFileSync(path.join(REPO, 'frontend/public/logos/ssii-logo.png'));
 
 /* ---------- Source ---------- */
 
@@ -97,7 +99,7 @@ function pngSize(file) {
   const b = fs.readFileSync(file);
   return { width: b.readUInt32BE(16), height: b.readUInt32BE(20) };
 }
-const CALLOUTS = { 'Tip:': ['tip', '1F9D74', 'E8F6F0'], 'Note:': ['note', BRAND, 'EEF2FB'], 'Important:': ['important', 'E8590C', 'FFF3E8'] };
+const CALLOUTS = { 'Tip:': ['tip'], 'Note:': ['note'], 'Important:': ['important'] };
 function calloutOf(t) {
   const first = t.tokens?.[0];
   const lead = first?.tokens?.[0];
@@ -124,16 +126,18 @@ renderer.paragraph = function ({ tokens: t }) {
   }
   return `<p>${this.parser.parseInline(t)}</p>`;
 };
+let pdfFigure = 0;
 renderer.image = ({ href, text }) => {
   const file = imagePath(href);
   const { width, height } = pngSize(file);
   const phone = height > width;
-  return `<figure class="${phone ? 'phone' : 'wide'}"><img src="data:image/png;base64,${fs.readFileSync(file).toString('base64')}" alt="${text}"><figcaption>${text}</figcaption></figure>`;
+  pdfFigure += 1;
+  return `<figure class="${phone ? 'phone' : 'wide'}"><img src="data:image/png;base64,${fs.readFileSync(file).toString('base64')}" alt="${text}"><figcaption><b>Figure ${pdfFigure}</b>&ensp;${text}</figcaption></figure>`;
 };
 renderer.blockquote = function ({ tokens: t }) {
   const c = calloutOf({ tokens: t });
   if (!c) return `<blockquote>${this.parser.parse(t)}</blockquote>`;
-  return `<div class="callout ${c.kind[0]}"><span class="label">${c.label}</span> ${this.parser.parseInline(c.rest)}${t.length > 1 ? this.parser.parse(t.slice(1)) : ''}</div>`;
+  return `<div class="callout ${c.kind[0]}"><div class="label">${c.label}</div><div class="text">${this.parser.parseInline(c.rest).replace(/^\s+/, '')}${t.length > 1 ? this.parser.parse(t.slice(1)) : ''}</div></div>`;
 };
 const bodyHtml = marked.parser(tokens, { renderer });
 const toc = tokens.filter((t) => t.type === 'heading' && t.depth <= 2)
@@ -142,50 +146,56 @@ const hljsCss = Object.entries(COLORS).map(([k, c]) => `.hljs-${k.replace('.', '
   + '.hljs-title.function_{color:#8250DF}.hljs-title.class_{color:#953800}.hljs-comment{font-style:italic}';
 
 const html = `<!doctype html><html><head><meta charset="utf-8"><title>${META.title} — ${META.subtitle}</title><style>
-@page { size: A4; margin: 22mm 18mm 20mm 18mm; }
+@page { size: A4; margin: 24mm 20mm 22mm 20mm; }
 * { box-sizing: border-box; }
-body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #${INK}; font-size: 10pt; line-height: 1.55; }
-.cover { height: 248mm; display: flex; flex-direction: column; page-break-after: always; } .cover > div:last-child { margin-top: auto; }
-.cover .band { height: 6px; background: linear-gradient(90deg, #283F8F, #23879A, #34BD98); border-radius: 3px; }
-.cover h1 { font-size: 34pt; margin: 0 0 4mm; color: #${INK}; letter-spacing: -0.5px; border: 0; }
-.cover h2 { font-size: 18pt; margin: 0; color: #${BRAND}; font-weight: 500; border: 0; padding: 0; }
-.cover table { width: auto; margin-top: 14mm; font-size: 10pt; }
-.cover td { border: 0; padding: 2px 18px 2px 0; } .cover td:first-child { color: #${MUTED}; }
+body { font-family: Cambria, Georgia, 'Times New Roman', serif; color: #${INK}; font-size: 10.5pt; line-height: 1.5; }
+h1, h2, h3, h4, h5, th, figcaption, .callout .label, .cover, .toc, table { font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; }
+.cover { height: 244mm; display: flex; flex-direction: column; page-break-after: always; }
+.cover .logo { height: 13mm; }
+.cover .title { margin-top: 62mm; border-top: 2.2pt solid #${INK}; padding-top: 7mm; }
+.cover h1 { font-size: 30pt; font-weight: 700; margin: 0 0 3mm; color: #${INK}; letter-spacing: -0.2pt; border: 0; padding: 0; page-break-before: auto; }
+.cover h2 { font-size: 16pt; font-weight: 400; margin: 0; color: #${MUTED}; border: 0; padding: 0; }
+.cover table.meta { margin-top: auto; width: 100%; font-size: 9pt; border-top: 1pt solid #${INK}; border-bottom: 1pt solid #${INK}; }
+.cover table.meta td { border: 0; border-bottom: 0.5pt solid #D9D9D9; padding: 4pt 0; background: none !important; }
+.cover table.meta tr:last-child td { border-bottom: 0; }
+.cover table.meta td:first-child { width: 32mm; color: #${MUTED}; }
 .control { page-break-after: always; }
-h1 { font-size: 19pt; color: #${BRAND}; margin: 0 0 12pt; padding-bottom: 6pt; border-bottom: 2px solid #${BRAND}; page-break-before: always; }
-.control h1, .toc h1, .cover h1 { page-break-before: auto; }
+h1 { font-size: 20pt; font-weight: 700; color: #${INK}; margin: 0 0 14pt; padding-bottom: 5pt; border-bottom: 1pt solid #${INK}; page-break-before: always; }
+.control h1, .toc h1 { page-break-before: auto; }
 h2, h3, h4 { break-after: avoid; page-break-after: avoid; }
-h2 { font-size: 13.5pt; color: #${INK}; margin: 18pt 0 6pt; } h3 { font-size: 11.5pt; margin: 14pt 0 4pt; color: #${INK}; }
-h4 { font-size: 10.5pt; margin: 12pt 0 4pt; color: #${BRAND}; } h5 { font-size: 10pt; margin: 10pt 0 3pt; }
-p { margin: 0 0 7pt; } ul, ol { margin: 0 0 7pt; padding-left: 18pt; } li { margin: 1.5pt 0; }
-a { color: #${BRAND}; text-decoration: none; }
-code { font-family: 'Cascadia Code', Consolas, 'Courier New', monospace; font-size: 8.8pt; background: #EEF1F6; padding: 0.5pt 3pt; border-radius: 3px; color: #1F2D5C; }
-pre.code { position: relative; background: #${CODE_BG}; border: 1px solid #${RULE}; border-left: 3px solid #${BRAND}; border-radius: 6px; padding: 9pt 11pt; margin: 6pt 0 10pt; white-space: pre-wrap; word-break: break-word; page-break-inside: avoid; }
-pre.code code { background: none; padding: 0; font-size: 8.4pt; line-height: 1.5; color: #24292F; }
-pre.code .lang { position: absolute; top: 4pt; right: 8pt; font-size: 7pt; color: #8C95A6; text-transform: uppercase; letter-spacing: 0.5px; }
-table { width: 100%; border-collapse: collapse; margin: 6pt 0 11pt; font-size: 8.8pt; page-break-inside: auto; }
-th { background: #${BRAND}; color: #fff; text-align: left; font-weight: 600; padding: 4pt 6pt; }
-td { border-bottom: 1px solid #${RULE}; padding: 4pt 6pt; vertical-align: top; } tr { page-break-inside: avoid; }
-tbody tr:nth-child(even) td { background: #F8F9FC; }
-.toc ol { list-style: none; padding: 0; columns: 1; } .toc li { margin: 2pt 0; } .toc .toc-2 { padding-left: 16pt; font-size: 9pt; color: #${MUTED}; }
-.toc .toc-1 { font-weight: 600; margin-top: 6pt; }
+h2 { font-size: 13pt; font-weight: 700; color: #${INK}; margin: 20pt 0 6pt; }
+h3 { font-size: 11pt; font-weight: 700; margin: 14pt 0 4pt; color: #${INK}; }
+h4 { font-size: 10pt; font-weight: 700; margin: 12pt 0 3pt; color: #${INK}; text-transform: uppercase; letter-spacing: 0.4pt; } h5 { font-size: 10pt; margin: 10pt 0 3pt; }
+p { margin: 0 0 7pt; } ul, ol { margin: 0 0 8pt; padding-left: 20pt; } li { margin: 2pt 0; } ol > li::marker { font-family: Arial, sans-serif; font-weight: 700; }
+a { color: #${INK}; text-decoration: underline; text-decoration-color: #${RULE}; }
+code { font-family: Consolas, 'Courier New', monospace; font-size: 9pt; background: none; padding: 0; color: #${INK}; }
+pre.code { position: relative; background: #${CODE_BG}; border: 0.5pt solid #${RULE}; padding: 8pt 10pt; margin: 6pt 0 10pt; white-space: pre-wrap; word-break: break-word; page-break-inside: avoid; }
+pre.code code { font-size: 8.4pt; line-height: 1.45; color: #24292F; }
+pre.code .lang { position: absolute; top: 3pt; right: 7pt; font-family: Arial, sans-serif; font-size: 6.5pt; color: #8C8C8C; text-transform: uppercase; letter-spacing: 0.5pt; }
+table { width: 100%; border-collapse: collapse; margin: 6pt 0 12pt; font-size: 8.8pt; line-height: 1.4; page-break-inside: auto; border-top: 1.2pt solid #${INK}; border-bottom: 1.2pt solid #${INK}; }
+th { text-align: left; font-weight: 700; padding: 4pt 6pt; border-bottom: 0.6pt solid #${INK}; color: #${INK}; }
+td { border-bottom: 0.4pt solid #D9D9D9; padding: 4pt 6pt; vertical-align: top; } tr { page-break-inside: avoid; } tbody tr:last-child td { border-bottom: 0; }
+.toc ol { list-style: none; padding: 0; } .toc li { margin: 0; padding: 3pt 0; border-bottom: 0.4pt solid #E6E6E6; }
+.toc .toc-1 { font-weight: 700; margin-top: 8pt; border-bottom: 0.6pt solid #${INK}; } .toc .toc-2 { padding-left: 12mm; font-size: 9.5pt; }
+.toc a { text-decoration: none; }
 figure { margin: 8pt 0 12pt; text-align: center; page-break-inside: avoid; }
-figure img { border: 1px solid #${RULE}; border-radius: 10px; box-shadow: 0 2px 10px rgba(15,23,41,0.10); }
+figure img { border: 0.5pt solid #A6A6A6; }
 figure.phone img { width: 56mm; } figure.wide img { width: 100%; }
-.figrow { display: flex; justify-content: center; gap: 8mm; page-break-inside: avoid; } .figrow figure { margin: 6pt 0 10pt; } .figrow figure.phone img { width: 48mm; }
-figcaption { font-size: 8.5pt; color: #${MUTED}; margin-top: 4pt; font-style: italic; }
-.callout { border-radius: 8px; padding: 8pt 11pt; margin: 6pt 0 11pt; page-break-inside: avoid; border-left: 4px solid; }
-.callout .label { font-weight: 700; margin-right: 3pt; }
-.callout.tip { background: #E8F6F0; border-color: #1F9D74; } .callout.tip .label { color: #1F9D74; }
-.callout.note { background: #EEF2FB; border-color: #${BRAND}; } .callout.note .label { color: #${BRAND}; }
-.callout.important { background: #FFF3E8; border-color: #E8590C; } .callout.important .label { color: #C2410C; }
+.figrow { display: flex; justify-content: center; gap: 10mm; page-break-inside: avoid; } .figrow figure { margin: 6pt 0 10pt; flex: 0 1 auto; } .figrow figure.phone img { width: 48mm; }
+.figrow figure figcaption { max-width: 52mm; margin-left: auto; margin-right: auto; }
+figcaption { font-size: 8.3pt; color: #${MUTED}; margin-top: 4pt; line-height: 1.35; }
+figcaption b { color: #${INK}; }
+.callout { display: flex; gap: 10pt; margin: 8pt 0 12pt; padding: 6pt 0; border-top: 0.75pt solid #${INK}; border-bottom: 0.75pt solid #${INK}; page-break-inside: avoid; }
+.callout .label { flex: 0 0 24mm; font-size: 7.8pt; font-weight: 700; letter-spacing: 0.8pt; text-transform: uppercase; padding-top: 1.5pt; }
+.callout .text { flex: 1; } .callout .text p:last-child { margin-bottom: 0; }
+.callout.important { border-top-width: 2pt; }
 ${hljsCss}
 </style></head><body>
-<section class="cover"><div class="band"></div><div style="margin-top:70mm">
-<h1>${META.title}</h1><h2>${META.subtitle}</h2>
-<table><tr><td>Document</td><td>${META.docNo}</td></tr><tr><td>Version</td><td>${META.version}</td></tr><tr><td>Date</td><td>${META.date}</td></tr>
-<tr><td>System</td><td>${META.url}</td></tr><tr><td>Repository</td><td>${META.repo}</td></tr><tr><td>Owner</td><td>${META.owner}</td></tr></table>
-</div><div></div></section>
+<section class="cover"><div><img class="logo" src="data:image/png;base64,${LOGO.toString('base64')}" alt="SS Innovations"></div>
+<div class="title"><h1>${META.title}</h1><h2>${META.subtitle}</h2></div>
+<table class="meta"><tr><td>Document number</td><td>${META.docNo}</td></tr><tr><td>Version</td><td>${META.version}</td></tr><tr><td>Issue date</td><td>${META.date}</td></tr>
+<tr><td>System</td><td>${META.url}</td></tr><tr><td>Owner</td><td>${META.owner}</td></tr><tr><td>Classification</td><td>Internal</td></tr></table>
+</section>
 <section class="control"><h1>Document control</h1>
 <table><thead><tr><th>Version</th><th>Date</th><th>Description</th></tr></thead><tbody><tr><td>1.0</td><td>${META.date}</td><td>${META.issue}</td></tr></tbody></table>
 <h2>Review and approval</h2>
@@ -202,16 +212,16 @@ await page.setContent(html, { waitUntil: 'load' });
 const pdfPath = path.join(OUT, `${META.file}.pdf`);
 await page.pdf({
   path: pdfPath, format: 'A4', printBackground: true, displayHeaderFooter: true,
-  margin: { top: '22mm', bottom: '20mm', left: '18mm', right: '18mm' },
-  headerTemplate: `<div style="font-size:7pt;color:#8C95A6;width:100%;padding:0 18mm;display:flex;justify-content:space-between;font-family:Segoe UI,Arial"><span>${META.title} — ${META.subtitle}</span><span>${META.docNo} v${META.version}</span></div>`,
-  footerTemplate: `<div style="font-size:7pt;color:#8C95A6;width:100%;padding:0 18mm;display:flex;justify-content:space-between;font-family:Segoe UI,Arial"><span>${META.owner} · Internal</span><span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>`,
+  margin: { top: '24mm', bottom: '22mm', left: '20mm', right: '20mm' },
+  headerTemplate: `<div style="font-size:7.5pt;color:#595959;width:100%;margin:0 20mm;padding-bottom:3pt;border-bottom:0.5pt solid #8C8C8C;display:flex;justify-content:space-between;font-family:Arial"><span>${META.title}: ${META.subtitle}</span><span>${META.docNo} &nbsp;Version ${META.version}</span></div>`,
+  footerTemplate: `<div style="font-size:7.5pt;color:#595959;width:100%;margin:0 20mm;padding-top:3pt;border-top:0.5pt solid #8C8C8C;display:flex;justify-content:space-between;font-family:Arial"><span>${META.owner} &middot; Internal</span><span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>`,
 });
 await browser.close();
 console.log('PDF', pdfPath);
 
 /* ---------- DOCX ---------- */
 
-const FONT = 'Segoe UI', MONO = 'Consolas';
+const FONT = 'Cambria', HFONT = 'Arial', MONO = 'Consolas';
 const decode = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'").replace(/&amp;/g, '&');
 
 /** hljs HTML → coloured runs, one array per line. */
@@ -239,8 +249,8 @@ function inlineRuns(toks, base = {}) {
       else runs.push(new D.TextRun({ text: decode(t.text), font: FONT, size: 20, ...base }));
     } else if (t.type === 'strong') runs.push(...inlineRuns(t.tokens, { ...base, bold: true }));
     else if (t.type === 'em') runs.push(...inlineRuns(t.tokens, { ...base, italics: true }));
-    else if (t.type === 'codespan') runs.push(new D.TextRun({ text: decode(t.text), font: MONO, size: 17, color: '1F2D5C', shading: { type: D.ShadingType.CLEAR, fill: 'EEF1F6', color: 'auto' } }));
-    else if (t.type === 'link') runs.push(new D.ExternalHyperlink({ link: t.href, children: inlineRuns(t.tokens, { ...base, color: BRAND }) }));
+    else if (t.type === 'codespan') runs.push(new D.TextRun({ text: decode(t.text), font: MONO, size: 18, color: INK }));
+    else if (t.type === 'link') runs.push(new D.ExternalHyperlink({ link: t.href, children: inlineRuns(t.tokens, { ...base, underline: {} }) }));
     else if (t.type === 'br') runs.push(new D.TextRun({ break: 1 }));
     else if (t.raw) runs.push(new D.TextRun({ text: decode(t.raw), font: FONT, size: 20, ...base }));
   }
@@ -248,26 +258,39 @@ function inlineRuns(toks, base = {}) {
 }
 
 const CONTENT_WIDTH = 9026; // A4 width minus 1" margins, in DXA
-const cellBorder = { style: D.BorderStyle.SINGLE, size: 4, color: RULE };
+const NONE = { style: D.BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+const rule = (size, color = INK) => ({ style: D.BorderStyle.SINGLE, size, color });
 function table(t) {
   const cols = t.header.length;
   const weights = t.header.map((h, i) => Math.max(4, Math.min(60, Math.max(h.text.length, ...t.rows.map((r) => (r[i]?.text || '').length)))));
   const total = weights.reduce((a, b) => a + b, 0);
   const widths = weights.map((w) => Math.round((w / total) * CONTENT_WIDTH));
   widths[cols - 1] += CONTENT_WIDTH - widths.reduce((a, b) => a + b, 0);
-  const cell = (c, i, header, shade) => new D.TableCell({
+  const last = t.rows.length - 1;
+  const cell = (c, i, header, ri) => new D.TableCell({
     width: { size: widths[i], type: D.WidthType.DXA },
-    shading: header ? { type: D.ShadingType.CLEAR, fill: BRAND, color: 'auto' } : shade ? { type: D.ShadingType.CLEAR, fill: 'F8F9FC', color: 'auto' } : undefined,
     margins: { top: 60, bottom: 60, left: 90, right: 90 },
-    borders: { top: cellBorder, left: cellBorder, bottom: cellBorder, right: cellBorder },
-    children: [new D.Paragraph({ children: inlineRuns(c.tokens, header ? { bold: true, color: 'FFFFFF', size: 17 } : { size: 17 }) })],
+    borders: {
+      top: header ? rule(10) : NONE, left: NONE, right: NONE,
+      bottom: header ? rule(5) : ri === last ? rule(10) : rule(3, 'D9D9D9'),
+    },
+    children: [new D.Paragraph({ children: inlineRuns(c.tokens, header ? { bold: true, size: 17, font: HFONT } : { size: 17, font: HFONT }) })],
   });
   return new D.Table({
     width: { size: CONTENT_WIDTH, type: D.WidthType.DXA }, columnWidths: widths,
+    borders: { top: NONE, bottom: NONE, left: NONE, right: NONE, insideHorizontal: NONE, insideVertical: NONE },
     rows: [new D.TableRow({ tableHeader: true, children: t.header.map((c, i) => cell(c, i, true)) }),
-      ...t.rows.map((r, ri) => new D.TableRow({ cantSplit: true, children: r.map((c, i) => cell(c, i, false, ri % 2 === 1)) }))],
+      ...t.rows.map((r, ri) => new D.TableRow({ cantSplit: true, children: r.map((c, i) => cell(c, i, false, ri)) }))],
   });
 }
+
+let docxFigure = 0;
+const caption = (text) => { docxFigure += 1; return [
+  new D.TextRun({ text: `Figure ${docxFigure}`, bold: true, size: 16, font: HFONT, color: INK }),
+  new D.TextRun({ text: `  ${text}`, size: 16, font: HFONT, color: MUTED })]; };
+const picture = (file, w, text, href) => { const { width, height } = pngSize(file); return new D.ImageRun({ type: 'png', data: fs.readFileSync(file),
+  transformation: { width: w, height: Math.round((w * height) / width) }, altText: { title: text, description: text, name: href },
+  outline: { type: 'solidFill', solidFillType: 'rgb', value: 'A6A6A6' } }); };
 
 const HEADINGS = { 1: D.HeadingLevel.HEADING_1, 2: D.HeadingLevel.HEADING_2, 3: D.HeadingLevel.HEADING_3, 4: D.HeadingLevel.HEADING_4, 5: D.HeadingLevel.HEADING_5 };
 const body = [];
@@ -286,10 +309,10 @@ function block(t, level = 0) {
         body.push(new D.Table({ width: { size: colW * imgs.length, type: D.WidthType.DXA }, columnWidths: imgs.map(() => colW),
           borders: { top: none, bottom: none, left: none, right: none, insideHorizontal: none, insideVertical: none },
           rows: [new D.TableRow({ cantSplit: true, children: imgs.map((img) => {
-            const file = imagePath(img.href); const { width, height } = pngSize(file); const w = imgs.length > 2 ? 180 : 200;
+            const w = imgs.length > 2 ? 180 : 200;
             return new D.TableCell({ width: { size: colW, type: D.WidthType.DXA }, borders: { top: none, left: none, bottom: none, right: none }, children: [
-              new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.ImageRun({ type: 'png', data: fs.readFileSync(file), transformation: { width: w, height: Math.round((w * height) / width) }, altText: { title: img.text, description: img.text, name: img.href } })] }),
-              new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { after: 120 }, children: [new D.TextRun({ text: img.text, italics: true, size: 17, color: MUTED, font: FONT })] }),
+              new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [picture(imagePath(img.href), w, img.text, img.href)] }),
+              new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { before: 60, after: 120 }, children: caption(img.text) }),
             ] });
           }) })] }), new D.Paragraph({ spacing: { after: 80 }, children: [] }));
         break;
@@ -300,11 +323,8 @@ function block(t, level = 0) {
       const { width, height } = pngSize(file);
       const w = height > width ? 200 : 600; // points-ish pixels at 96 dpi
       body.push(
-        new D.Paragraph({ alignment: D.AlignmentType.CENTER, keepNext: true, spacing: { before: 120, after: 60 },
-          children: [new D.ImageRun({ type: 'png', data: fs.readFileSync(file), transformation: { width: w, height: Math.round((w * height) / width) },
-            altText: { title: only.text, description: only.text, name: only.href } })] }),
-        new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { after: 200 },
-          children: [new D.TextRun({ text: only.text, italics: true, size: 17, color: MUTED, font: FONT })] }),
+        new D.Paragraph({ alignment: D.AlignmentType.CENTER, keepNext: true, spacing: { before: 120, after: 60 }, children: [picture(file, w, only.text, only.href)] }),
+        new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { after: 200 }, children: caption(only.text) }),
       );
       break;
     }
@@ -327,7 +347,7 @@ function block(t, level = 0) {
           width: { size: CONTENT_WIDTH, type: D.WidthType.DXA },
           shading: { type: D.ShadingType.CLEAR, fill: CODE_BG, color: 'auto' },
           margins: { top: 100, bottom: 100, left: 160, right: 160 },
-          borders: { top: edge, left: { style: D.BorderStyle.SINGLE, size: 18, color: BRAND }, bottom: edge, right: edge },
+          borders: { top: edge, left: edge, bottom: edge, right: edge },
           children: lines.map((runs) => new D.Paragraph({ spacing: { before: 0, after: 0, line: 250 },
             children: runs.length ? runs : [new D.TextRun({ text: ' ', font: MONO, size: 16 })] })),
         })] })],
@@ -337,17 +357,18 @@ function block(t, level = 0) {
     case 'blockquote': {
       const c = calloutOf(t);
       if (!c) { for (const sub of t.tokens) block(sub, level); break; }
-      const [, color, fill] = c.kind;
-      const edge = { style: D.BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+      // Ruled panel: label column and text, rules above and below (heavier above for Important).
+      const top = rule(c.kind[0] === 'important' ? 16 : 6), bottom = rule(6);
+      const LABEL_W = 1400;
+      const cellOf = (w, children, extra = {}) => new D.TableCell({ width: { size: w, type: D.WidthType.DXA },
+        margins: { top: 90, bottom: 90, left: 0, right: 120 }, borders: { top, bottom, left: NONE, right: NONE }, children, ...extra });
       body.push(new D.Table({
-        width: { size: CONTENT_WIDTH, type: D.WidthType.DXA }, columnWidths: [CONTENT_WIDTH],
-        rows: [new D.TableRow({ cantSplit: true, children: [new D.TableCell({
-          width: { size: CONTENT_WIDTH, type: D.WidthType.DXA },
-          shading: { type: D.ShadingType.CLEAR, fill, color: 'auto' },
-          margins: { top: 100, bottom: 100, left: 180, right: 180 },
-          borders: { top: edge, left: { style: D.BorderStyle.SINGLE, size: 24, color }, bottom: edge, right: edge },
-          children: [new D.Paragraph({ children: [new D.TextRun({ text: `${c.label} `, bold: true, color, font: FONT, size: 20 }), ...inlineRuns(c.rest)] })],
-        })] })],
+        width: { size: CONTENT_WIDTH, type: D.WidthType.DXA }, columnWidths: [LABEL_W, CONTENT_WIDTH - LABEL_W],
+        borders: { top: NONE, bottom: NONE, left: NONE, right: NONE, insideHorizontal: NONE, insideVertical: NONE },
+        rows: [new D.TableRow({ cantSplit: true, children: [
+          cellOf(LABEL_W, [new D.Paragraph({ children: [new D.TextRun({ text: c.label.toUpperCase(), bold: true, font: HFONT, size: 15, characterSpacing: 16 })] })]),
+          cellOf(CONTENT_WIDTH - LABEL_W, [new D.Paragraph({ children: inlineRuns(c.rest.length && c.rest[0].type === 'text' ? [{ ...c.rest[0], text: c.rest[0].text.replace(/^\s+/, ''), tokens: undefined }, ...c.rest.slice(1)] : c.rest) })]),
+        ] })],
       }), new D.Paragraph({ spacing: { after: 100 }, children: [] }));
       break;
     }
@@ -358,22 +379,25 @@ function block(t, level = 0) {
 }
 tokens.forEach((t) => block(t));
 
-const label = (k, v) => new D.TableRow({ children: [
-  new D.TableCell({ width: { size: 2200, type: D.WidthType.DXA }, borders: D.TableBorders?.NONE, children: [new D.Paragraph({ children: [new D.TextRun({ text: k, color: MUTED, font: FONT, size: 20 })] })] }),
-  new D.TableCell({ width: { size: 6826, type: D.WidthType.DXA }, children: [new D.Paragraph({ children: [new D.TextRun({ text: v, font: FONT, size: 20 })] })] }),
-] });
-const noBorders = { top: { style: D.BorderStyle.NONE, size: 0, color: 'FFFFFF' }, bottom: { style: D.BorderStyle.NONE, size: 0, color: 'FFFFFF' }, left: { style: D.BorderStyle.NONE, size: 0, color: 'FFFFFF' }, right: { style: D.BorderStyle.NONE, size: 0, color: 'FFFFFF' }, insideHorizontal: { style: D.BorderStyle.NONE, size: 0, color: 'FFFFFF' }, insideVertical: { style: D.BorderStyle.NONE, size: 0, color: 'FFFFFF' } };
 const simpleTable = (header, rows, widths) => table({
   header: header.map((h) => ({ text: h, tokens: [{ type: 'text', text: h }] })),
   rows: rows.map((r) => r.map((c) => ({ text: c, tokens: [{ type: 'text', text: c }] }))),
 });
 
+const metaRow = (k, v, lastRow) => new D.TableRow({ children: [[k, 2000, MUTED], [v, 7026, INK]].map(([text, w, color]) => new D.TableCell({
+  width: { size: w, type: D.WidthType.DXA }, margins: { top: 70, bottom: 70, left: 0, right: 0 },
+  borders: { top: NONE, left: NONE, right: NONE, bottom: lastRow ? rule(8) : rule(3, 'D9D9D9') },
+  children: [new D.Paragraph({ children: [new D.TextRun({ text, color, font: HFONT, size: 18 })] })] })) });
+const metaRows = [['Document number', META.docNo], ['Version', META.version], ['Issue date', META.date], ['System', META.url], ['Owner', META.owner], ['Classification', 'Internal']];
+const logoSize = (() => { const { width, height } = pngSize(path.join(REPO, 'frontend/public/logos/ssii-logo.png')); return { width: Math.round((48 * width) / height), height: 48 }; })();
 const cover = [
-  new D.Paragraph({ border: { bottom: { style: D.BorderStyle.SINGLE, size: 24, color: BRAND, space: 1 } }, children: [] }),
-  new D.Paragraph({ spacing: { before: 3600, after: 120 }, children: [new D.TextRun({ text: META.title, font: FONT, size: 64, bold: true, color: INK })] }),
-  new D.Paragraph({ spacing: { after: 600 }, children: [new D.TextRun({ text: META.subtitle, font: FONT, size: 36, color: BRAND })] }),
-  new D.Table({ width: { size: 9026, type: D.WidthType.DXA }, columnWidths: [2200, 6826], borders: noBorders,
-    rows: [['Document', META.docNo], ['Version', META.version], ['Date', META.date], ['System', META.url], ['Repository', META.repo], ['Owner', META.owner]].map(([k, v]) => label(k, v)) }),
+  new D.Paragraph({ children: [new D.ImageRun({ type: 'png', data: LOGO, transformation: logoSize, altText: { title: 'SS Innovations', description: 'SS Innovations logo', name: 'logo' } })] }),
+  new D.Paragraph({ spacing: { before: 3400, after: 0 }, border: { top: { style: D.BorderStyle.SINGLE, size: 18, color: INK, space: 12 } }, children: [] }),
+  new D.Paragraph({ spacing: { after: 100 }, children: [new D.TextRun({ text: META.title, font: HFONT, size: 60, bold: true, color: INK })] }),
+  new D.Paragraph({ spacing: { after: 3600 }, children: [new D.TextRun({ text: META.subtitle, font: HFONT, size: 32, color: MUTED })] }),
+  new D.Table({ width: { size: 9026, type: D.WidthType.DXA }, columnWidths: [2000, 7026],
+    borders: { top: rule(8), bottom: NONE, left: NONE, right: NONE, insideHorizontal: NONE, insideVertical: NONE },
+    rows: metaRows.map(([k, v], i) => metaRow(k, v, i === metaRows.length - 1)) }),
   new D.Paragraph({ children: [new D.PageBreak()] }),
   new D.Paragraph({ heading: D.HeadingLevel.HEADING_1, children: [new D.TextRun('Document control')] }),
   simpleTable(['Version', 'Date', 'Description'], [[META.version, META.date, META.issue]]),
@@ -387,14 +411,14 @@ const doc = new D.Document({
   creator: META.owner, title: `${META.title} — ${META.subtitle}`, description: META.docNo,
   features: { updateFields: true },
   styles: {
-    default: { document: { run: { font: FONT, size: 20, color: INK } } },
+    default: { document: { run: { font: FONT, size: 21, color: INK }, paragraph: { spacing: { line: 276 } } } },
     paragraphStyles: [
-      { id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 36, bold: true, color: BRAND, font: FONT },
-        paragraph: { spacing: { before: 0, after: 200 }, outlineLevel: 0, border: { bottom: { style: D.BorderStyle.SINGLE, size: 12, color: BRAND, space: 4 } } } },
-      { id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 27, bold: true, color: INK, font: FONT }, paragraph: { spacing: { before: 300, after: 100 }, outlineLevel: 1, keepNext: true } },
-      { id: 'Heading3', name: 'Heading 3', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 23, bold: true, color: INK, font: FONT }, paragraph: { spacing: { before: 240, after: 80 }, outlineLevel: 2, keepNext: true } },
-      { id: 'Heading4', name: 'Heading 4', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 21, bold: true, color: BRAND, font: FONT }, paragraph: { spacing: { before: 200, after: 60 }, outlineLevel: 3, keepNext: true } },
-      { id: 'Heading5', name: 'Heading 5', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 20, bold: true, color: INK, font: FONT }, paragraph: { spacing: { before: 160, after: 60 }, outlineLevel: 4, keepNext: true } },
+      { id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 40, bold: true, color: INK, font: HFONT },
+        paragraph: { spacing: { before: 0, after: 240 }, outlineLevel: 0, border: { bottom: { style: D.BorderStyle.SINGLE, size: 8, color: INK, space: 4 } } } },
+      { id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 26, bold: true, color: INK, font: HFONT }, paragraph: { spacing: { before: 360, after: 100 }, outlineLevel: 1, keepNext: true } },
+      { id: 'Heading3', name: 'Heading 3', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 22, bold: true, color: INK, font: HFONT }, paragraph: { spacing: { before: 240, after: 80 }, outlineLevel: 2, keepNext: true } },
+      { id: 'Heading4', name: 'Heading 4', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 19, bold: true, color: INK, font: HFONT, allCaps: true }, paragraph: { spacing: { before: 200, after: 60 }, outlineLevel: 3, keepNext: true } },
+      { id: 'Heading5', name: 'Heading 5', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { size: 20, bold: true, color: INK, font: HFONT }, paragraph: { spacing: { before: 160, after: 60 }, outlineLevel: 4, keepNext: true } },
     ],
   },
   numbering: { config: [
@@ -402,12 +426,14 @@ const doc = new D.Document({
     { reference: 'numbers', levels: [0, 1, 2].map((level) => ({ level, format: D.LevelFormat.DECIMAL, text: `%${level + 1}.`, alignment: D.AlignmentType.LEFT, style: { paragraph: { indent: { left: 360 + level * 360, hanging: 300 } } } })) },
   ] },
   sections: [{
-    properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1440, bottom: 1300, left: 1440, right: 1440 } } },
+    properties: { titlePage: true, page: { size: { width: 11906, height: 16838 }, margin: { top: 1440, bottom: 1300, left: 1440, right: 1440 } } },
     headers: { default: new D.Header({ children: [new D.Paragraph({ tabStops: [{ type: D.TabStopType.RIGHT, position: 9026 }],
-      children: [new D.TextRun({ text: `${META.title} — ${META.subtitle}`, size: 15, color: '8C95A6' }), new D.TextRun({ text: `\t${META.docNo} v${META.version}`, size: 15, color: '8C95A6' })] })] }) },
+      border: { bottom: { style: D.BorderStyle.SINGLE, size: 4, color: '8C8C8C', space: 3 } },
+      children: [new D.TextRun({ text: `${META.title}: ${META.subtitle}`, size: 15, color: MUTED, font: HFONT }), new D.TextRun({ text: `\t${META.docNo}  Version ${META.version}`, size: 15, color: MUTED, font: HFONT })] })] }) },
     footers: { default: new D.Footer({ children: [new D.Paragraph({ tabStops: [{ type: D.TabStopType.RIGHT, position: 9026 }],
-      children: [new D.TextRun({ text: `${META.owner} · Internal`, size: 15, color: '8C95A6' }),
-        new D.TextRun({ children: ['\tPage ', D.PageNumber.CURRENT, ' of ', D.PageNumber.TOTAL_PAGES], size: 15, color: '8C95A6' })] })] }) },
+      border: { top: { style: D.BorderStyle.SINGLE, size: 4, color: '8C8C8C', space: 3 } },
+      children: [new D.TextRun({ text: `${META.owner} · Internal`, size: 15, color: MUTED, font: HFONT }),
+        new D.TextRun({ children: ['\tPage ', D.PageNumber.CURRENT, ' of ', D.PageNumber.TOTAL_PAGES], size: 15, color: MUTED, font: HFONT })] })] }) },
     children: [...cover, ...body],
   }],
 });

@@ -12,20 +12,24 @@ type Props = {
 };
 
 /**
- * The three kinds of SS Innovations event, each opening its own page (/smrsc, /mantram, /cme).
+ * The kinds of SS Innovations event, each opening its own page (/smrsc, /mantram, /cme, /conferences).
  * A category registered elsewhere links straight to that site once its address is known.
  */
 export function CategoryCards({ events, loading = false }: Props) {
   return (
     <section aria-label="Event categories" className="mb-8 md:mb-12">
-      <ul className="grid gap-3 md:grid-cols-3 md:gap-4">
+      <ul className="grid gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-4">
         {EVENT_CATEGORIES.map((category, index) => {
           const open = events.filter((e) => e.eventType === category.type && (e.status === 'UPCOMING' || e.status === 'LIVE')).length;
+          const past = events.filter((e) => e.eventType === category.type && e.status === 'COMPLETED').length;
           const externalUrl = category.external?.externalUrl;
           const status = category.external
             ? (externalUrl ? 'Register on the conference website' : 'Registration details to follow')
-            : open > 0 ? (open === 1 ? '1 event open for registration' : `${open} events open for registration`) : 'No events open at present';
-          const active = category.external ? Boolean(externalUrl) : open > 0;
+            : category.archive
+              ? open > 0 ? (open === 1 ? '1 current or upcoming conference' : `${open} current or upcoming conferences`)
+                : past > 0 ? 'See our recent conferences' : 'No conferences listed at present'
+              : open > 0 ? (open === 1 ? '1 event open for registration' : `${open} events open for registration`) : 'No events open at present';
+          const active = category.external ? Boolean(externalUrl) : open > 0 || (Boolean(category.archive) && past > 0);
           const body = (
             <>
               <span className="relative block aspect-[16/9] overflow-hidden rounded-[16px] bg-gray-100 md:rounded-[20px]">

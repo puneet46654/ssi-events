@@ -16,7 +16,8 @@ export interface IEvent {
   eventType:
     | 'conference'
     | 'mantram'
-    | 'event';
+    | 'event'
+    | 'participation';
 
   venue: string;
 
