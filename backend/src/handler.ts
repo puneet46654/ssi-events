@@ -5,6 +5,8 @@ import { login, logout, session } from './routes/admin-auth.js';
 import { collectAnalytics } from './routes/analytics.js';
 import { cancelBooking, createBooking, eventSlots, getOwnBooking, myTickets, rescheduleBooking, savePending } from './routes/bookings.js';
 import { listActivity } from './routes/admin-activity.js';
+import { attendanceSummary, checkIn } from './routes/admin-attendance.js';
+import { deleteAdminBooking, deletePendingBooking, getAdminBooking, listBookings, updateAdminBooking } from './routes/admin-bookings.js';
 import { createUser, deleteUser, listUsers, updateUser } from './routes/admin-users.js';
 import { createEvent, deleteEvent, eventImage, getEvent, listEvents, updateEvent } from './routes/events.js';
 import { health } from './routes/health.js';
@@ -38,7 +40,14 @@ export const router = new Router()
   .post('/api/admin/users', createUser)
   .put('/api/admin/users/:id', updateUser)
   .delete('/api/admin/users/:id', deleteUser)
-  .get('/api/admin/activity', listActivity);
+  .get('/api/admin/activity', listActivity)
+  .get('/api/admin/bookings', listBookings)
+  .delete('/api/admin/bookings/pending/:id', deletePendingBooking)
+  .get('/api/admin/bookings/:id', getAdminBooking)
+  .patch('/api/admin/bookings/:id', updateAdminBooking)
+  .delete('/api/admin/bookings/:id', deleteAdminBooking)
+  .get('/api/admin/attendance', attendanceSummary)
+  .post('/api/admin/attendance', checkIn);
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<Response> {
   try {

@@ -51,10 +51,10 @@ The planned list mirrors the endpoints the current frontend calls. Each one gets
 | GET | `/api/admin/session` | Current admin + permissions | admin | **live** |
 | GET, POST | `/api/admin/users` | List / create admins | superadmin | **live** |
 | PUT, DELETE | `/api/admin/users/:id` | Edit / remove admin | superadmin | **live** |
-| GET | `/api/admin/bookings` | Search bookings (paginated) | admin: bookings | planned |
-| GET, PATCH, DELETE | `/api/admin/bookings/:id` | Booking detail / edit / cancel | admin: bookings | planned |
-| DELETE | `/api/admin/bookings/pending/:id` | Discard a pending booking | admin: bookings | planned |
-| GET, POST | `/api/admin/attendance` | Check-in lookup / QR or manual check-in | admin: check-in | planned |
+| GET | `/api/admin/bookings` | Search bookings (paginated) | admin: bookings | **live** |
+| GET, PATCH, DELETE | `/api/admin/bookings/:id` | Booking detail / edit / delete | admin: bookings | **live** |
+| DELETE | `/api/admin/bookings/pending/:id` | Discard a pending booking | admin: bookings + delete | **live** |
+| GET, POST | `/api/admin/attendance` | Check-in lookup / QR or manual check-in | admin: check-in | **live** |
 | GET | `/api/admin/dashboard` | Dashboard figures | admin: dashboard | planned |
 | GET | `/api/admin/reports` | Report data for CSV/Excel/print | admin: reports | planned |
 | GET | `/api/admin/analytics` | Analytics summary | admin: dashboard | planned |
@@ -383,3 +383,87 @@ The admin audit trail, newest first, at most 200 entries.
 `200 { success, logs: [{ _id, admin, action, resource, resourceId, details, createdAt }] }`
 
 `resource` is `auth`, `event` or `admin_user`. User changes carry `details.changes` (`{ field: { from, to } }`) and `details.credentialReset`; event edits carry `details.fields` (the fields that changed).
+
+## Bookings (admin)
+
+**IDs:** a confirmed booking's `_id` is its reference (`SSI-EV-…`). A pending registration has no reference, so its `_id` is `<eventId>_<draftId>`.
+
+**How lists are built:** each request reads every event's bookings and pending registrations and filters them in memory. That suits SSI's scale (occasional events, at most a few thousand bookings each); it should move to indexed queries if volumes grow far beyond that.
+
+### `GET /api/admin/bookings`
+
+Requires `bookings`. Query parameters, all optional:
+
+| Parameter | Meaning |
+| --- | --- |
+| `page`, `limit` | 1-based page; `limit` 1-100 (default 10) |
+| `search` | booking reference, name, email, mobile or hospital (contains, any case) |
+| `eventId` | one event |
+| `dateFilter` | `upcoming` or `past` (slot date against today in the event's timezone) |
+| `status` | `pending` or `confirmed` |
+| `attendance` | `present` or `not_present` |
+| `dayScheduleId`, `slotId` | one day or slot |
+| `specialty`, `designation`, `country`, `state`, `city` | exact value, any case |
+| `bookedFrom`, `bookedTo`, `timeZone` | `YYYY-MM-DD` booked-on range, as calendar days in `timeZone` |
+| `sort` | `newest` (default), `oldest` or `name` |
+
+Pending registrations are left out whenever a filter only confirmed bookings can match (`confirmed`, `past`, attendance, day or slot).
+
+`200`:
+```json
+{ "success": true,
+  "bookings": [{ "_id", "bookingId", "pending"?, "attendee": { "fullName", "email", "mobile" },
+                 "event": { "_id", "eventName", "venue", "status", "timeZone" },
+                 "daySchedule": { "_id", "date" } | null, "slot": { "_id", "startTime", "endTime" } | null,
+                 "attendanceStatus", "createdAt" }],
+  "events": [{ "_id", "eventName" }],
+  "filterOptions": { "specialty": [], "designation": [], "country": [], "state": [], "city": [], "days": [], "slots": [] },
+  "stats": { "total", "upcoming", "past", "pending" },
+  "pagination": { "page", "limit", "total", "pages" } }
+```
+`days` and `slots` are filled only when `eventId` is set.
+
+### `GET /api/admin/bookings/:id`
+
+Requires `bookings`. `200 { success, booking: { _id, bookingId, pending?, details, eventId: {event}, slotId: {_id, startTime, endTime}, dayScheduleId: {_id, dayNumber, date}, attendanceStatus, checkedInAt, checkedInBy, checkInMethod, createdAt, updatedAt } }`. Pending registrations have `slotId` and `dayScheduleId` `null`. `400` malformed ID, `404` not found.
+
+### `PATCH /api/admin/bookings/:id`
+
+Requires `bookings` + create. Body: `{ details, attendanceStatus? }`.
+
+- `details` is merged over the stored details and validated like a new booking (name, valid email, full mobile). A changed mobile number moves the ticket to that number in My Tickets.
+- `attendanceStatus` (`PRESENT` / `NOT_PRESENT`) also needs `check-in`. It is the admin's manual correction, so unlike scanning it isn't limited to the slot's time. `PRESENT` records the admin and method `MANUAL`.
+
+`200 { success, message, booking }` (same shape as GET). `400` invalid details, `404`.
+
+### `DELETE /api/admin/bookings/:id`
+
+Requires `bookings` + delete. Deletes the booking and frees its seat in one transaction (slot count, event count, retry key), at any time, even after check-in. A pending ID deletes the pending registration. `200 { success, message }`, `404`, `409` if the booking changed at the same moment.
+
+### `DELETE /api/admin/bookings/pending/:id`
+
+Requires `bookings` + delete. `200 { success }`, `400` malformed ID, `404`.
+
+## Check-in
+
+### `GET /api/admin/attendance?eventId=`
+
+Requires `check-in`.
+
+- Without `eventId`: `200 { success, events, stats: zeros, recent: [] }`, where `events` lists the events that are live today (`{ id, eventName, venue, startDate, endDate, timeZone }`).
+- With `eventId`: also `stats: { total, present, remaining, percentage }` and `recent`, the ten latest check-ins (`{ id, bookingId, fullName, checkedInAt, checkedInBy, method }`). `400` if the event isn't live today.
+
+### `POST /api/admin/attendance`
+
+Requires `check-in`. Body: `{ eventId, method: "QR" | "MANUAL", code?, bookingId? }`
+
+- `QR`: `code` is the scanned text. The ticket QR is JSON `{ type: "SSI_EVENTS_ATTENDANCE", bookingId, eventId }`; a bare booking reference is accepted too.
+- `MANUAL`: `bookingId` is the reference typed by staff (any case).
+
+**Rules:**
+- The event must be live today and not cancelled (`409`).
+- The ticket must belong to that event (`409` for another event's QR, `404` otherwise).
+- Admission is open during the booked slot only, from its start until its end, in the event's timezone (`409` with the slot's times). Staff can still mark someone present at any time from the booking's page.
+- Scanning a ticket that is already checked in is not an error: `alreadyPresent: true`. Two scanners reading the same ticket at once record it once.
+
+`200 { success, alreadyPresent, message, booking: { id, bookingId, fullName, email, attendanceStatus, checkedInAt } }`
