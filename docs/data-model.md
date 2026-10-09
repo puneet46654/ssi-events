@@ -21,7 +21,7 @@ Key builders live in `backend/src/db/table.ts`. Keep this file and that one in s
 | Slot | `EVENT#<eventId>` | `SLOT#<nn>#<HH:mm>#<slotId>` | | | |
 | Booking request key (idempotency) | `EVENT#<eventId>` | `REQUEST#<requestKeyHash>` | | | |
 | Pending booking | `EVENT#<eventId>` | `PENDING#<draftId>` | | | `expiresAt` |
-| Booking | `BOOKING#<bookingId>` | `META` | `EVENT#<eventId>#BOOKINGS` / `<nn>#<HH:mm>#<bookingId>` | `EVENT#<eventId>#ATTENDANCE` / `<checkedInAt>` (set at check-in) | |
+| Booking | `BOOKING#<bookingId>` | `META` | `EVENT#<eventId>#BOOKINGS` / `<nn>#<HH:mm>#<bookingId>` | `PHONE#<full number>` / `<createdAt>#<bookingId>` | |
 | Admin user | `ADMIN#<username>` | `META` | `ADMINS` / `<username>` | | |
 | Failed sign-in | `LOGINFAIL#<username>` | `<timestamp>#<id>` | | | 15 minutes |
 | Admin activity | `ADMINLOG#<yyyy-mm>` | `<timestamp>#<id>` | | | 1 year |
@@ -41,7 +41,8 @@ Key builders live in `backend/src/db/table.ts`. Keep this file and that one in s
 | Public catalogue by date | `Query GSI1 PK = EVENTS` (range on start date) |
 | Booking by reference | `GetItem BOOKING#ref / META` |
 | Bookings for an event, by day/slot | `Query GSI1 PK = EVENT#id#BOOKINGS` |
-| Attendance log for an event | `Query GSI2 PK = EVENT#id#ATTENDANCE` |
+| My Tickets by mobile number | `Query GSI2 PK = PHONE#<number>` |
+| Attendance for an event | `Query GSI1 PK = EVENT#id#BOOKINGS` (filter `attendanceStatus`) |
 | Admin login | `GetItem ADMIN#username / META` |
 | Polling for changes | `GetItem REALTIME / GLOBAL` (CDN-cached 2 s) |
 
@@ -72,3 +73,7 @@ If the request key already exists, it's a retry. The backend then returns the bo
 | Admin activity | `admin`, `action`, `resource`, `resourceId`, `details` (sensitive keys removed), `createdAt` |
 
 **Event creation** writes the day and slot items first, in batches of 25, and the event item last. A create that fails midway leaves no event in the catalogue; its orphaned day and slot items are never read.
+
+| Booking (implemented) | `bookingId`, `eventId`, `slotId`, `slotSK` (the slot item's sort key), `dayId`, `dayNumber`, `date`, `startTime`, `endTime`, `details`, `phone`, `email`, `requestKeyHash`, `requestFingerprint`, `attendanceStatus`, `checkedInAt`, `checkedInBy`, `checkInMethod`, `createdAt`, `updatedAt` |
+| Pending booking (implemented) | `eventId`, `draftId`, `details`, `phone`, `email`, `expiresAt`, `ttl`, `updatedAt` |
+| Booking request key (implemented) | `bookingId`, `fingerprint`, `createdAt`; removed when the booking is cancelled |

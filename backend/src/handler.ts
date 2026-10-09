@@ -3,8 +3,10 @@ import { error, HttpError, type Response } from './http.js';
 import { Router } from './router.js';
 import { login, logout, session } from './routes/admin-auth.js';
 import { collectAnalytics } from './routes/analytics.js';
+import { cancelBooking, createBooking, eventSlots, getOwnBooking, myTickets, rescheduleBooking, savePending } from './routes/bookings.js';
 import { createEvent, eventImage, getEvent, listEvents } from './routes/events.js';
 import { health } from './routes/health.js';
+import { countries, states } from './routes/location.js';
 import { realtimeVersions } from './routes/realtime.js';
 
 // Every endpoint is registered here and documented in docs/api-contract.md.
@@ -14,6 +16,15 @@ export const router = new Router()
   .post('/api/events', createEvent)
   .get('/api/events/:id', getEvent)
   .get('/api/events/:id/image', eventImage)
+  .get('/api/events/:id/slots', eventSlots)
+  .post('/api/events/mytickets', myTickets)
+  .get('/api/bookings', getOwnBooking)
+  .post('/api/bookings', createBooking)
+  .patch('/api/bookings', rescheduleBooking)
+  .delete('/api/bookings', cancelBooking)
+  .post('/api/bookings/pending', savePending)
+  .get('/api/location/countries', countries)
+  .get('/api/location/states', states)
   .get('/api/realtime', realtimeVersions)
   .post('/api/analytics/collect', collectAnalytics)
   .post('/api/admin/login', login)
