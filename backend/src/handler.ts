@@ -1,11 +1,17 @@
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import { error, HttpError, type Response } from './http.js';
 import { Router } from './router.js';
+import { collectAnalytics } from './routes/analytics.js';
+import { listEvents } from './routes/events.js';
 import { health } from './routes/health.js';
+import { realtimeVersions } from './routes/realtime.js';
 
 // Every endpoint is registered here and documented in docs/api-contract.md.
 export const router = new Router()
-  .get('/api/health', health);
+  .get('/api/health', health)
+  .get('/api/events', listEvents)
+  .get('/api/realtime', realtimeVersions)
+  .post('/api/analytics/collect', collectAnalytics);
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<Response> {
   try {

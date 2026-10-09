@@ -31,7 +31,7 @@ The planned list mirrors the endpoints the current frontend calls. Each one gets
 | Method | Path | Purpose | Auth | Status |
 | --- | --- | --- | --- | --- |
 | GET | `/api/health` | Liveness + database reachability | none | **live** |
-| GET | `/api/events` | Public event catalogue | none | planned |
+| GET | `/api/events` | Public event catalogue (CDN-cached 5 s) | none | **live** |
 | POST | `/api/events` | Create event (with schedule) | admin: events | planned |
 | GET | `/api/events/:id` | Event details + schedule | none | planned |
 | PUT | `/api/events/:id` | Edit event (keeps booked slots) | admin: events | planned |
@@ -42,10 +42,10 @@ The planned list mirrors the endpoints the current frontend calls. Each one gets
 | GET, POST, PATCH, DELETE | `/api/bookings` | Look up / create / reschedule / cancel own booking | booking grant | planned |
 | POST | `/api/bookings/pending` | Save attendee details before slot choice | none | planned |
 | POST, GET | `/api/feedback` | App rating | none / admin | planned |
-| GET | `/api/realtime` | Revision counters for polling (CDN-cached 2 s) | none | planned |
+| GET | `/api/realtime` | Revision counters for polling (CDN-cached 2 s) | none | **live** |
 | GET | `/api/location/countries` | Country list | none | planned |
 | GET | `/api/location/states` | States for a country | none | planned |
-| POST | `/api/analytics/collect` | Anonymous page analytics | none | planned |
+| POST | `/api/analytics/collect` | Anonymous page analytics (always 204; storage planned) | none | **live** |
 | POST | `/api/admin/login` | Sign in | none | planned |
 | POST | `/api/admin/logout` | Sign out | admin | planned |
 | GET | `/api/admin/session` | Current admin + permissions | admin | planned |
@@ -71,3 +71,31 @@ Used by the deploy pipeline and for monitoring.
   "database": { "table": "ssi-events", "status": "ACTIVE", "latencyMs": 42 } }
 ```
 `503` if DynamoDB can't be reached: `database.status` is `"UNREACHABLE"`.
+
+## `GET /api/events`
+
+The public catalogue, soonest first. `cache-control: public, s-maxage=5, stale-while-revalidate=30`.
+
+`200`:
+```json
+{ "success": true, "events": [{
+  "_id": "01JA...", "eventName": "...", "eventType": "conference | mantram | event",
+  "bookingFormTemplate": "practitioner-institutional | template-2 | template-3",
+  "venue": "...", "description": "...", "imageUrl": "/api/events/<id>/image?v=<ms> or empty",
+  "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD", "timeZone": "Asia/Kolkata",
+  "totalSlots": 40, "bookedSlots": 3, "status": "UPCOMING | LIVE | COMPLETED | CANCELLED",
+  "createdAt": "ISO", "updatedAt": "ISO" }] }
+```
+`status` is computed from the event's dates in its own timezone at request time. `CANCELLED` always wins.
+
+## `GET /api/realtime`
+
+`200`: `{ "success": true, "versions": { "events": 0, "bookings": 0, "attendance": 0 } }`
+
+Poll every few seconds while the tab is visible. Refetch a resource when its number changes.
+
+## `POST /api/analytics/collect`
+
+Body: `{ visitorId, sessionId, events: [{ kind: "pageview" | "api", path, ts, ... }], presence?: { path } }`
+
+Always returns `204` with no body. Views aren't stored yet; storage comes with the admin analytics endpoints.
