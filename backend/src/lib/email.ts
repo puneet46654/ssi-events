@@ -10,7 +10,8 @@ import { slotInstant } from './schedule.js';
 /*
  * Ticket emails, sent through Amazon SES from the verified domain events.ssistudios.com.
  * Configured by MAIL_FROM (e.g. `SS Innovations Events <tickets@events.ssistudios.com>`), plus
- * optional MAIL_REPLY_TO and SITE_URL. Without MAIL_FROM nothing is sent (tests, local runs).
+ * optional MAIL_CC (comma-separated staff addresses copied on every ticket email), MAIL_REPLY_TO
+ * and SITE_URL. Without MAIL_FROM nothing is sent (tests, local runs).
  * An email never decides whether a booking succeeds: failures are logged and recorded on the booking.
  */
 
@@ -20,6 +21,12 @@ export const ses = new SESv2Client({ maxAttempts: 2 });
 
 const BRAND = '#283F8F';
 const QR_CID = 'ticket-qr@events.ssistudios.com';
+
+/** MAIL_CC: staff copied on every ticket email; anything that isn't a plain address is ignored. */
+export function staffCopies(): string[] {
+  return (process.env.MAIL_CC || '').split(',').map((a) => a.trim().toLowerCase())
+    .filter((a) => /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(a));
+}
 
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
@@ -127,12 +134,13 @@ const base64Lines = (data: Buffer | string) => Buffer.from(data).toString('base6
 const encodedWord = (value: string) => `=?UTF-8?B?${Buffer.from(value).toString('base64')}?=`;
 
 /** RFC 5322 message: text + HTML alternatives, with the QR code as an inline image. */
-export function mimeMessage(mail: TicketEmail, from: string, replyTo?: string): Buffer {
+export function mimeMessage(mail: TicketEmail, from: string, replyTo?: string, cc: string[] = []): Buffer {
   const related = `rel_${randomBytes(12).toString('hex')}`;
   const alternative = `alt_${randomBytes(12).toString('hex')}`;
   const lines = [
     `From: ${from}`,
     `To: ${mail.to}`,
+    ...(cc.length ? [`Cc: ${cc.join(', ')}`] : []),
     ...(replyTo ? [`Reply-To: ${replyTo}`] : []),
     `Subject: ${encodedWord(mail.subject)}`,
     'MIME-Version: 1.0',
@@ -174,14 +182,15 @@ export function mimeMessage(mail: TicketEmail, from: string, replyTo?: string): 
 export async function notifyAttendee(kind: TicketEmailKind, booking: BookingItem, event: EventCore | undefined): Promise<void> {
   const from = process.env.MAIL_FROM;
   if (!from || !event) return;
+  const cc = staffCopies();
   const at = new Date().toISOString();
   let record: Record<string, unknown>;
   try {
     const mail = await ticketEmail(kind, booking, event);
     const result = await ses.send(new SendEmailCommand({
       FromEmailAddress: /<([^>]+)>/.exec(from)?.[1] ?? from, // the IAM policy only allows @events.ssistudios.com
-      Destination: { ToAddresses: [mail.to] },
-      Content: { Raw: { Data: mimeMessage(mail, from, process.env.MAIL_REPLY_TO || undefined) } },
+      Destination: { ToAddresses: [mail.to], ...(cc.length ? { CcAddresses: cc } : {}) },
+      Content: { Raw: { Data: mimeMessage(mail, from, process.env.MAIL_REPLY_TO || undefined, cc) } },
     }));
     record = { kind, at, messageId: result.MessageId ?? '' };
   } catch (err) {

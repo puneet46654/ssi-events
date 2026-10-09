@@ -35,7 +35,7 @@ beforeEach(async () => {
   process.env.MAIL_FROM = 'SS Innovations Events <tickets@events.ssistudios.com>';
   mock.method(ses, 'send', async (command: any) => { sent.push(Buffer.from(command.input.Content.Raw.Data)); return { MessageId: `m-${sent.length}` }; });
 });
-afterEach(() => { delete process.env.MAIL_FROM; mock.restoreAll(); });
+afterEach(() => { delete process.env.MAIL_FROM; delete process.env.MAIL_CC; mock.restoreAll(); });
 
 const decodedParts = (raw: Buffer) => [...raw.toString().matchAll(/base64\r\n\r\n([A-Za-z0-9+/=\r\n]+?)\r\n--/g)]
   .map((m) => Buffer.from(m[1]!.replace(/\r\n/g, ''), 'base64'));
@@ -97,4 +97,19 @@ test('message headers cannot be injected through attendee details', async () => 
   } as any, { eventName: 'E\r\nBcc: evil@example.com', venue: 'V', timeZone: 'Asia/Kolkata' } as any);
   const raw = mimeMessage(mail, 'SS Innovations Events <tickets@events.ssistudios.com>').toString();
   assert.doesNotMatch(raw, /^Bcc:/m);
+});
+
+test('staff in MAIL_CC are copied on every ticket email', async () => {
+  process.env.MAIL_CC = 'naveen.kumar@ssinnovations.org, reena.bhatt@ssinnovations.org,vilayat.ali@ssinnovations.org, not an address';
+  const destinations: any[] = [];
+  mock.method(ses, 'send', async (command: any) => {
+    destinations.push(command.input.Destination);
+    sent.push(Buffer.from(command.input.Content.Raw.Data));
+    return { MessageId: 'm' };
+  });
+  const res = await call('POST', '/api/bookings', { body: { eventId: EVENT, dayScheduleId: DAY, slotId: SLOT_A, details, idempotencyKey: randomUUID() } });
+  assert.equal(res.status, 201);
+  const staff = ['naveen.kumar@ssinnovations.org', 'reena.bhatt@ssinnovations.org', 'vilayat.ali@ssinnovations.org'];
+  assert.deepEqual(destinations[0], { ToAddresses: ['asha@example.com'], CcAddresses: staff });
+  assert.ok(sent[0]!.toString().includes(`\r\nCc: ${staff.join(', ')}\r\n`));
 });
