@@ -72,8 +72,12 @@ type DashboardResponse = {
   message?: string;
 };
 
+type OpenSlot = { slotId: string; startTime: string; endTime: string; remaining: number };
+type CheckInInput = { code?: string; bookingId?: string; method: 'QR' | 'MANUAL'; moveToSlotId?: string };
+
 type CheckInResponse = {
   success: boolean;
+  openSlots?: OpenSlot[];
 
   alreadyPresent?: boolean;
 
@@ -107,6 +111,10 @@ type ScanMessage = {
   bookingId?: string;
 
   fullName?: string;
+
+  /** Outside the booked time: slots open now with free seats, and the scan to repeat with one of them. */
+  openSlots?: OpenSlot[];
+  retry?: CheckInInput;
 };
 
 type ScannerState =
@@ -234,7 +242,7 @@ export default function CheckInPage() {
     return () => { clearTimeout(timer); clearInterval(interval); attendanceRequest.current?.abort(); };
   }, [selectedEventId, loadAttendance]);
 
-  const checkIn = useCallback(async (input: { code?: string; bookingId?: string; method: 'QR' | 'MANUAL' }) => {
+  const checkIn = useCallback(async (input: CheckInInput) => {
     const eventId = activeEvent.current;
     if (!eventId || eventId !== selectedEventId) return;
     if (checkInRequest.current && !checkInRequest.current.signal.aborted) return;
@@ -244,6 +252,15 @@ export default function CheckInPage() {
         signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]), body: JSON.stringify({ ...input, eventId }) });
       const data = await response.json() as CheckInResponse;
       if (controller.signal.aborted || activeEvent.current !== eventId) return;
+      if (response.status === 409 && data.openSlots && !input.moveToSlotId) {
+        // Early or late: staff can move the attendee into a slot that is open now.
+        setScanMessage({
+          type: 'warning', title: data.openSlots.length ? 'Not their booked time: seats are open now' : 'Not their booked time',
+          message: data.message || 'This ticket is for another time.', fullName: data.booking?.fullName, bookingId: data.booking?.bookingId,
+          openSlots: data.openSlots, retry: { code: input.code, bookingId: input.bookingId, method: input.method },
+        });
+        return data;
+      }
       if (!response.ok || !data.success) throw new Error(data.message || 'Unable to record attendance.');
       setScanMessage({ type: 'success', title: data.alreadyPresent ? 'Ticket verified' : 'Marked Present',
         message: data.message || 'Attendance recorded successfully.', bookingId: data.booking?.bookingId, fullName: data.booking?.fullName });
@@ -587,7 +604,7 @@ export default function CheckInPage() {
         </div>
       </section>
 
-      {selectedEvent && <p className="mt-2 text-sm text-gray-500">Event timezone: {eventTimeZone(selectedEvent.timeZone)}. Admission is limited to the ticket&apos;s booked date and slot.</p>}
+      {selectedEvent && <p className="mt-2 text-sm text-gray-500">Event timezone: {eventTimeZone(selectedEvent.timeZone)}. Check-in opens 15 minutes before a ticket&apos;s slot; someone early or late can be moved into a slot that is open now with free seats.</p>}
       {(eventsError || attendanceError) && <div role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
         {eventsError || attendanceError} <button type="button" className="ml-3 underline" onClick={() => {
           if (eventsError) void loadLiveEvents();
@@ -612,6 +629,14 @@ export default function CheckInPage() {
                 null,
               )
             }
+            onMove={(slotId) => {
+              const retry = scanMessage.retry;
+              if (!retry) return;
+              void checkIn({ ...retry, moveToSlotId: slotId }).catch((error) => setScanMessage({
+                type: 'error', title: 'Could not move the booking',
+                message: error instanceof Error ? error.message : 'Please scan the ticket again.',
+              }));
+            }}
           />
         )}
       </AnimatePresence>
@@ -1870,10 +1895,11 @@ export default function CheckInPage() {
 function ScanResult({
   value,
   onClose,
+  onMove,
 }: {
   value: ScanMessage;
-
   onClose: () => void;
+  onMove?: (slotId: string) => void;
 }) {
   const success =
     value.type ===
@@ -2031,7 +2057,7 @@ function ScanResult({
         >
           <p
             className={`
-              text-[13px]
+              text-[16px]
               font-semibold
 
               ${
@@ -2051,12 +2077,10 @@ function ScanResult({
 
           <p
             className="
-              mt-0.5
-
-              text-[11px]
-              leading-4
-
-              text-gray-600
+              mt-1
+              text-[14px]
+              leading-5
+              text-gray-700
             "
           >
             {
@@ -2064,15 +2088,32 @@ function ScanResult({
             }
           </p>
 
+          {value.openSlots && value.openSlots.length > 0 && onMove && (
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              {value.openSlots.map((slot) => (
+                <button
+                  key={slot.slotId}
+                  type="button"
+                  onClick={() => onMove(slot.slotId)}
+                  className="min-h-11 rounded-lg bg-primary px-4 py-2 text-left text-[14px] font-semibold leading-5 text-white hover:bg-primary/90"
+                >
+                  <span className="block">Check in to {slot.startTime}–{slot.endTime}</span>
+                  <span className="block text-[13px] font-normal text-white/85">{slot.remaining === 1 ? '1 seat left' : `${slot.remaining} seats left`}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {value.openSlots && value.openSlots.length === 0 && (
+            <p className="mt-2 text-[14px] text-gray-700">No other slot has free seats right now. You can mark them present from their booking page.</p>
+          )}
+
           {value.bookingId && (
             <p
               className="
-                mt-1
-
+                mt-1.5
                 font-mono
-
-                text-[10px]
-                text-gray-500
+                text-[13px]
+                text-gray-600
               "
             >
               ID:{' '}
