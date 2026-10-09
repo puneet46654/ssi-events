@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Copies the app secrets from SSM Parameter Store (/ssi-events/*) into the Lambda's environment.
+# Copies the app secrets from SSM Parameter Store (/ssi-events/*) into the backend Lambda's environment.
 # Run after changing a secret, e.g.:
-#   aws ssm put-parameter --name /ssi-events/MONGODB_URI --type SecureString --overwrite --value 'mongodb+srv://...'
+#   aws ssm put-parameter --name /ssi-events/ADMIN_SESSION_SECRET --type SecureString --overwrite --value "$(openssl rand -hex 32)"
 #   bash infra/set-secrets.sh
 # The CI deploy role cannot read these; only an administrator runs this.
 set -euo pipefail
 export MSYS_NO_PATHCONV=1   # Git Bash on Windows: keep /ssi-events/... and /aws/lambda/... literal
 aws() { command aws "$@" | tr -d "\r"; }   # Windows AWS CLI ends lines with CRLF
 export AWS_DEFAULT_REGION=ap-south-1
-FUNCTION=ssi-events-web
+FUNCTION=ssi-events-api   # secrets belong to the backend only
 PYTHON=$(python3 -c 'print(1)' >/dev/null 2>&1 && echo python3 || echo python)
 
 current=$(aws lambda get-function-configuration --function-name "$FUNCTION" --query Environment.Variables --output json)

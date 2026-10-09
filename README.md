@@ -1,74 +1,80 @@
 # SSI Maya Connect — events.ssistudios.com
 
 Event registration, slot booking, QR tickets and admin check-in for events hosted by SS Innovations.
-App code is written by Puneet in https://github.com/puneet46654/ssimayaconnect and copied into `site/`.
-This repository (GitLab `naveen-ssi/ssi-events`) is the repo of record: nothing reaches production until the owner merges.
+
+This GitLab project (`naveen-ssi/ssi-events`) is the single source of truth for frontend, backend and infrastructure. Nothing reaches production without the owner merging a merge request into `main`.
+
+| Folder | What | Owner |
+| --- | --- | --- |
+| `backend/` | API (`/api/*`): TypeScript on AWS Lambda, data in DynamoDB | SS Innovations |
+| `frontend/` | Next.js website (pages, components) | Frontend developer, see `docs/frontend-developer-guide.md` |
+| `infra/` | AWS setup and deploy scripts | SS Innovations |
+| `docs/` | API contract, data model, developer guide | Shared |
+
+## Architecture (all AWS, pay-per-request, nothing always on)
+
+```
+viewer ─► CloudFront E2YO5MY27AOEY1  (events.ssistudios.com, ACM TLS cert)
+            ├─ /api/*           ─► Lambda ssi-events-api  (backend/, Node 24, arm64)
+            │                        ├─► DynamoDB ssi-events       (on-demand, PITR, TTL)
+            │                        └─► S3 ssi-studio-events       (event images)
+            ├─ /_next/static/*  ─► S3 ssi-events-site-051826716001  (private, OAC)
+            └─ everything else  ─► Lambda ssi-events-web  (frontend/, Next.js standalone + Lambda Web Adapter)
+```
+
+The app is only used when SS Innovations runs an event. Lambda and DynamoDB on-demand charge per request, so an idle site costs nothing. Event-scale traffic stays within the AWS free tiers. The fixed costs are the existing Route 53 zone and pennies for S3 storage and DynamoDB backups.
+
+| Resource | ID / setting |
+| --- | --- |
+| AWS account / region | 051826716001 / ap-south-1 (CloudFront cert in us-east-1) |
+| DNS | Route 53 zone ssistudios.com `Z07119773E1TU1SAAQGCF`, A/AAAA alias `events` → CloudFront |
+| TLS | ACM `531ab18e-fd0a-43cf-86b6-eb9ea13a75a4` |
+| CloudFront | `E2YO5MY27AOEY1`; cache policy `ssi-events-next` (honours origin `Cache-Control`, default no caching); OAC `ssi-events-s3` |
+| Backend Lambda | `ssi-events-api`: nodejs24.x arm64, 512 MB, 25 s, reserved concurrency 50; role `ssi-events-api` (table + index CRUD, event-image bucket) |
+| Frontend Lambda | `ssi-events-web`: nodejs24.x x86_64, 1024 MB, 30 s, reserved concurrency 100, Lambda Web Adapter v30; role `ssi-events-lambda` (logs only, no data access) |
+| Database | DynamoDB `ssi-events`; see `docs/data-model.md` |
+| Secrets | SSM SecureString `/ssi-events/ADMIN_SESSION_SECRET`, `/ssi-events/BOOKING_ACCESS_SECRET`; backend only |
+| CI deploy role | `ssi-events-gitlab-deploy`: GitLab OIDC, `naveen-ssi/ssi-events` `main` only; can update the two functions' code, write `/_next/static/*` and `releases/*` in the site bucket, and invalidate the distribution. It can't read secrets or data. |
+| Logs | CloudWatch `/aws/lambda/ssi-events-api`, `/aws/lambda/ssi-events-web`, kept 30 days |
+
+`infra/setup-aws.sh` creates or updates all of the above. It's idempotent and safe to re-run.
 
 ## Release flow
 
-1. Puneet pushes to GitHub `main`.
-2. The GitHub webhook triggers this project's `sync` job (`infra/sync-frontend.sh`). It copies the code into `site/` on branch `frontend-sync` and opens or updates an MR into `main`.
-3. The MR pipeline runs unit tests and a production build. It does not deploy.
-4. The owner reviews and merges.
-5. The `main` pipeline builds and deploys to https://events.ssistudios.com, then checks that `/events` returns 200.
-
-## Hosting (pay-per-request, nothing always on)
-
-```
-viewer ─► CloudFront E2YO5MY27AOEY1 (events.ssistudios.com, ACM cert)
-            ├─ /_next/static/*  ─► S3 ssi-events-site-051826716001 (private, OAC)
-            └─ everything else  ─► Lambda ssi-events-web (Next.js standalone + Lambda Web Adapter)
-                                     ├─► MongoDB Atlas (free M0, SS Innovations account)
-                                     └─► S3 ssi-studio-events (event images, via the Lambda role)
-```
-
-Lambda only runs while requests come in, so an idle site costs nothing. Expected traffic falls within the AWS free tiers for Lambda, CloudFront and SSM. Fixed costs are the existing Route 53 zone and a few MB of S3.
-
-| Resource | ID |
-| --- | --- |
-| AWS account | 051826716001 (ap-south-1) |
-| Route 53 zone | ssistudios.com `Z07119773E1TU1SAAQGCF` |
-| ACM certificate (us-east-1) | `531ab18e-fd0a-43cf-86b6-eb9ea13a75a4` |
-| CloudFront | `E2YO5MY27AOEY1` (`d10w4er69834v0.cloudfront.net`), cache policy `ssi-events-next`, OAC `ssi-events-s3` |
-| Lambda | `ssi-events-web`, nodejs24.x, 1024 MB, 30 s, reserved concurrency 100, Lambda Web Adapter layer v30 (1.1.0) |
-| Lambda role | `ssi-events-lambda` (logs + get/put on `ssi-studio-events/*`) |
-| Deploy role | `ssi-events-gitlab-deploy` (GitLab OIDC, `naveen-ssi/ssi-events` `main` only) |
-| Secrets | SSM SecureString `/ssi-events/MONGODB_URI`, `/ssi-events/ADMIN_SESSION_SECRET`, `/ssi-events/BOOKING_ACCESS_SECRET` |
-
-`infra/setup-aws.sh` created all of the above and can be re-run safely.
-
-## Build adaptations
-
-Puneet's app targets Vercel. Before `next build`, `infra/prepare-build.mjs` makes two changes:
-
-- `next.config.ts`: `output: 'standalone'`, so Lambda gets a self-contained server.
-- `lib/s3.ts`: removes the explicit access-key credentials, so the S3 client uses the Lambda role. Lambda's temporary credentials need a session token that the explicit form drops.
-
-Each change is skipped once it exists upstream. If Puneet's code changes shape, the build fails rather than shipping unpatched. Ask Puneet to make both changes upstream.
-
-The custom `server.mjs` (Socket.IO) isn't used. The app falls back to polling `/api/realtime`, which it already does on Vercel.
+1. A developer pushes a branch to this project and opens an MR into `main`.
+2. The MR pipeline runs in parallel:
+   - **backend:** typecheck, unit tests, bundle
+   - **frontend:** unit tests, Next.js build
+   Nothing is deployed.
+3. The owner reviews and merges.
+4. The `main` pipeline rebuilds and runs `infra/deploy.sh`:
+   1. uploads static assets
+   2. updates the backend Lambda, then the frontend Lambda
+   3. invalidates CloudFront
+   4. checks that `/events` returns 200 and that `/api/health` reports the new commit with the database `ACTIVE`
 
 ## Admin tasks
 
-Set or rotate a secret, then push it to Lambda:
-
 ```bash
-aws ssm put-parameter --name /ssi-events/MONGODB_URI --type SecureString --overwrite --value 'mongodb+srv://...'
-bash infra/set-secrets.sh
+bash infra/setup-aws.sh       # (re)apply AWS infrastructure
+bash infra/set-secrets.sh     # copy /ssi-events/* secrets from SSM into the backend Lambda
+curl https://events.ssistudios.com/api/health
 ```
 
-GitLab CI setup (same as the Dr. Sudhir site):
-- CI/CD variable `SYNC_PUSH_TOKEN`: a project access token with `write_repository`, role Developer or higher. Masked and protected.
-- Pipeline trigger token, plus a GitHub webhook on `puneet46654/ssimayaconnect` (push events) pointing to
-  `https://gitlab.com/api/v4/projects/<project-id>/ref/main/trigger/pipeline?token=<trigger-token>`.
-- Protect `main`: only Maintainers can merge, and no one can push directly.
+To roll back, revert the merge commit in GitLab. The revert goes through the same pipeline. Each release's zips are kept for 30 days under `s3://ssi-events-site-051826716001/releases/`.
 
-## Known limitations / open items
+## GitLab settings (owner, one-time)
 
-- **Database:** production needs a MongoDB Atlas cluster owned by SS Innovations (free M0, AWS Mumbai). Lambda has no fixed IP, so Atlas network access must allow `0.0.0.0/0`. Use a long random database password. Free M0 has throughput limits, so load-test before a large event.
-- **Data migration** from Puneet's current database is pending. Keep his `BOOKING_ACCESS_SECRET` if existing ticket links must keep working.
-- **Image uploads:** Lambda caps request bodies at 6 MB, so uploads close to the app's 5 MiB limit may fail. Images under about 4 MB are fine.
-- `/admin/attendance` redirects to an absolute URL built from the server's internal host. It isn't linked anywhere in the app. Puneet should change it to a relative redirect.
-- The root admin account (`puneet`) and its password hash are hard-coded in `lib/admin-server-auth.ts`. Rotate it or move it to configuration before go-live.
-- The Lambda function URL is public as well as the CloudFront domain. CloudFront is the intended entry point.
-- `@vercel/speed-insights` loads a Vercel-only script that returns 404 here. It's harmless; Puneet can remove it.
+- **Protect `main`:** allowed to merge = Maintainers, allowed to push = No one.
+- **Add the frontend developer** as a Developer: they can push branches and open MRs, but can't merge to `main`.
+- **Merge settings:** turn on "Pipelines must succeed".
+
+## Status
+
+- **Done:**
+  - AWS foundation: CloudFront routing, DynamoDB table, backend Lambda with `/api/health`, frontend Lambda
+  - MR-gated pipeline for both frontend and backend
+  - docs
+- **Next:** implement the planned endpoints in `backend/` (see `docs/api-contract.md`), point the frontend at them, then delete the legacy server code from `frontend/` (`app/api`, `models`, MongoDB/Redis/Socket.IO dependencies).
+- **Data:** the table starts empty. Migration of the old MongoDB data is deferred.
+- **Until the backend endpoints exist,** the site's pages load but every data call (events, bookings, admin) returns `404` from the new backend.
