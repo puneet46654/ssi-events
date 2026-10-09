@@ -1,4 +1,6 @@
 {"Version":"2012-10-17","Statement":[
 {"Sid":"Table","Effect":"Allow","Action":["dynamodb:GetItem","dynamodb:PutItem","dynamodb:UpdateItem","dynamodb:DeleteItem","dynamodb:Query","dynamodb:BatchGetItem","dynamodb:BatchWriteItem","dynamodb:ConditionCheckItem","dynamodb:DescribeTable"],
  "Resource":["arn:aws:dynamodb:ap-south-1:051826716001:table/ssi-events","arn:aws:dynamodb:ap-south-1:051826716001:table/ssi-events/index/*"]},
-{"Sid":"EventImages","Effect":"Allow","Action":["s3:GetObject","s3:PutObject"],"Resource":"arn:aws:s3:::ssi-studio-events/*"}]}
+{"Sid":"EventImages","Effect":"Allow","Action":["s3:GetObject","s3:PutObject"],"Resource":"arn:aws:s3:::ssi-studio-events/*"},
+{"Sid":"TicketEmails","Effect":"Allow","Action":["ses:SendEmail","ses:SendRawEmail"],"Resource":"arn:aws:ses:ap-south-1:051826716001:identity/events.ssistudios.com",
+ "Condition":{"StringLike":{"ses:FromAddress":"*@events.ssistudios.com"}}}]}

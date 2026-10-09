@@ -9,6 +9,7 @@ import {
   phoneIdentity, publicBooking, readBookingDetails, sha256, slotStart, type BookingItem, type EventCore, type SlotItem,
 } from '../lib/bookings.js';
 import { calendarDate, eventStatus, eventTimeZone, zonedDate } from '../lib/dates.js';
+import { notifyAttendee } from '../lib/email.js';
 import { EDIT_LOCKED_MESSAGE, NOT_EDIT_LOCKED } from '../lib/event-lock.js';
 import { isId } from '../lib/ids.js';
 import { isValidPhone, normalizePhone } from '../lib/phone.js';
@@ -213,7 +214,7 @@ export const createBooking: Handler = async (req) => {
   }
 
   try { await clearPending(eventId, booking); } catch (err) { console.error('Pending cleanup failed', err); }
-  await bumpRealtime('bookings');
+  await Promise.all([bumpRealtime('bookings'), notifyAttendee('confirmed', booking, event)]);
   return bookingResponse(booking, false, event);
 };
 
@@ -312,6 +313,7 @@ export const rescheduleBooking: Handler = async (req) => {
   }
   await bumpRealtime('bookings');
   const updated = await getBooking(bookingId);
+  if (updated) await notifyAttendee('rescheduled', updated, event);
   return json(200, { success: true, booking: updated ? publicBooking(updated, event) : null });
 };
 
@@ -319,7 +321,7 @@ export const rescheduleBooking: Handler = async (req) => {
 export const cancelBooking: Handler = async (req) => {
   assertSameOrigin(req);
   const bookingId = managedBookingId(req, req.query.bookingId);
-  const { booking } = await manageable(bookingId);
+  const { booking, event } = await manageable(bookingId);
   try {
     await db.send(new TransactWriteCommand({
       TransactItems: [
@@ -344,7 +346,7 @@ export const cancelBooking: Handler = async (req) => {
     if (!cancelledParts(err)) throw err;
     throw new HttpError(409, 'This booking was already changed or checked in. Reload My Tickets.');
   }
-  await bumpRealtime('bookings');
+  await Promise.all([bumpRealtime('bookings'), notifyAttendee('cancelled', booking, event)]);
   return json(200, { success: true });
 };
 

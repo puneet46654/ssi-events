@@ -292,6 +292,15 @@ Body: `{ eventId, dayScheduleId, slotId, details, idempotencyKey (UUID v4) }`
 - `status`: `ACTIVE`, `EXPIRED`, `ATTENDED` or `CANCELLED`
 - `qrData`: a JSON string `{ type: "SSI_EVENTS_ATTENDANCE", doctorId, bookingId, eventId }`, empty if the event is cancelled
 
+### Ticket emails
+
+The attendee is emailed after `POST /api/bookings` (confirmation, with the QR code as an inline image), `PATCH /api/bookings` (reschedule, with the QR code) and `DELETE /api/bookings` (cancellation, no QR code). A retried booking request that returns the existing booking sends nothing.
+
+- **Sender:** `MAIL_FROM` (`SS Innovations Events <tickets@events.ssistudios.com>`), through Amazon SES in ap-south-1. The domain `events.ssistudios.com` is verified with DKIM (2048-bit), a custom MAIL FROM domain `bounce.events.ssistudios.com` (SPF), and DMARC `p=quarantine`. `MAIL_REPLY_TO` is optional.
+- **Never blocks a booking:** a failed send is logged and the booking still succeeds. The outcome is stored on the booking as `lastEmail` (`{ kind, at, messageId }` or `{ kind, at, error }`).
+- **Content:** event, date, time with the event's timezone, venue and booking reference, plus how to manage the booking through My Tickets. Attendee-supplied text is HTML-escaped and the subject is MIME-encoded, so details can't alter the message headers.
+- Without `MAIL_FROM` (tests, local runs) nothing is sent.
+
 ### `GET /api/bookings?bookingId=`
 
 Needs the ticket grant. `200 { success, booking }`; `403` without the grant; `404` if not found.

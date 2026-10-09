@@ -95,6 +95,7 @@ interface Ticket {
 
   qrData:
     string;
+  details?: { title?: string; fullName?: string };
   slotId: string;
   dayScheduleId: string;
   /** True only on the device that made the booking, before its slot starts. */
@@ -651,7 +652,7 @@ export default function MyTicketsPage() {
             <div className="min-w-0 flex-1">
               <p className="text-[14px] font-semibold text-secondary">Booking confirmed</p>
               <p className="mt-0.5 text-[12px] text-gray-600">
-                Your ticket {justBooked} is ready below. Tap QR Ticket and show it at the venue, or add it to your calendar.
+                Your ticket {justBooked} is below, and we have emailed a copy to the address you registered with. Open QR Ticket to save it to your phone, and present it at the venue for check-in.
               </p>
             </div>
             <button type="button" onClick={() => setJustBooked('')} aria-label="Dismiss" className="text-[18px] leading-none text-gray-400 hover:text-gray-600">×</button>
@@ -782,11 +783,13 @@ export default function MyTicketsPage() {
                 }}
 
                 className="
+                  w-full
+                  max-w-sm
                   rounded-2xl
 
                   bg-white
 
-                  p-6
+                  p-5
 
                   text-center
                 "
@@ -798,66 +801,7 @@ export default function MyTicketsPage() {
 
               >
 
-                {selectedTicket.status === 'CANCELLED' ? <p className="max-w-xs font-semibold text-red-700">Event cancelled. This ticket is not valid for admission.</p> : (<QRCodeSVG
-
-                  value={
-                    selectedTicket.qrData
-                  }
-
-                  size={
-                    220
-                  }
-
-                />)}
-
-
-                <p
-                  className="
-                    mt-4
-
-                    text-[13px]
-
-                    font-semibold
-
-                    text-secondary
-                  "
-                >
-                  {
-                    selectedTicket.bookingId
-                  }
-                </p>
-
-
-                <button
-
-                  onClick={() =>
-                    setSelectedTicket(
-                      null,
-                    )
-                  }
-
-                  className="
-                    mt-5
-
-                    h-10
-
-                    rounded-lg
-
-                    bg-primary
-
-                    px-6
-
-                    text-[12px]
-
-                    font-semibold
-
-                    text-white
-                  "
-                >
-
-                  Close
-
-                </button>
+                <TicketPass ticket={selectedTicket} onClose={() => setSelectedTicket(null)} />
 
 
               </motion.div>
@@ -1326,5 +1270,67 @@ function ManageTicketDialog({
         </div>
       </div>
     </div>
+  );
+}
+
+/** The ticket as one card: what staff need at the door, and what the attendee saves to their phone. */
+function TicketPass({ ticket, onClose }: { ticket: Ticket; onClose: () => void }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const cancelled = ticket.status === 'CANCELLED';
+  const name = [ticket.details?.title, ticket.details?.fullName].filter(Boolean).join(' ');
+  const date = new Date(ticket.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+  async function save() {
+    if (!cardRef.current || saving) return;
+    setSaving(true);
+    setSaveError('');
+    try {
+      const { toPng } = await import('html-to-image');
+      const url = await toPng(cardRef.current, { pixelRatio: 3, backgroundColor: '#ffffff', cacheBust: true });
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `SSI-ticket-${ticket.bookingId}.png`;
+      link.click();
+    } catch {
+      setSaveError('The ticket could not be saved. Please take a screenshot instead.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <>
+      <div ref={cardRef} className="bg-white px-2 pb-2 text-left">
+        <p className="text-[12px] font-medium text-primary">SS Innovations Events</p>
+        <p className="mt-1 text-[17px] font-semibold leading-snug text-secondary">{ticket.eventName}</p>
+        <dl className="mt-3 space-y-1.5 text-[13px] text-gray-700">
+          {name && <div><dt className="sr-only">Attendee</dt><dd className="font-medium text-secondary">{name}</dd></div>}
+          <div><dt className="sr-only">Date</dt><dd>{date}</dd></div>
+          <div><dt className="sr-only">Time</dt><dd>{ticket.startTime} – {ticket.endTime} ({eventTimeZone(ticket.timeZone)})</dd></div>
+          {ticket.venue && <div><dt className="sr-only">Venue</dt><dd>{ticket.venue}</dd></div>}
+        </dl>
+        <div className="mt-4 flex justify-center">
+          {cancelled
+            ? <p className="max-w-xs py-8 text-center font-semibold text-red-700">Event cancelled. This ticket is not valid for admission.</p>
+            : <QRCodeSVG value={ticket.qrData} size={220} marginSize={2} />}
+        </div>
+        <p className="mt-3 text-center text-[13px] font-semibold tracking-wide text-secondary">{ticket.bookingId}</p>
+      </div>
+      {saveError && <p role="alert" className="mt-3 text-[12px] text-red-700">{saveError}</p>}
+      <div className="mt-4 flex gap-2">
+        {!cancelled && (
+          <button type="button" onClick={() => { void save(); }} disabled={saving}
+            className="h-11 flex-1 rounded-lg bg-primary px-4 text-[13px] font-semibold text-white disabled:opacity-60">
+            {saving ? 'Saving…' : 'Save ticket'}
+          </button>
+        )}
+        <button type="button" onClick={onClose}
+          className="h-11 flex-1 rounded-lg border border-gray-200 px-4 text-[13px] font-semibold text-secondary">
+          Close
+        </button>
+      </div>
+    </>
   );
 }
