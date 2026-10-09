@@ -16,15 +16,14 @@ export const DEFAULT_BOOKING_TEMPLATE: BookingFormTemplate =
 export const BOOKING_TEMPLATES: BookingTemplateDefinition[] = [
   {
     id: 'practitioner-institutional',
-    name: 'Template 1',
-    description: 'Practitioner & Institutional registration form.',
+    name: 'Conference registration',
+    description: 'Practitioner and institutional details, including whether the attendee is Faculty or a Delegate. Suited to SMRSC and CME programmes.',
     available: true,
   },
   {
     id: 'template-2',
-    name: 'Template 2',
-    description:
-      'Practitioner & Institutional registration form without Faculty / Delegate placeholder.',
+    name: 'Standard registration',
+    description: 'Practitioner and institutional details, without the Faculty / Delegate question. Used for MantraM visits.',
     available: true,
   },
   {
@@ -34,6 +33,13 @@ export const BOOKING_TEMPLATES: BookingTemplateDefinition[] = [
     available: false,
   },
 ];
+
+/** The form each kind of event normally uses; admins can still choose another. */
+export const DEFAULT_TEMPLATE_FOR_TYPE: Record<'conference' | 'mantram' | 'event', BookingFormTemplate> = {
+  conference: 'practitioner-institutional',
+  mantram: 'template-2',
+  event: 'practitioner-institutional',
+};
 
 export const BOOKING_TEMPLATE_VALUES =
   BOOKING_TEMPLATES.map((template) => template.id);
