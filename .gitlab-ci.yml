@@ -1,12 +1,11 @@
 # Release flow:
-#   Puneet pushes to GitHub → webhook runs `sync` → MR "Frontend update from GitHub" into main
-#   → MR pipeline tests and builds it (no deploy) → owner reviews and merges → main pipeline deploys.
-# Hosting: CloudFront → Lambda (runs only while requests arrive; no always-on server) + S3 for static assets.
+#   Developer pushes a branch to this project → opens an MR into main
+#   → MR pipeline tests and builds frontend + backend (no deploy) → owner reviews and merges
+#   → main pipeline builds again and deploys both to production.
+# Hosting: CloudFront → Lambda (frontend, backend) + DynamoDB + S3. Nothing runs between requests.
 # AWS access is via OIDC (no stored keys); only main of this project can assume the deploy role.
 
 variables:
-  FRONTEND_REPO: https://github.com/puneet46654/ssimayaconnect.git
-  FRONTEND_REF: main
   AWS_ROLE_ARN: arn:aws:iam::051826716001:role/ssi-events-gitlab-deploy
   AWS_DEFAULT_REGION: ap-south-1
   DISTRIBUTION_ID: E2YO5MY27AOEY1
@@ -18,45 +17,53 @@ workflow:
     - if: $CI_COMMIT_BRANCH == "main"
 
 stages:
-  - sync
   - build
   - deploy
 
-# Pull Puneet's latest code into a merge request. Runs from the GitHub webhook
-# (pipeline trigger) or a schedule, or manually from "Run pipeline".
-sync:
-  stage: sync
-  image: node:24-bookworm
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" || $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: manual
-      allow_failure: true
-  script:
-    - bash infra/sync-frontend.sh
-
-build:
-  stage: build
-  image: node:24-bookworm
+.build-rules: &build-rules
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "web"
+
+backend:
+  stage: build
+  image: node:24-bookworm
+  <<: *build-rules
+  script:
+    - apt-get update -qq && apt-get install -y -qq zip >/dev/null
+    - cd backend
+    - npm ci --no-audit --no-fund
+    - npm run typecheck
+    - npm test
+    - npm run build -- "--define:process.env.RELEASE=\"$CI_COMMIT_SHORT_SHA\""
+    - mkdir -p ../dist && (cd dist && zip -q ../../dist/api.zip index.mjs)
+    - ls -l ../dist/api.zip
+  artifacts:
+    paths:
+      - dist/api.zip
+    expire_in: 1 week
+
+frontend:
+  stage: build
+  image: node:24-bookworm
+  <<: *build-rules
   variables:
     NEXT_TELEMETRY_DISABLED: "1"
-    # lib/db.ts requires a URI at import time; the build never connects. The real one lives only on Lambda.
+    # Legacy: frontend/lib/db.ts still requires a URI at import time. The build never connects;
+    # production /api/* is served by backend/. Remove once frontend/ no longer contains server code.
     MONGODB_URI: mongodb://build.invalid:27017/placeholder
   script:
     - apt-get update -qq && apt-get install -y -qq zip >/dev/null
-    - cd site
+    - cd frontend
     - npm ci --no-audit --no-fund
-    - node ../infra/prepare-build.mjs
     - npm test
     - npx next build
     - cd ..
-    - bash infra/package-lambda.sh site
+    - bash infra/package-lambda.sh frontend
   artifacts:
     paths:
-      - dist
+      - dist/web.zip
+      - dist/static
     expire_in: 1 week
 
 deploy:
@@ -66,6 +73,7 @@ deploy:
     entrypoint: [""]
   rules:
     - if: $CI_COMMIT_BRANCH == "main" && ($CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "web")
+  needs: [backend, frontend]
   id_tokens:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
@@ -79,3 +87,5 @@ deploy:
     - bash infra/deploy.sh dist "$CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID"
     - sleep 20
     - test "$(curl -s -o /dev/null -w '%{http_code}' "$SITE_URL/events")" = 200
+    # The backend must report this commit and a reachable database.
+    - curl -sf "$SITE_URL/api/health" | grep -q "\"release\":\"$CI_COMMIT_SHORT_SHA\".*\"status\":\"ACTIVE\""
