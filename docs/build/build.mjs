@@ -11,11 +11,17 @@ import * as D from 'docx';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, '../..');
-const OUT = process.argv[2] || path.join(REPO, 'docs');
+const OUT = process.argv[3] || path.join(REPO, 'docs');
+const DOC = process.argv[2] === 'guide' ? 'guide' : 'project';
+const DOCS = {
+  project: { subtitle: 'Project Documentation', docNo: 'SSI-EVT-PD-001', file: 'SSI-Events-Project-Documentation', source: 'project-document.md',
+    issue: 'First issue: system as deployed at release d0f559b', images: null },
+  guide: { subtitle: 'User Guide', docNo: 'SSI-EVT-UG-001', file: 'SSI-Events-User-Guide', source: 'user-guide.md',
+    issue: 'First issue: attendee and staff guide for the release of 9 October 2026', images: 'guide-img' },
+};
 const META = {
   title: 'SSI Events Platform',
-  subtitle: 'Project Documentation',
-  docNo: 'SSI-EVT-PD-001',
+  ...DOCS[DOC],
   version: '1.0',
   date: '9 October 2026',
   url: 'https://events.ssistudios.com',
@@ -59,7 +65,8 @@ const changeTable = ['Merge times are UTC. Each change was merged by a maintaine
   '| MR | Branch | Merged | Change |', '| --- | --- | --- | --- |',
   ...changes.map((c) => `| ${c.map((x) => x.replace(/\|/g, '\\|')).join(' | ')} |`)].join('\n');
 
-let md = fs.readFileSync(path.join(HERE, 'project-document.md'), 'utf8')
+let md = fs.readFileSync(path.join(HERE, META.source), 'utf8');
+if (DOC === 'project') md = md
   .replace('{{DATA_MODEL}}', shift(fs.readFileSync(path.join(REPO, 'docs/data-model.md'), 'utf8')).replace('Keep this file and that one in step.', 'The two are kept in step.'))
   .replace('{{API_CONTRACT}}', shift(fs.readFileSync(path.join(REPO, 'docs/api-contract.md'), 'utf8')).replace('This file is the agreement', 'This section is the agreement'))
   .replace('{{CHANGES}}', changeTable);
@@ -83,6 +90,22 @@ const COLORS = {
   symbol: '0550AE', punctuation: '57606A', 'template-variable': '953800', subst: '24292F', section: '0550AE', name: '116329', tag: '116329',
 };
 
+/* ---------- Images and callouts ---------- */
+
+const imagePath = (href) => path.join(HERE, META.images || '', href);
+function pngSize(file) {
+  const b = fs.readFileSync(file);
+  return { width: b.readUInt32BE(16), height: b.readUInt32BE(20) };
+}
+const CALLOUTS = { 'Tip:': ['tip', '1F9D74', 'E8F6F0'], 'Note:': ['note', BRAND, 'EEF2FB'], 'Important:': ['important', 'E8590C', 'FFF3E8'] };
+function calloutOf(t) {
+  const first = t.tokens?.[0];
+  const lead = first?.tokens?.[0];
+  if (first?.type !== 'paragraph' || lead?.type !== 'strong') return null;
+  const kind = CALLOUTS[lead.text.trim()];
+  return kind ? { kind, label: lead.text.trim().replace(':', ''), rest: first.tokens.slice(1) } : null;
+}
+
 /* ---------- PDF (HTML + Chromium) ---------- */
 
 const renderer = new marked.Renderer();
@@ -91,6 +114,26 @@ const slug = (s) => s.toLowerCase().replace(/<[^>]+>/g, '').replace(/[^a-z0-9]+/
 renderer.heading = function ({ tokens: t, depth }) {
   const text = this.parser.parseInline(t);
   return `<h${depth} id="${slug(text)}">${text}</h${depth}>`;
+};
+const imagesOnly = (t) => t.some((x) => x.type === 'image') && t.every((x) => x.type === 'image' || (x.type === 'text' && !x.text.trim()));
+renderer.paragraph = function ({ tokens: t }) {
+  if (imagesOnly(t)) {
+    const imgs = t.filter((x) => x.type === 'image');
+    const figs = imgs.map((x) => this.parser.parseInline([x])).join('');
+    return imgs.length > 1 ? `<div class="figrow">${figs}</div>` : figs;
+  }
+  return `<p>${this.parser.parseInline(t)}</p>`;
+};
+renderer.image = ({ href, text }) => {
+  const file = imagePath(href);
+  const { width, height } = pngSize(file);
+  const phone = height > width;
+  return `<figure class="${phone ? 'phone' : 'wide'}"><img src="data:image/png;base64,${fs.readFileSync(file).toString('base64')}" alt="${text}"><figcaption>${text}</figcaption></figure>`;
+};
+renderer.blockquote = function ({ tokens: t }) {
+  const c = calloutOf({ tokens: t });
+  if (!c) return `<blockquote>${this.parser.parse(t)}</blockquote>`;
+  return `<div class="callout ${c.kind[0]}"><span class="label">${c.label}</span> ${this.parser.parseInline(c.rest)}${t.length > 1 ? this.parser.parse(t.slice(1)) : ''}</div>`;
 };
 const bodyHtml = marked.parser(tokens, { renderer });
 const toc = tokens.filter((t) => t.type === 'heading' && t.depth <= 2)
@@ -111,6 +154,7 @@ body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #${I
 .control { page-break-after: always; }
 h1 { font-size: 19pt; color: #${BRAND}; margin: 0 0 12pt; padding-bottom: 6pt; border-bottom: 2px solid #${BRAND}; page-break-before: always; }
 .control h1, .toc h1, .cover h1 { page-break-before: auto; }
+h2, h3, h4 { break-after: avoid; page-break-after: avoid; }
 h2 { font-size: 13.5pt; color: #${INK}; margin: 18pt 0 6pt; } h3 { font-size: 11.5pt; margin: 14pt 0 4pt; color: #${INK}; }
 h4 { font-size: 10.5pt; margin: 12pt 0 4pt; color: #${BRAND}; } h5 { font-size: 10pt; margin: 10pt 0 3pt; }
 p { margin: 0 0 7pt; } ul, ol { margin: 0 0 7pt; padding-left: 18pt; } li { margin: 1.5pt 0; }
@@ -125,6 +169,16 @@ td { border-bottom: 1px solid #${RULE}; padding: 4pt 6pt; vertical-align: top; }
 tbody tr:nth-child(even) td { background: #F8F9FC; }
 .toc ol { list-style: none; padding: 0; columns: 1; } .toc li { margin: 2pt 0; } .toc .toc-2 { padding-left: 16pt; font-size: 9pt; color: #${MUTED}; }
 .toc .toc-1 { font-weight: 600; margin-top: 6pt; }
+figure { margin: 8pt 0 12pt; text-align: center; page-break-inside: avoid; }
+figure img { border: 1px solid #${RULE}; border-radius: 10px; box-shadow: 0 2px 10px rgba(15,23,41,0.10); }
+figure.phone img { width: 56mm; } figure.wide img { width: 100%; }
+.figrow { display: flex; justify-content: center; gap: 8mm; page-break-inside: avoid; } .figrow figure { margin: 6pt 0 10pt; } .figrow figure.phone img { width: 48mm; }
+figcaption { font-size: 8.5pt; color: #${MUTED}; margin-top: 4pt; font-style: italic; }
+.callout { border-radius: 8px; padding: 8pt 11pt; margin: 6pt 0 11pt; page-break-inside: avoid; border-left: 4px solid; }
+.callout .label { font-weight: 700; margin-right: 3pt; }
+.callout.tip { background: #E8F6F0; border-color: #1F9D74; } .callout.tip .label { color: #1F9D74; }
+.callout.note { background: #EEF2FB; border-color: #${BRAND}; } .callout.note .label { color: #${BRAND}; }
+.callout.important { background: #FFF3E8; border-color: #E8590C; } .callout.important .label { color: #C2410C; }
 ${hljsCss}
 </style></head><body>
 <section class="cover"><div class="band"></div><div style="margin-top:70mm">
@@ -133,7 +187,7 @@ ${hljsCss}
 <tr><td>System</td><td>${META.url}</td></tr><tr><td>Repository</td><td>${META.repo}</td></tr><tr><td>Owner</td><td>${META.owner}</td></tr></table>
 </div><div></div></section>
 <section class="control"><h1>Document control</h1>
-<table><thead><tr><th>Version</th><th>Date</th><th>Description</th></tr></thead><tbody><tr><td>1.0</td><td>${META.date}</td><td>First issue: system as deployed at release d0f559b</td></tr></tbody></table>
+<table><thead><tr><th>Version</th><th>Date</th><th>Description</th></tr></thead><tbody><tr><td>1.0</td><td>${META.date}</td><td>${META.issue}</td></tr></tbody></table>
 <h2>Review and approval</h2>
 <table><thead><tr><th style="width:22%">Role</th><th style="width:30%">Name</th><th style="width:28%">Signature</th><th>Date</th></tr></thead><tbody>
 <tr><td>Prepared by</td><td>&nbsp;</td><td></td><td></td></tr><tr><td>Reviewed by</td><td>&nbsp;</td><td></td><td></td></tr><tr><td>Approved by</td><td>&nbsp;</td><td></td><td></td></tr></tbody></table>
@@ -145,7 +199,7 @@ ${bodyHtml}
 const browser = await chromium.launch(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {});
 const page = await browser.newPage();
 await page.setContent(html, { waitUntil: 'load' });
-const pdfPath = path.join(OUT, 'SSI-Events-Project-Documentation.pdf');
+const pdfPath = path.join(OUT, `${META.file}.pdf`);
 await page.pdf({
   path: pdfPath, format: 'A4', printBackground: true, displayHeaderFooter: true,
   margin: { top: '22mm', bottom: '20mm', left: '18mm', right: '18mm' },
@@ -222,7 +276,38 @@ function block(t, level = 0) {
     case 'heading':
       body.push(new D.Paragraph({ heading: HEADINGS[Math.min(t.depth, 5)], pageBreakBefore: t.depth === 1, children: inlineRuns(t.tokens) }));
       break;
-    case 'paragraph': body.push(new D.Paragraph({ spacing: { after: 120 }, children: inlineRuns(t.tokens) })); break;
+    case 'paragraph': {
+      const imgs = t.tokens.filter((x) => x.type === 'image');
+      const onlyImages = imgs.length > 0 && t.tokens.every((x) => x.type === 'image' || (x.type === 'text' && !x.text.trim()));
+      if (onlyImages && imgs.length > 1) {
+        // Side by side: a borderless table, one image and caption per cell.
+        const colW = Math.floor(CONTENT_WIDTH / imgs.length);
+        const none = { style: D.BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+        body.push(new D.Table({ width: { size: colW * imgs.length, type: D.WidthType.DXA }, columnWidths: imgs.map(() => colW),
+          borders: { top: none, bottom: none, left: none, right: none, insideHorizontal: none, insideVertical: none },
+          rows: [new D.TableRow({ cantSplit: true, children: imgs.map((img) => {
+            const file = imagePath(img.href); const { width, height } = pngSize(file); const w = imgs.length > 2 ? 180 : 200;
+            return new D.TableCell({ width: { size: colW, type: D.WidthType.DXA }, borders: { top: none, left: none, bottom: none, right: none }, children: [
+              new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.ImageRun({ type: 'png', data: fs.readFileSync(file), transformation: { width: w, height: Math.round((w * height) / width) }, altText: { title: img.text, description: img.text, name: img.href } })] }),
+              new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { after: 120 }, children: [new D.TextRun({ text: img.text, italics: true, size: 17, color: MUTED, font: FONT })] }),
+            ] });
+          }) })] }), new D.Paragraph({ spacing: { after: 80 }, children: [] }));
+        break;
+      }
+      const only = onlyImages ? imgs[0] : null;
+      if (!only) { body.push(new D.Paragraph({ spacing: { after: 120 }, children: inlineRuns(t.tokens) })); break; }
+      const file = imagePath(only.href);
+      const { width, height } = pngSize(file);
+      const w = height > width ? 200 : 600; // points-ish pixels at 96 dpi
+      body.push(
+        new D.Paragraph({ alignment: D.AlignmentType.CENTER, keepNext: true, spacing: { before: 120, after: 60 },
+          children: [new D.ImageRun({ type: 'png', data: fs.readFileSync(file), transformation: { width: w, height: Math.round((w * height) / width) },
+            altText: { title: only.text, description: only.text, name: only.href } })] }),
+        new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { after: 200 },
+          children: [new D.TextRun({ text: only.text, italics: true, size: 17, color: MUTED, font: FONT })] }),
+      );
+      break;
+    }
     case 'list':
       for (const item of t.items) {
         const [first, ...rest] = item.tokens;
@@ -249,7 +334,23 @@ function block(t, level = 0) {
       }), new D.Paragraph({ spacing: { after: 100 }, children: [] }));
       break;
     }
-    case 'blockquote': for (const s of t.tokens) block(s, level); break;
+    case 'blockquote': {
+      const c = calloutOf(t);
+      if (!c) { for (const sub of t.tokens) block(sub, level); break; }
+      const [, color, fill] = c.kind;
+      const edge = { style: D.BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+      body.push(new D.Table({
+        width: { size: CONTENT_WIDTH, type: D.WidthType.DXA }, columnWidths: [CONTENT_WIDTH],
+        rows: [new D.TableRow({ cantSplit: true, children: [new D.TableCell({
+          width: { size: CONTENT_WIDTH, type: D.WidthType.DXA },
+          shading: { type: D.ShadingType.CLEAR, fill, color: 'auto' },
+          margins: { top: 100, bottom: 100, left: 180, right: 180 },
+          borders: { top: edge, left: { style: D.BorderStyle.SINGLE, size: 24, color }, bottom: edge, right: edge },
+          children: [new D.Paragraph({ children: [new D.TextRun({ text: `${c.label} `, bold: true, color, font: FONT, size: 20 }), ...inlineRuns(c.rest)] })],
+        })] })],
+      }), new D.Paragraph({ spacing: { after: 100 }, children: [] }));
+      break;
+    }
     case 'hr': body.push(new D.Paragraph({ border: { bottom: { style: D.BorderStyle.SINGLE, size: 6, color: RULE, space: 1 } }, children: [] })); break;
     case 'space': break;
     default: if (t.text) body.push(new D.Paragraph({ children: [new D.TextRun({ text: t.text, font: FONT, size: 20 })] }));
@@ -275,7 +376,7 @@ const cover = [
     rows: [['Document', META.docNo], ['Version', META.version], ['Date', META.date], ['System', META.url], ['Repository', META.repo], ['Owner', META.owner]].map(([k, v]) => label(k, v)) }),
   new D.Paragraph({ children: [new D.PageBreak()] }),
   new D.Paragraph({ heading: D.HeadingLevel.HEADING_1, children: [new D.TextRun('Document control')] }),
-  simpleTable(['Version', 'Date', 'Description'], [[META.version, META.date, 'First issue: system as deployed at release d0f559b']]),
+  simpleTable(['Version', 'Date', 'Description'], [[META.version, META.date, META.issue]]),
   new D.Paragraph({ heading: D.HeadingLevel.HEADING_2, children: [new D.TextRun('Review and approval')] }),
   simpleTable(['Role', 'Name', 'Signature', 'Date'], [['Prepared by', ' ', ' ', ' '], ['Reviewed by', ' ', ' ', ' '], ['Approved by', ' ', ' ', ' ']]),
   new D.Paragraph({ heading: D.HeadingLevel.HEADING_1, pageBreakBefore: true, children: [new D.TextRun('Contents')] }),
@@ -310,6 +411,6 @@ const doc = new D.Document({
     children: [...cover, ...body],
   }],
 });
-const docxPath = path.join(OUT, 'SSI-Events-Project-Documentation.docx');
+const docxPath = path.join(OUT, `${META.file}.docx`);
 fs.writeFileSync(docxPath, await D.Packer.toBuffer(doc));
 console.log('DOCX', docxPath);
