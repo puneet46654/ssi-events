@@ -1,7 +1,6 @@
 export const ADMIN_TOKEN_KEY = 'ssi_admin_token';
 export const ADMIN_SESSION_EVENT = 'ssi-admin-session-refresh';
 
-export const ROOT_ADMIN_USERNAME = 'puneet';
 
 export type AdminRole = 'superadmin' | 'admin' | 'staff';
 
@@ -89,8 +88,8 @@ export function hasAdminPermission(
   permission: AdminPermission,
 ): boolean {
   if (!payload) return false;
-  // User & Access belongs to the built-in root admin only.
-  if (permission === 'auth') return payload.username === ROOT_ADMIN_USERNAME;
+  // User & Access (managing admins) is for superadmins only; the backend enforces the same rule.
+  if (permission === 'auth') return payload.role === 'superadmin';
   if (payload.role === 'superadmin') return true;
   return payload.permissions.includes(permission);
 }

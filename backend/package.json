@@ -10,11 +10,14 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/*.test.ts",
-    "build": "esbuild src/handler.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/index.mjs --external:@aws-sdk/* --sourcemap=inline"
+    "build": "esbuild src/handler.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/index.mjs --external:@aws-sdk/* --external:sharp --sourcemap=inline"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1148.0",
-    "@aws-sdk/lib-dynamodb": "^3.1148.0"
+    "@aws-sdk/client-s3": "^3.1148.0",
+    "@aws-sdk/lib-dynamodb": "^3.1148.0",
+    "@js-temporal/polyfill": "0.5.1",
+    "sharp": "0.35.4"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.164",
