@@ -1,76 +1,76 @@
-# Frontend developer guide
+# Frontend guide
 
-This guide is for the frontend developer working in this repository (GitLab `naveen-ssi/ssi-events`).
+## Scope
 
-## What you own
+| Path | Owner |
+| --- | --- |
+| `frontend/` | Frontend developer |
+| `backend/`, `infra/`, `.gitlab-ci.yml` | SS Innovations (request changes through an issue) |
+| `docs/api-contract.md` | Shared; API changes are agreed there first |
 
-| Folder | Owner | Notes |
-| --- | --- | --- |
-| `frontend/` | Frontend developer | Next.js pages, components, styles, public assets |
-| `backend/` | SS Innovations | API, database, auth, bookings. Don't change it; raise an issue instead |
-| `infra/`, `.gitlab-ci.yml` | SS Innovations | AWS setup and the release pipeline |
-| `docs/api-contract.md` | Shared | The API you build against. Propose changes in an issue or MR |
+The frontend calls the backend only through `/api/*` (`docs/api-contract.md`). It has no server-side
+data access. Do not add database clients, AWS SDKs, secrets, `.env` files or `app/api` routes; in
+production CloudFront sends `/api/*` to the backend Lambda, so frontend API routes never run.
 
-The frontend talks to the backend **only** over HTTP at `/api/*`, as described in `docs/api-contract.md`.
+## Setup
 
-**Don't add, in `frontend/`:**
-- database clients (MongoDB, mongoose, Redis, DynamoDB)
-- AWS SDKs
-- secrets or `.env` values
-- server-side API routes (`app/api/...`)
+Node 24, npm.
 
-In production, CloudFront sends every `/api/*` request to the backend, so routes under `frontend/app/api` never run there.
+```bash
+git clone https://gitlab.com/naveen-ssi/ssi-events.git
+cd ssi-events/backend && npm ci && npm run dev     # local API, :4000
+cd ../frontend && npm ci && npm run dev            # http://localhost:3000
+```
 
-> **Current state:** `frontend/` still contains the previous app's server code: `app/api/`, `models/`, `lib/db.ts`, `lib/s3.ts`, `lib/admin-server-auth.ts`, and the `mongoose`, `mongodb`, `redis`, `socket.io` and `@aws-sdk` dependencies. It is legacy and gets removed as the backend takes over each endpoint. Don't extend it.
+`next dev` proxies `/api/*` to `http://localhost:4000` (set `API_PROXY_TARGET` to change it). The
+local API runs the real backend code against an in-memory table with sample data; it resets on
+restart. Admin login: `admin` / `Dev-Password-1` (or `admin@example.com`). Emails are not sent locally.
 
-## How to work
+## Workflow
 
-1. Clone: `git clone https://gitlab.com/naveen-ssi/ssi-events.git`
-2. Create a branch from `main`, e.g. `feature/ticket-page`.
-3. Develop in `frontend/`:
-   ```bash
-   cd frontend
-   npm ci
-   npm run dev          # http://localhost:3000
-   ```
-   To use the live backend while developing, proxy `/api` to `https://events.ssistudios.com` (Next.js `rewrites` in development only). Alternatively, mock responses using the shapes in the API contract.
-4. Before pushing, run `npm test`, `npm run lint` and `npx next build`.
-5. Push your branch and open a merge request into `main`. The MR pipeline builds and tests both frontend and backend; nothing is deployed.
-6. The owner reviews and merges. Merging deploys to https://events.ssistudios.com automatically.
+1. Branch from `main` (`feature/<name>`).
+2. Before pushing: `npm test`, `npm run lint`, `npx next build`.
+3. Open an MR into `main`. CI builds and tests; nothing deploys.
+4. A maintainer merges; the merge deploys to production.
 
-You can't push to `main` directly, and nothing reaches the live site without the owner's merge.
+## Structure
 
-## Design language
+| Path | Purpose |
+| --- | --- |
+| `app/events/` | Catalogue (served at `/`), event page, booking flow, My Tickets |
+| `app/mantram`, `app/cme`, `app/smrsc` | Category pages (`components/user/CategoryPage.tsx`) |
+| `app/admin/` | Admin: dashboard, events, bookings, check-in, reports, analytics, users |
+| `app/components/admin/booking-templates/` | Registration forms, template and booking-type pickers |
+| `components/user/` | Shared attendee UI (header, cards, event grid) |
+| `components/realtime/RealtimeProvider.tsx` | Polls `GET /api/realtime` every 4 s and notifies `useRealtimeRefresh` subscribers |
+| `lib/event-categories.ts` | Category names, copy and images |
+| `lib/bookings/confirm-booking.ts` | Creates a booking (idempotency key per request) |
+| `tests/unit/` | Unit tests (`node:test`, run with `npm test`) |
 
-The site follows the SS Innovations design language used on the new corporate website: `SSi-Design-Language.md`, available from the web team.
+## Conventions
 
-| Element | How it's set up | Rule |
-| --- | --- | --- |
-| Colour | `frontend/app/globals.css`: `primary` = indigo `#283F8F`, `secondary` = ink `#0F1729`, `gray-*` mapped to the SSi neutrals | Indigo is the only accent |
-| Insignia gradient | `.btn-primary`, `.ssi-rule`, `.ssi-highlight`, `var(--ssi-gradient-90)` | Only on primary buttons, thin rules, one highlighted phrase per heading, and small markers. Never as a large fill |
-| Type | Figtree (via `next/font`): 600 for headings, 500 for navigation and buttons, 400 for body. `font-bold` renders as 600 on purpose | Nothing smaller than 12px on attendee pages |
-| Shape | Panels have 28px corners (22px on phones); small cards and images 18px | Buttons are pills; dark footer band (`#0B1120`) on every page |
-| Icons | Phosphor (`@phosphor-icons/react`), regular weight, indigo | |
-| Logo | `public/logos/ssii-logo.png` (light backgrounds), `ssii-logo-white.png` (dark) | The header reads "SSii logo │ Events" |
-| Voice | Formal "we", sentence-case headings | No labels above headings, no slogans, no exclamation marks |
-| Categories | `lib/event-categories.ts`: SMRSC (`conference`), MantraM (`mantram`), CME / Workshop (`event`) | Use these names everywhere |
-| Phones first | Tap targets at least 44px, safe-area insets, bottom navigation | No horizontal scrolling down to a 360px-wide screen |
+- `output: 'standalone'` in `next.config.ts` is required for the Lambda deployment. `agentRules: false` stops Next from writing `AGENTS.md`/`CLAUDE.md`.
+- No Vercel-specific features and no custom Node server.
+- Build redirects from relative paths; behind CloudFront `request.url` carries the internal host.
+- Realtime updates are polling only (`/api/realtime`), no WebSockets.
+- Pages may set `Cache-Control: s-maxage=…`; each deploy invalidates CloudFront.
+- Times: event dates are `YYYY-MM-DD` in the event's IANA timezone; timestamps are UTC ISO strings.
 
-## Build and hosting notes
+## Design
 
-- **Hosting:** the frontend runs on AWS Lambda as a Next.js `output: 'standalone'` server. Keep `output: 'standalone'` in `next.config.ts`.
-- **Node:** Node 24 (the CI image is `node:24-bookworm`). Use `npm`; `package-lock.json` must be committed.
-- **Static files:** files in `public/` and `/_next/static/*` are served through CloudFront.
-- **Caching:** pages can be cached by CloudFront if they send `Cache-Control: s-maxage=...`. Each deploy clears the cache.
-- **Don't** rely on Vercel features (`@vercel/*`, Edge Config, Vercel image or analytics services) or on a custom Node server (`server.mjs`). Neither runs here.
-- **Redirects:** in route handlers or middleware, build redirects from relative paths, not from `request.url`. Behind CloudFront and Lambda, `request.url` has the internal host.
-- **Realtime:** poll `GET /api/realtime`. There are no WebSockets.
+Follows the SS Innovations design language (`SSi-Design-Language.md`, from the web team).
 
-## Asking for backend changes
+| Item | Rule |
+| --- | --- |
+| Colour | `primary` indigo `#283F8F`, `secondary` ink `#0F1729` (`app/globals.css`). Indigo is the only accent |
+| Gradient | `.btn-primary`, `.ssi-rule`, `.ssi-highlight` only; never a large fill |
+| Type | Figtree via `next/font`; 600 headings, 500 buttons, 400 body. Minimum 12 px; admin body 14 px+ |
+| Shape | Panels 28 px radius (22 px on phones), cards and images 18 px, pill buttons |
+| Icons | `@phosphor-icons/react`, regular weight |
+| Copy | Formal "we", sentence case; no eyebrow labels, slogans or exclamation marks |
+| Layout | Phone first: 44 px tap targets, safe-area insets, no horizontal scroll at 360 px |
 
-Open a GitLab issue labelled `backend` that describes:
-- the screen or flow
-- the data you need
-- the proposed request/response
+## Backend changes
 
-Once it's agreed, the backend team implements it and updates `docs/api-contract.md` in the same MR.
+Open an issue labelled `backend` with the screen, the data needed and a proposed request/response.
+The backend change and the `docs/api-contract.md` update land in the same MR.

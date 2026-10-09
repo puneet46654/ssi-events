@@ -40,11 +40,12 @@ backend:
     - npm run build
     - npm run smoke
     - cd ..
-    - bash infra/package-backend.sh "$CI_COMMIT_SHORT_SHA"
+    # Only main deploys; MR pipelines build and test without storing a package.
+    - if [ "$CI_PIPELINE_SOURCE" != "merge_request_event" ]; then bash infra/package-backend.sh "$CI_COMMIT_SHORT_SHA"; fi
   artifacts:
     paths:
       - dist/api.zip
-    expire_in: 1 week
+    expire_in: 1 day
 
 frontend:
   stage: build
@@ -52,9 +53,6 @@ frontend:
   <<: *build-rules
   variables:
     NEXT_TELEMETRY_DISABLED: "1"
-    # Legacy: frontend/lib/db.ts still requires a URI at import time. The build never connects;
-    # production /api/* is served by backend/. Remove once frontend/ no longer contains server code.
-    MONGODB_URI: mongodb://build.invalid:27017/placeholder
   script:
     - apt-get update -qq && apt-get install -y -qq zip >/dev/null
     - cd frontend
@@ -62,12 +60,12 @@ frontend:
     - npm test
     - npx next build
     - cd ..
-    - bash infra/package-lambda.sh frontend
+    - if [ "$CI_PIPELINE_SOURCE" != "merge_request_event" ]; then bash infra/package-lambda.sh frontend; fi
   artifacts:
     paths:
       - dist/web.zip
       - dist/static
-    expire_in: 1 week
+    expire_in: 1 day
 
 deploy:
   stage: deploy

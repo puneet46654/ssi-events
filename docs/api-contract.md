@@ -24,9 +24,7 @@ This file is the agreement between frontend and backend. A change to an endpoint
 
 ## Endpoints
 
-Status key: **live** = implemented in `backend/` and deployed; **planned** = to be built in `backend/`.
-
-The planned list mirrors the endpoints the current frontend calls. Each one gets a full request/response section here when it's implemented.
+All endpoints below are implemented in `backend/` and deployed.
 
 | Method | Path | Purpose | Auth | Status |
 | --- | --- | --- | --- | --- |
