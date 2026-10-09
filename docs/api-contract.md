@@ -223,7 +223,8 @@ Errors: `400` invalid input (with reason), `401`, `403`, `404`, `409` as above.
 Requires `events` permission plus `canDelete`.
 
 - **No bookings:** the event, its days, slots and pending registrations are deleted. `200 { success, cancelled: false, message }`
-- **Any booking (or already cancelled):** the event is cancelled instead. Bookings are kept for the record, tickets show `CANCELLED` and lose their QR code. `200 { success, cancelled: true, message }`
+- **Any booking (or already cancelled):** the event is cancelled instead. Bookings are kept for the record, tickets show `CANCELLED` and lose their QR code. `200 { success, cancelled: true, attendeesNotified, message }`
+- **Attendees are emailed** when an event is cancelled (if email is configured): each gets a cancellation notice with no QR code, without staff copies; staff in `MAIL_CC` get one summary with the count. The emails go out in the background, about 11 a second, in runs of up to 18 seconds that hand over to the next run (the API invokes itself asynchronously). A booking already notified is skipped, so a retried run never emails anyone twice; the outcome is stored on each booking as `lastEmail`.
 
 The delete is conditional on the event still having no bookings, so a booking that lands at the same moment turns the delete into a cancellation. `409` while an edit holds the lock.
 
