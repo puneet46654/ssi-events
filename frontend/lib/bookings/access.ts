@@ -1,12 +1,12 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import type { NextRequest, NextResponse } from 'next/server';
 
-const COOKIE_PREFIX = 'ssimaya_ticket_';
-const LEGACY_COOKIE = 'ssimaya_booking_access';
+const COOKIE_PREFIX = 'ssievents_ticket_';
+const LEGACY_COOKIE = 'ssievents_booking_access';
 const ACCESS_SECONDS = 60 * 60 * 24 * 30;
 
 function sign(value: string) {
-  const secret = process.env.BOOKING_ACCESS_SECRET || process.env.MONGODB_URI || 'ssimaya-development-secret';
+  const secret = process.env.BOOKING_ACCESS_SECRET || process.env.MONGODB_URI || 'ssievents-development-secret';
   return createHmac('sha256', secret).update(value).digest('hex');
 }
 

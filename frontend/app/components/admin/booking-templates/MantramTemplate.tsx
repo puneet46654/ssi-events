@@ -521,7 +521,7 @@ export default function MantramTemplate({
                   sm:text-[12px]
                 "
               >
-                SSI Maya Connect
+                SSInnovations Events
               </span>
             </div>
           </div>

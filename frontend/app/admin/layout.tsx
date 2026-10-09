@@ -457,7 +457,7 @@ export default function AdminLayout({
                 min-[360px]:text-[14px]
               "
             >
-              SSI Maya Connect
+              SSInnovations Events
             </p>
 
             <p

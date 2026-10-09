@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SSI Maya Connect",
-  description: "SSI Maya Connect",
+  title: "SSInnovations Events",
+  description: "Register for SS Innovations events and book your slot.",
   icons: {
     icon: "/logos/ssilogo.png",
   },

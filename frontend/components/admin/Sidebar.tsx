@@ -365,7 +365,7 @@ export default function Sidebar({
                   text-secondary
                 "
               >
-                SSI Maya Connect
+                SSInnovations Events
               </p>
             </div>
           </Link>
@@ -569,7 +569,7 @@ export default function Sidebar({
 
             {/* The attendee-facing site, kept open beside the admin panel */}
             <a
-              href="/events"
+              href="/"
               target="_blank"
               rel="noopener noreferrer"
               onClick={handleNavigation}

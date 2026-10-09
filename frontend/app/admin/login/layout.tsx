@@ -380,7 +380,7 @@ export default function AuthLayout({
                 drop-shadow-sm
               "
             >
-              SSI Maya Connect
+              SSInnovations Events
             </span>
           </motion.div>
 
@@ -420,9 +420,9 @@ export default function AuthLayout({
                 drop-shadow-[0_8px_24px_rgba(0,0,0,0.12)]
               "
             >
-              SSI Maya
+              SSInnovations
               <br />
-              Connect
+              Events
             </h1>
 
             <motion.div
@@ -452,7 +452,7 @@ export default function AuthLayout({
                   text-white/[0.92]
                 "
               >
-                SSI MAYA
+                SSINNOVATIONS
               </span>
             </motion.div>
           </motion.div>

@@ -12,7 +12,8 @@ import { AppFeedbackDialog } from '@/components/user/AppFeedback';
  * Pages render only their own content below the header.
  */
 
-const ROOT_PAGES = ['/events', '/events/mytickets'];
+// The event catalogue is the home page (`/`); `/events` permanently redirects there.
+const ROOT_PAGES = ['/', '/events/mytickets'];
 
 const BUTTON = 'inline-flex h-10 items-center justify-center gap-2 rounded-lg border px-4 text-[11px] font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/15';
 const BUTTON_IDLE = 'border-gray-200 bg-white text-secondary hover:border-primary/25 hover:bg-primary/[0.035] hover:text-primary';
@@ -30,7 +31,7 @@ function useChrome() {
     isEventDetails: /^\/events\/[^/]+$/.test(pathname) && !ROOT_PAGES.includes(pathname),
     goBack() {
       if (window.history.length > 1) router.back();
-      else router.push('/events');
+      else router.push('/');
     },
   };
 }
@@ -101,7 +102,7 @@ export function UserHeader() {
                 {shared ? 'Link copied' : 'Share'}
               </button>
             )}
-            <Link href="/events" aria-current={chrome.onEvents ? 'page' : undefined} className={`${BUTTON} ${chrome.onEvents ? BUTTON_ACTIVE : BUTTON_IDLE}`}>
+            <Link href="/" aria-current={chrome.onEvents ? 'page' : undefined} className={`${BUTTON} ${chrome.onEvents ? BUTTON_ACTIVE : BUTTON_IDLE}`}>
               <EventsIcon />
               Events
             </Link>
@@ -121,12 +122,21 @@ export function UserHeader() {
   );
 }
 
+/** Quiet credit line under every user page. */
+export function UserFooter() {
+  return (
+    <footer className="px-4 py-6 text-center text-[11px] text-gray-400">
+      © {new Date().getFullYear()} SS Innovations · Developed by SSI Maya
+    </footer>
+  );
+}
+
 export function UserBottomNav() {
   const { onTickets } = useChrome();
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 grid h-[var(--user-nav-h)] grid-cols-2 border-t border-gray-200/80 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_18px_rgba(27,75,107,0.045)] backdrop-blur-xl md:hidden">
-      <NavItem href="/events" label="Events" active={!onTickets}>
+      <NavItem href="/" label="Events" active={!onTickets}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 10.5 12 3l9 7.5M5 9.5V20h5v-6h4v6h5V9.5" />
       </NavItem>
       <NavItem href="/events/mytickets" label="My Tickets" active={onTickets}>
@@ -138,9 +148,9 @@ export function UserBottomNav() {
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <Link href="/events" className="inline-flex min-w-0 items-center gap-2 transition-opacity hover:opacity-80">
+    <Link href="/" className="inline-flex min-w-0 items-center gap-2 transition-opacity hover:opacity-80">
       <Image src="/logos/ssilogo.png" alt="SSI" width={compact ? 24 : 26} height={compact ? 24 : 26} priority className="shrink-0 object-contain" />
-      <span className={`truncate font-semibold text-secondary ${compact ? 'text-[13px]' : 'text-[14px]'}`}>SSI Maya Connect</span>
+      <span className={`truncate font-semibold text-secondary ${compact ? 'text-[13px]' : 'text-[14px]'}`}>SSInnovations Events</span>
     </Link>
   );
 }

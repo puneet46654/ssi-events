@@ -1,4 +1,4 @@
-# SSI Maya Connect — events.ssistudios.com
+# SSInnovations Events — events.ssistudios.com
 
 Event registration, slot booking, QR tickets and admin check-in for events hosted by SS Innovations.
 
@@ -51,7 +51,7 @@ The app is only used when SS Innovations runs an event. Lambda and DynamoDB on-d
    1. uploads static assets
    2. updates the backend Lambda, then the frontend Lambda
    3. invalidates CloudFront
-   4. checks that `/events` returns 200 and that `/api/health` reports the new commit with the database `ACTIVE`
+   4. checks that `/` (the event catalogue) returns 200 and that `/api/health` reports the new commit with the database `ACTIVE`
 
 ## Admin tasks
 

@@ -9,7 +9,7 @@ import { deviceTimeZone } from '@/lib/events/dates';
 installFetchCache();
 
 const ADMIN_PAGES = ['/admin/landing', '/admin/bookings', '/admin/eventmanagement', '/admin/reports', '/admin/analytics', '/admin/check-in', '/admin/auth'];
-const USER_PAGES = ['/events', '/events/mytickets'];
+const USER_PAGES = ['/', '/events/mytickets'];
 const MAX_EVENTS = 8;
 
 function whenIdle(task: () => void) {

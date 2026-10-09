@@ -15,7 +15,7 @@ export function googleCalendarUrl(ticket: CalendarTicket) {
     dates: `${at(ticket.startTime)}/${at(ticket.endTime)}`,
     ctz: eventTimeZone(ticket.timeZone),
     location: ticket.venue,
-    details: `SSI Maya Connect booking reference: ${ticket.bookingId}\nShow your QR ticket from My Tickets at the venue.`,
+    details: `SSInnovations Events booking reference: ${ticket.bookingId}\nShow your QR ticket from My Tickets at the venue.`,
   });
   return `https://calendar.google.com/calendar/render?${params}`;
 }

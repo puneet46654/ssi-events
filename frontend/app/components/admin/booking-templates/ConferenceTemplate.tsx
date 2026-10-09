@@ -507,7 +507,7 @@ export default function ConferenceTemplate({
                   text-secondary
                 "
               >
-                SSI Maya Connect
+                SSInnovations Events
               </span>
             </div>
           </div>

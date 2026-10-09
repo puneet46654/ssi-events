@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server';
-
-export async function GET(request: Request) {
-  return NextResponse.redirect(new URL('/admin/check-in', request.url));
+// Relative Location: behind CloudFront and Lambda, request.url carries the internal host.
+export function GET() {
+  return new Response(null, { status: 307, headers: { Location: '/admin/check-in' } });
 }

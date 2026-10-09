@@ -621,7 +621,7 @@ export default function ReportsPage() {
         ),
 
         buildFilename(
-          'SSI-Maya-Booking-Report',
+          'SSI-Events-Booking-Report',
           'csv', report,
         ),
       );
@@ -864,7 +864,7 @@ export default function ReportsPage() {
       XLSX.writeFile(
         workbook,
         buildFilename(
-          'SSI-Maya-Full-Report',
+          'SSI-Events-Full-Report',
           'xlsx', report,
         ),
       );
@@ -915,7 +915,7 @@ export default function ReportsPage() {
             font-bold
           "
         >
-          SSI Maya Connect —
+          SSInnovations Events —
           Booking and Attendance
           Report
         </h1>
@@ -2802,7 +2802,7 @@ export default function ReportsPage() {
         "
       >
         <span>
-          SSI Maya Connect •
+          SSInnovations Events •
           Administrative
           Reporting
         </span>

@@ -735,8 +735,8 @@ export default function EventsPage() {
               Browse conferences,
               MantraM sessions and
               programmes currently
-              available through SSI
-              Maya Connect.
+              available through
+              SSInnovations Events.
             </p>
           </div>
               <div className="flex w-full max-w-[600px] items-center gap-2">
