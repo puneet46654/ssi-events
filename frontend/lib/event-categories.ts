@@ -10,8 +10,16 @@ export type EventCategory = {
   /** Plural form for headings, e.g. "Upcoming CME and workshops". */
   heading: string;
   description: string;
-  /** Its own page (e.g. /mantram), once it has one: introduction, list heading and empty state. */
-  page?: { path: string; title: string; intro: string[]; listHeading: string; empty: string };
+  /** Card image in /public (SSI's own library) and its description for screen readers. */
+  image: string;
+  imageAlt: string;
+  /** Its own page: introduction, list heading and empty state. */
+  page: { path: string; title: string; intro: string[]; listHeading: string; empty: string };
+  /**
+   * Registration happens on another site. Until `externalUrl` is set, the page is a
+   * "coming soon" notice; once it is, the card links straight there.
+   */
+  external?: { comingSoon: string; externalUrl?: string };
 };
 
 export const EVENT_CATEGORIES: EventCategory[] = [
@@ -20,12 +28,28 @@ export const EVENT_CATEGORIES: EventCategory[] = [
     name: 'SMRSC',
     heading: 'SMRSC',
     description: 'The SSI Multi-Specialty Robotic Surgery Conference.',
+    image: '/images/categories/smrsc.webp',
+    imageAlt: 'A robotic operating suite with the SSI Mantra system, surgeon console and theatre team',
+    page: {
+      path: '/smrsc',
+      title: 'SMRSC',
+      intro: [
+        'The SSI Multi-Specialty Robotic Surgery Conference brings together surgeons from across specialties to share clinical experience with robotic surgery.',
+      ],
+      listHeading: 'Registration',
+      empty: '',
+    },
+    external: {
+      comingSoon: 'Registration for SMRSC will open on the conference website. We will publish the link here as soon as it is available.',
+    },
   },
   {
     type: 'mantram',
     name: 'MantraM',
     heading: 'MantraM',
     description: 'Our mobile tele-surgical unit, carrying the SSI Mantra surgical robotic system.',
+    image: '/images/categories/mantram.webp',
+    imageAlt: 'The SSi MantraM mobile unit in SS Innovations livery',
     page: {
       path: '/mantram',
       title: 'SSi MantraM',
@@ -42,6 +66,18 @@ export const EVENT_CATEGORIES: EventCategory[] = [
     name: 'CME / Workshop',
     heading: 'CME and workshops',
     description: 'Continuing medical education and hands-on workshops.',
+    image: '/images/categories/cme.webp',
+    imageAlt: 'The SSI Mantra training simulator showing a simulated procedure',
+    page: {
+      path: '/cme',
+      title: 'CME and workshops',
+      intro: [
+        'Our continuing medical education programmes and hands-on workshops give surgeons and clinical teams structured experience with robotic surgery.',
+        'Choose a programme below and book a time slot. Your ticket is shown on screen and sent to you by email.',
+      ],
+      listHeading: 'Upcoming programmes',
+      empty: 'No CME programmes or workshops are open for registration at present. New programmes are published here as they are scheduled.',
+    },
   },
 ];
 

@@ -12,7 +12,7 @@ import { UpcomingGrid, type IEvent } from '@/components/user/EventGrid';
  */
 export function CategoryPage({ type }: { type: EventCategoryType }) {
   const category = categoryOf(type);
-  const page = category.page!;
+  const page = category.page;
   const [events, setEvents] = useState<IEvent[] | null>(null);
   const [error, setError] = useState('');
 
@@ -31,9 +31,10 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
   }, [type]);
 
   useEffect(() => {
+    if (category.external) return;
     const timer = window.setTimeout(() => { void load(); }, 0);
     return () => window.clearTimeout(timer);
-  }, [load]);
+  }, [load, category.external]);
   useRealtimeRefresh('events', () => { void load(); });
 
   return (
@@ -46,6 +47,22 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
         {page.intro.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
       </div>
 
+      {category.external ? (
+        <section aria-labelledby="category-list" className="mt-10 max-w-[62ch] rounded-[22px] bg-gray-50 p-6 md:mt-14 md:p-8">
+          <h2 id="category-list" className="text-[20px] font-semibold text-secondary md:text-[24px]">{page.listHeading}</h2>
+          {category.external.externalUrl ? (
+            <a href={category.external.externalUrl} target="_blank" rel="noopener"
+              className="mt-4 inline-flex h-11 items-center rounded-full bg-primary px-6 text-[14px] font-semibold text-white">
+              Go to the conference website
+            </a>
+          ) : (
+            <p className="mt-2 text-[16px] leading-[1.6] text-gray-600">
+              <span className="mb-2 block font-semibold text-secondary">Coming soon</span>
+              {category.external.comingSoon}
+            </p>
+          )}
+        </section>
+      ) : (
       <section aria-labelledby="category-list" className="mt-10 md:mt-14">
         <h2 id="category-list" className="text-[20px] font-semibold text-secondary md:text-[24px]">{page.listHeading}</h2>
         <div className="mt-4">
@@ -65,6 +82,7 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
           )}
         </div>
       </section>
+      )}
     </main>
   );
 }
