@@ -17,7 +17,7 @@ export type EventCategory = {
   page: { path: string; title: string; intro: string[]; listHeading: string; empty: string };
   /**
    * Registration happens on another site. Until `externalUrl` is set, the page is a
-   * "coming soon" notice; once it is, the card links straight there.
+   * "registration details to follow" notice; once it is, the card links straight there.
    */
   external?: { comingSoon: string; externalUrl?: string };
 };

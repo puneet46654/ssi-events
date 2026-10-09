@@ -57,7 +57,7 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
             </a>
           ) : (
             <p className="mt-2 text-[16px] leading-[1.6] text-gray-600">
-              <span className="mb-2 block font-semibold text-secondary">Coming soon</span>
+              <span className="mb-2 block font-semibold text-secondary">Registration details to follow</span>
               {category.external.comingSoon}
             </p>
           )}
