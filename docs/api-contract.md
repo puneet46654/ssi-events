@@ -36,15 +36,15 @@ The planned list mirrors the endpoints the current frontend calls. Each one gets
 | GET | `/api/events/:id` | Event details + schedule | none | **live** |
 | PUT | `/api/events/:id` | Edit event (keeps booked slots) | admin: events | planned |
 | DELETE | `/api/events/:id` | Delete empty event / cancel booked event | admin: events | planned |
-| GET | `/api/events/:id/slots` | Slot availability for a day | none | planned |
+| GET | `/api/events/:id/slots` | Live slot availability, all days | none | **live** |
 | GET | `/api/events/:id/image` | Event image (validated, re-encoded at upload) | none | **live** |
-| POST | `/api/events/mytickets` | Ticket recovery (reference + full mobile) | none | planned |
-| GET, POST, PATCH, DELETE | `/api/bookings` | Look up / create / reschedule / cancel own booking | booking grant | planned |
-| POST | `/api/bookings/pending` | Save attendee details before slot choice | none | planned |
+| POST | `/api/events/mytickets` | My Tickets: mobile number, plus booking reference on a new device | none | **live** |
+| GET, POST, PATCH, DELETE | `/api/bookings` | Look up / create / reschedule / cancel own booking | booking grant | **live** |
+| POST | `/api/bookings/pending` | Save attendee details before slot choice | none | **live** |
 | POST, GET | `/api/feedback` | App rating | none / admin | planned |
 | GET | `/api/realtime` | Revision counters for polling (CDN-cached 2 s) | none | **live** |
-| GET | `/api/location/countries` | Country list | none | planned |
-| GET | `/api/location/states` | States for a country | none | planned |
+| GET | `/api/location/countries` | Country list (calling codes, flags) | none | **live** |
+| GET | `/api/location/states` | States for a country | none | **live** |
 | POST | `/api/analytics/collect` | Anonymous page analytics (always 204; storage planned) | none | **live** |
 | POST | `/api/admin/login` | Sign in | none | **live** |
 | POST | `/api/admin/logout` | Sign out | admin | **live** |
@@ -195,3 +195,109 @@ Errors:
 ### `GET /api/events/:id/image`
 
 The image bytes, with `cache-control: public, max-age=31536000, immutable`; the URL carries a version. Returns `404` if the event has no image.
+
+## Bookings (attendees)
+
+### Attendee details
+
+The `details` object holds string fields only. Field names must be letters, digits, `_` or `-`; at most 60 fields of up to 1000 characters each.
+
+Required:
+- `fullName`
+- `email` (valid; stored lower-case)
+- `mobile` (the full number with country code, or `mobile` plus `countryCode`)
+
+Template fields such as `title`, `specialty`, `hospitalName`, `designation`, `city`, `state` and `country` are stored as sent.
+
+### Ticket access grants
+
+**How a browser gets one:** booking a ticket, or unlocking it in My Tickets with its booking reference, gives that browser a ticket grant:
+- one `HttpOnly; Secure; SameSite=Lax` cookie per booking
+- signed with HMAC-SHA256
+- valid for 30 days and renewed on use
+
+**What it allows:** reading the ticket (`GET /api/bookings`), rescheduling and cancelling. A mobile number alone never grants access.
+
+### `GET /api/events/:id/slots`
+
+`200 { success, event: { _id, eventName, venue, description, startDate, endDate, timeZone, status }, days: [{ _id, dayNumber, date, startTime, endTime, slots: [{ _id, startTime, endTime, capacity, bookedCount, remaining, ended, available }] }] }`
+
+Never cached.
+
+### `POST /api/bookings/pending`
+
+Body: `{ eventId, draftId (UUID v4), details }`
+
+`200 { success, saved: true, expiresAt }`, or `{ success, saved: false, ended: true }` if the event is over or cancelled.
+
+The saved details are deleted automatically at the start of the day after the event, or as soon as the same email or mobile confirms a booking.
+
+### `POST /api/bookings`
+
+Body: `{ eventId, dayScheduleId, slotId, details, idempotencyKey (UUID v4) }`
+
+**Success:**
+- `201 { success, existing: false, booking }` plus a ticket grant cookie.
+- Retrying with the same `idempotencyKey` and identical details returns `200 { existing: true, booking }` with the original booking, never a second one.
+
+**Errors:**
+- `400` invalid input (with reason)
+- `404` event not found
+- `409` for any of:
+  - the slot is full
+  - the slot has ended
+  - the event is cancelled or completed
+  - the retry key was reused with different details
+
+**Overselling:** one DynamoDB transaction claims the seat (`bookedCount < capacity`), counts it on the event, and stores the booking and its retry key. Tested live: 30 concurrent attendees for 5 seats, plus 10 retries, produced exactly 5 bookings.
+
+**`booking` fields:**
+- `id`, `bookingId` (`SSI-EV-<year>-<12 hex>`), `eventId`, `eventName`, `venue`, `timeZone`, `imageUrl`
+- `details`
+- `slotId`, `dayScheduleId`, `date` (ISO), `startTime`, `endTime`
+- `attendanceStatus`, `checkedInAt`, `checkedInBy`, `checkInMethod`
+- `status`: `ACTIVE`, `EXPIRED`, `ATTENDED` or `CANCELLED`
+- `qrData`: a JSON string `{ type: "SSI_EVENTS_ATTENDANCE", doctorId, bookingId, eventId }`, empty if the event is cancelled
+
+### `GET /api/bookings?bookingId=`
+
+Needs the ticket grant. `200 { success, booking }`; `403` without the grant; `404` if not found.
+
+### `PATCH /api/bookings`
+
+Body: `{ bookingId, dayScheduleId, slotId }`. Needs the grant.
+
+Moves the booking to another slot of the same event. The new seat is claimed in the same transaction that releases the old one.
+
+Allowed only before the current slot starts, before check-in, and while the event isn't cancelled.
+
+### `DELETE /api/bookings?bookingId=`
+
+Needs the grant. Same time rules as rescheduling.
+
+Releases the seat, uncounts it on the event, and removes the retry key.
+
+### `POST /api/events/mytickets`
+
+Body: `{ mobile (full international number), bookingId? }`
+
+**What it returns:**
+- tickets registered to that number that this browser already holds a grant for, plus the ticket matching `bookingId` if given
+- grant cookies for every ticket returned
+- `200 { success, tickets: [booking + canManage], referenceNeeded }`
+
+**Privacy:**
+- `referenceNeeded` is `true` whenever nothing can be shown, so the response is the same whether or not the number has bookings.
+- A `bookingId` that doesn't match the number returns `404`.
+
+### `GET /api/location/countries`, `GET /api/location/states?country=`
+
+**Source:** proxied from countriesnow.space.
+
+**Caching:** browsers keep the lists for an hour; CloudFront keeps them for a day.
+
+**Responses:**
+- countries: `{ success, countries: [{ name, iso2, callingCode, flag }] }`
+- states: `{ success, states: [{ name, code }] }`
+
+`502` if the source is down.

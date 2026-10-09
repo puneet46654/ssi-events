@@ -125,6 +125,9 @@ export default function MyTicketsPage() {
 
   const hydrated = useHydrated();
   const [mobile, setMobile] = useState('');
+  // Needed on a device that didn't make the booking: a phone number alone never reveals tickets.
+  const [reference, setReference] = useState('');
+  const [referenceNeeded, setReferenceNeeded] = useState(false);
   const [countries, setCountries] = useState<CountryOption[]>([INDIA_FALLBACK]);
   const [phoneCountry, setPhoneCountry] = useState(INDIA_FALLBACK);
   const [savedMobile, setSavedMobile] = useState('');
@@ -144,7 +147,7 @@ export default function MyTicketsPage() {
   const pendingRef = useRef<AbortController | null>(null);
   const requestVersion = useRef(0);
 
-  const loadTickets = useCallback(async (value: string) => {
+  const loadTickets = useCallback(async (value: string, bookingReference = '') => {
     const clean = normalizePhone(value);
     if (!isValidPhone(value)) {
       setError('Enter the mobile number you registered with.');
@@ -159,11 +162,20 @@ export default function MyTicketsPage() {
     try {
       const response = await fetch('/api/events/mytickets', {
         method: 'POST', cache: 'no-store', signal: controller.signal,
-        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: clean }),
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: clean, ...(bookingReference.trim() ? { bookingId: bookingReference.trim().toUpperCase() } : {}) }),
       });
       const data = await response.json();
       if (version !== requestVersion.current || controller.signal.aborted) return;
       if (!response.ok || !data.success) throw new Error(data.message || 'Unable to load your ticket. Please retry.');
+      if (data.referenceNeeded) {
+        // Nothing this device may show yet: ask for the reference instead of showing an empty list.
+        setReferenceNeeded(true);
+        setTickets([]);
+        setError('No tickets for this number have been opened on this device. Enter the booking reference from your confirmation to view them.');
+        return;
+      }
+      setReferenceNeeded(false);
+      setReference('');
       setTickets(data.tickets);
       setSelectedTicket(current => current ? data.tickets.find((ticket: Ticket) => ticket.bookingId === current.bookingId) || null : null);
       setSavedMobile(clean);
@@ -438,7 +450,7 @@ export default function MyTicketsPage() {
               }
 
               onKeyDown={(e) => {
-                if (e.key === 'Enter') void loadTickets(fullNumber(mobile));
+                if (e.key === 'Enter') void loadTickets(fullNumber(mobile), reference);
               }}
 
               placeholder="Mobile number, e.g. 98765 43210"
@@ -470,12 +482,27 @@ export default function MyTicketsPage() {
 
 
 
-            <p className="mt-3 text-xs text-gray-500">Enter the mobile number you registered with. No email or OTP is needed.</p>
+            <label htmlFor="ticket-reference" className="mt-4 block text-[12px] font-semibold text-secondary">
+              Booking reference{referenceNeeded ? '' : ' (optional)'}
+            </label>
+            <input disabled={!hydrated}
+              id="ticket-reference"
+              value={reference}
+              onChange={e => { setError(''); setReference(e.target.value.toUpperCase()); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') void loadTickets(fullNumber(mobile), reference); }}
+              placeholder="SSI-EV-2026-1A2B3C4D5E6F"
+              autoCapitalize="characters"
+              autoComplete="off"
+              spellCheck={false}
+              className="mt-2 h-11 w-full rounded-lg border border-gray-200 px-3 text-[13px] uppercase tracking-wide outline-none focus:border-primary/40"
+            />
+
+            <p className="mt-3 text-xs text-gray-500">On the device you booked with, your mobile number is enough. On any other device, also enter the booking reference shown on your confirmation.</p>
 
             <button
               disabled={!hydrated || loading}
               onClick={() =>
-                void loadTickets(fullNumber(mobile))
+                void loadTickets(fullNumber(mobile), reference)
               }
 
               className="
