@@ -56,7 +56,7 @@ The planned list mirrors the endpoints the current frontend calls. Each one gets
 | DELETE | `/api/admin/bookings/pending/:id` | Discard a pending booking | admin: bookings + delete | **live** |
 | GET, POST | `/api/admin/attendance` | Check-in lookup / QR or manual check-in | admin: check-in | **live** |
 | GET | `/api/admin/dashboard` | Dashboard figures | admin: dashboard | planned |
-| GET | `/api/admin/reports` | Report data for CSV/Excel/print | admin: reports | planned |
+| GET | `/api/admin/reports` | Report data for CSV/Excel/print | admin: reports | **live** |
 | GET | `/api/admin/analytics` | Analytics summary | admin: dashboard | planned |
 | GET | `/api/admin/analytics/live` | Live visitors | admin: dashboard | planned |
 | GET | `/api/admin/activity` | Admin activity log | superadmin | **live** |
@@ -476,3 +476,27 @@ Requires `check-in`. Body: `{ eventId, method: "QR" | "MANUAL", code?, bookingId
 - Scanning a ticket that is already checked in is not an error: `alreadyPresent: true`. Two scanners reading the same ticket at once record it once.
 
 `200 { success, alreadyPresent, message, booking: { id, bookingId, fullName, email, attendanceStatus, checkedInAt } }`
+
+## Reports
+
+### `GET /api/admin/reports?eventId=&from=&to=&attendance=&timeZone=`
+
+Requires `reports`. Everything the reports screen shows and exports (CSV, Excel, print).
+
+| Parameter | Meaning |
+| --- | --- |
+| `eventId` | one event (default: all) |
+| `from`, `to` | registration dates `YYYY-MM-DD`, inclusive, as calendar days in `timeZone` |
+| `attendance` | `present` or `not_present` (default: all) |
+| `timeZone` | IANA zone for dates and the trend chart; default the selected event's zone, else Asia/Kolkata |
+
+`400` for an invalid event ID, date range or timezone.
+
+`200`:
+- `summary`: `totalBookings`, `present`, `notPresent`, `attendanceRate` (%), `qrCheckIns`, `manualCheckIns`, `totalCapacity` / `reservedCapacity` / `remainingCapacity` / `slotUtilization` (%) across the events in scope, `events`, `liveEvents`
+- `charts`: `registrationTrend` (per day, per month past 62 days), `attendanceByEvent` and `utilizationByEvent` (top 10), `attendanceStatus`, `checkInMethods`
+- `eventPerformance`: per event: registrations, present, not present, attendance rate, capacity, booked seats, utilization
+- `bookings`: the ledger, newest first: attendee (name, email, mobile, designation, specialty, hospital, city, state, country), event, slot (date, day, times), attendance (status, method, time, staff member) and registration time
+- `eventOptions` (every event, for the filter), `filters`, `timeZone`, `generatedAt`
+
+Capacity comes from each event's seat counters; attendance figures count the bookings that match the filters. Cancelled bookings are deleted, so they are not in reports.
