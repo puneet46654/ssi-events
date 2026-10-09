@@ -8,6 +8,7 @@ import type { BookingDetails, BookingItem } from './bookings.js';
 export type AdminEvent = {
   eventId: string; eventName: string; eventType: string; venue: string; startDate: string; endDate: string;
   timeZone: string; status: string; totalSlots: number; bookedSlots: number; imageKey?: string; updatedAt: string;
+  registrationMode?: string; capacity?: number;
 };
 
 /** Pending registration (`EVENT#<id>` / `PENDING#<draftId>`): details saved, no slot chosen yet. */

@@ -8,7 +8,7 @@ import {
 } from '../lib/admin-data.js';
 import { requireAdmin } from '../lib/admins.js';
 import { assertSameOrigin, jsonBody } from '../lib/body.js';
-import { getBooking, isBookingId, phoneIdentity, readBookingDetails, type BookingItem } from '../lib/bookings.js';
+import { getBooking, isBookingId, isOpenRegistration, phoneIdentity, readBookingDetails, type BookingItem } from '../lib/bookings.js';
 import { eventStatus, eventTimeZone, isTimeZone, zonedDate } from '../lib/dates.js';
 import { isId } from '../lib/ids.js';
 import { isCalendarDate } from '../lib/schedule.js';
@@ -105,8 +105,9 @@ export const listBookings: Handler = async (req) => {
       ...(r.pending ? { pending: true } : {}),
       attendee: { fullName: text(details.fullName) || 'Unknown attendee', email: text(details.email), mobile: text(details.mobile) },
       event: eventSummary(r.event, now),
-      daySchedule: b ? { _id: b.dayId, date: isoDate(b.date) } : null,
-      slot: b ? { _id: b.slotId, startTime: b.startTime, endTime: b.endTime } : null,
+      daySchedule: b && !isOpenRegistration(b) ? { _id: b.dayId, date: isoDate(b.date) } : null,
+      slot: b && !isOpenRegistration(b) ? { _id: b.slotId, startTime: b.startTime, endTime: b.endTime } : null,
+      registrationOnly: b ? isOpenRegistration(b) : false,
       attendanceStatus: b?.attendanceStatus ?? 'NOT_PRESENT',
       createdAt: r.at,
     };
@@ -171,8 +172,9 @@ async function bookingDetail(b: BookingItem) {
   return {
     _id: b.bookingId, bookingId: b.bookingId, details: b.details,
     eventId: eventDetail(await getEvent(b.eventId)),
-    slotId: { _id: b.slotId, startTime: b.startTime, endTime: b.endTime },
-    dayScheduleId: { _id: b.dayId, dayNumber: b.dayNumber, date: isoDate(b.date) },
+    slotId: isOpenRegistration(b) ? null : { _id: b.slotId, startTime: b.startTime, endTime: b.endTime },
+    dayScheduleId: isOpenRegistration(b) ? null : { _id: b.dayId, dayNumber: b.dayNumber, date: isoDate(b.date) },
+    registrationOnly: isOpenRegistration(b),
     attendanceStatus: b.attendanceStatus, checkedInAt: b.checkedInAt ?? null, checkedInBy: b.checkedInBy || '',
     checkInMethod: b.checkInMethod || '', createdAt: b.createdAt, updatedAt: b.updatedAt,
   };
@@ -311,11 +313,11 @@ export const deleteAdminBooking: Handler = async (req) => {
     await db.send(new TransactWriteCommand({
       TransactItems: [
         { Delete: { TableName: TABLE_NAME, Key: keys.booking(booking.bookingId), ConditionExpression: 'attribute_exists(PK)' } },
-        { Update: {
+        ...(isOpenRegistration(booking) ? [] : [{ Update: {
           TableName: TABLE_NAME, Key: { PK: keys.event(booking.eventId).PK, SK: booking.slotSK },
           UpdateExpression: 'SET bookedCount = bookedCount - :one', ConditionExpression: 'bookedCount > :zero',
           ExpressionAttributeValues: { ':one': 1, ':zero': 0 },
-        } },
+        } }]),
         { Update: { TableName: TABLE_NAME, Key: keys.event(booking.eventId), UpdateExpression: 'ADD bookedSlots :minus', ExpressionAttributeValues: { ':minus': -1 } } },
         { Delete: { TableName: TABLE_NAME, Key: keys.bookingRequest(booking.eventId, booking.requestKeyHash) } },
       ],

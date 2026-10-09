@@ -84,10 +84,13 @@ export async function ticketEmail(kind: TicketEmailKind, b: BookingItem, event: 
   const copy = COPY[kind];
   const name = [b.details.title, b.details.fullName].filter(Boolean).join(' ').trim();
   const myTickets = `${siteUrl()}/events/mytickets`;
+  // A registration without a time slot shows the event's dates instead of a time.
+  const open = !b.slotId;
+  const dates = open && event.endDate && event.endDate !== b.date ? `${longDate(b.date)} to ${longDate(event.endDate)}` : longDate(b.date);
   const rows: [string, string][] = [
     ['Event', event.eventName],
-    ['Date', longDate(b.date)],
-    ['Time', slotTimes(b, event.timeZone)],
+    [open && event.endDate !== b.date ? 'Dates' : 'Date', dates],
+    ...(open ? [] : [['Time', slotTimes(b, event.timeZone)] as [string, string]]),
     ['Venue', event.venue],
     ['Booking reference', b.bookingId],
   ];
@@ -96,7 +99,7 @@ export async function ticketEmail(kind: TicketEmailKind, b: BookingItem, event: 
 
   const manage = ENDED.includes(kind)
     ? `You can find upcoming events at ${siteUrl()}.`
-    : `To view, reschedule or cancel this booking, open My Tickets on our website and enter your mobile number and booking reference: ${myTickets}`;
+    : `To view${open ? '' : ', reschedule'} or cancel this booking, open My Tickets on our website and enter your mobile number and booking reference: ${myTickets}`;
 
   const text = [
     `Dear ${name},`, '', copy.lead, '',
@@ -128,7 +131,7 @@ ${qrPng ? `<tr><td align="center" style="padding:24px 28px 8px;">
 <tr><td style="padding:20px 28px 28px;font-size:14px;line-height:22px;color:#3A4052;">
 ${ENDED.includes(kind)
     ? `You can find upcoming events at <a href="${siteUrl()}" style="color:${BRAND};">events.ssistudios.com</a>.`
-    : `To view, reschedule or cancel this booking, open <a href="${myTickets}" style="color:${BRAND};">My Tickets</a> on our website and enter your mobile number and booking reference.`}
+    : `To view${open ? '' : ', reschedule'} or cancel this booking, open <a href="${myTickets}" style="color:${BRAND};">My Tickets</a> on our website and enter your mobile number and booking reference.`}
 </td></tr>
 <tr><td style="padding:16px 28px;background:#F8F9FC;font-size:12px;line-height:18px;color:#6B7285;">
 SS Innovations<br>This message was sent to you because a booking was made on events.ssistudios.com with this email address.

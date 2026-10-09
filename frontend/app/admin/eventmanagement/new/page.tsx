@@ -36,6 +36,7 @@ import {
 } from 'framer-motion';
 
 import BookingTemplateSelector from '@/app/components/admin/booking-templates/BookingTemplateSelector';
+import RegistrationModePicker, { type RegistrationMode } from '@/app/components/admin/booking-templates/RegistrationModePicker';
 
 import {
   BookingFormTemplate,
@@ -383,6 +384,8 @@ export default function CreateNewEventPage() {
   ========================================================== */
 
   const [timeZone, setTimeZone] = useState('');
+  const [registrationMode, setRegistrationMode] = useState<RegistrationMode>('slots');
+  const [capacity, setCapacity] = useState('');
 
   const [
     eventName,
@@ -1035,11 +1038,16 @@ export default function CreateNewEventPage() {
       return;
     }
 
+    if (registrationMode === 'open' && capacity && (!Number.isInteger(Number(capacity)) || Number(capacity) < 1)) {
+      setFormError('Registration limit must be a whole number above zero, or blank for no limit.');
+      return;
+    }
+
     for (
       let index = 0;
 
       index <
-      numberOfDays;
+      (registrationMode === 'slots' ? numberOfDays : 0);
 
       index += 1
     ) {
@@ -1072,6 +1080,8 @@ export default function CreateNewEventPage() {
       const formData =
         new FormData();
       formData.set('timeZone', timeZone);
+      formData.set('registrationMode', registrationMode);
+      if (registrationMode === 'open') formData.set('capacity', capacity);
 
       formData.set(
         'eventName',
@@ -2005,6 +2015,14 @@ export default function CreateNewEventPage() {
                         setFormError('');
                       }}
                     />
+                    <div className="mt-4 border-t border-gray-100 pt-4">
+                      <RegistrationModePicker
+                        mode={registrationMode}
+                        onModeChange={(mode) => { setRegistrationMode(mode); setFormError(''); }}
+                        capacity={capacity}
+                        onCapacityChange={setCapacity}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2016,6 +2034,7 @@ export default function CreateNewEventPage() {
             SCHEDULE
         ==================================================== */}
 
+        {registrationMode === 'slots' && (
         <motion.section
           initial={{
             opacity: 0,
@@ -3126,6 +3145,7 @@ export default function CreateNewEventPage() {
             </AnimatePresence>
           </div>
         </motion.section>
+        )}
       </div>
     </motion.form>
   );

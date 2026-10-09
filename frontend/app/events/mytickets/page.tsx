@@ -96,6 +96,10 @@ interface Ticket {
   qrData:
     string;
   details?: { title?: string; fullName?: string };
+  /** No time slot: the ticket is valid for the event's dates. */
+  registrationOnly?: boolean;
+  eventStartDate?: string | null;
+  eventEndDate?: string | null;
   slotId: string;
   dayScheduleId: string;
   /** True only on the device that made the booking, before its slot starts. */
@@ -979,17 +983,11 @@ function TicketCard({
               ? new Date(ticket.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
               : ''}
 
-          {' · '}
-
-          {
-            ticket.startTime
-          }
-
-          {' - '}
-
-          {
-            ticket.endTime
-          } {eventTimeZone(ticket.timeZone)}
+          {ticket.registrationOnly
+            ? (ticket.eventEndDate && ticket.eventEndDate !== ticket.date
+              ? ` – ${new Date(ticket.eventEndDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })} · Any time during the event`
+              : ' · Any time during the event')
+            : <>{' · '}{ticket.startTime}{' - '}{ticket.endTime} {eventTimeZone(ticket.timeZone)}</>}
 
         </p>
 
@@ -1077,10 +1075,12 @@ function TicketCard({
             </a>
             {changeable && (
               <>
-                <button type="button" onClick={() => onManage('reschedule')}
-                  className="rounded-lg border border-primary/30 px-3 py-2 text-[13px] font-semibold text-primary hover:bg-primary/[0.05]">
-                  Reschedule
-                </button>
+                {!ticket.registrationOnly && (
+                  <button type="button" onClick={() => onManage('reschedule')}
+                    className="rounded-lg border border-primary/30 px-3 py-2 text-[13px] font-semibold text-primary hover:bg-primary/[0.05]">
+                    Reschedule
+                  </button>
+                )}
                 <button type="button" onClick={() => onManage('cancel')}
                   className="rounded-lg border border-red-200 px-3 py-2 text-[13px] font-semibold text-red-600 hover:bg-red-50">
                   Cancel booking
@@ -1223,7 +1223,7 @@ function ManageTicketDialog({
           {mode === 'cancel' ? 'Cancel this booking?' : 'Choose a new time slot'}
         </h2>
         <p className="mt-1 text-[12px] text-gray-500">
-          {ticket.eventName} · currently {ticket.date ? dayLabel(ticket.date) : ''}, {ticket.startTime} - {ticket.endTime}
+          {ticket.eventName} · {ticket.registrationOnly ? 'registration' : <>currently {ticket.date ? dayLabel(ticket.date) : ''}, {ticket.startTime} - {ticket.endTime}</>}
         </p>
 
         {mode === 'cancel' ? (
@@ -1281,6 +1281,7 @@ function TicketPass({ ticket, onClose }: { ticket: Ticket; onClose: () => void }
   const cancelled = ticket.status === 'CANCELLED';
   const name = [ticket.details?.title, ticket.details?.fullName].filter(Boolean).join(' ');
   const date = new Date(ticket.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const endDate = new Date(ticket.eventEndDate || ticket.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
   async function save() {
     if (!cardRef.current || saving) return;
@@ -1307,8 +1308,8 @@ function TicketPass({ ticket, onClose }: { ticket: Ticket; onClose: () => void }
         <p className="mt-1 text-[17px] font-semibold leading-snug text-secondary">{ticket.eventName}</p>
         <dl className="mt-3 space-y-1.5 text-[13px] text-gray-700">
           {name && <div><dt className="sr-only">Attendee</dt><dd className="font-medium text-secondary">{name}</dd></div>}
-          <div><dt className="sr-only">Date</dt><dd>{date}</dd></div>
-          <div><dt className="sr-only">Time</dt><dd>{ticket.startTime} – {ticket.endTime} ({eventTimeZone(ticket.timeZone)})</dd></div>
+          <div><dt className="sr-only">Date</dt><dd>{ticket.registrationOnly && endDate !== date ? `${date} to ${endDate}` : date}</dd></div>
+          <div><dt className="sr-only">Time</dt><dd>{ticket.registrationOnly ? 'Any time during the event' : `${ticket.startTime} – ${ticket.endTime} (${eventTimeZone(ticket.timeZone)})`}</dd></div>
           {ticket.venue && <div><dt className="sr-only">Venue</dt><dd>{ticket.venue}</dd></div>}
         </dl>
         <div className="mt-4 flex justify-center">

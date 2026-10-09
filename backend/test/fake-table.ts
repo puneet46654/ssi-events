@@ -20,7 +20,8 @@ function check(item: Item | undefined, condition: string | undefined, values: It
     if ((m = part.match(/^\((.+)\)$/))) return m[1]!.split(' OR ').some((alt) => check(item, alt, values, names));
     if (part === 'attribute_not_exists(PK)') return !item;
     if (part === 'attribute_exists(PK)') return !!item;
-    if ((m = part.match(/^attribute_not_exists\((\w+)\)$/))) return item?.[m[1]!] === undefined;
+    if ((m = part.match(/^attribute_not_exists\(([#\w]+)\)$/))) return item?.[names[m[1]!] ?? m[1]!] === undefined;
+    if ((m = part.match(/^(\S+) < (#\w+)$/))) return !!item && attr(m[1]!) < attr(m[2]!);
     if ((m = part.match(/^(\S+) <= (:\w+)$/))) return !!item && attr(m[1]!) <= values[m[2]!];
     if ((m = part.match(/^(\S+) < (:\w+)$/))) return !!item && attr(m[1]!) < values[m[2]!];
     if (part === 'bookedCount < #cap') return !!item && item.bookedCount < item[names['#cap']];

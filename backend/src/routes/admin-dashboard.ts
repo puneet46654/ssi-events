@@ -28,9 +28,11 @@ export const dashboard: Handler = async (req) => {
   const eventName = new Map(events.map((e) => [e.eventId, e.eventName]));
 
   // Seats still free in slots from today onward, at events that can still be booked.
-  const availableSlots = open.reduce((sum, e, i) => sum + slotsByEvent[i]!
-    .filter((s) => s.date >= e.today)
-    .reduce((seats, s) => seats + Math.max((s.capacity || 0) - (s.bookedCount || 0), 0), 0), 0);
+  // Registration-only events count their remaining places when they have a limit (none when unlimited).
+  const availableSlots = open.reduce((sum, e, i) => sum + (e.registrationMode === 'open'
+    ? (e.capacity ? Math.max(e.capacity - (e.bookedSlots || 0), 0) : 0)
+    : slotsByEvent[i]!.filter((s) => s.date >= e.today)
+      .reduce((seats, s) => seats + Math.max((s.capacity || 0) - (s.bookedCount || 0), 0), 0)), 0);
 
   return json(200, {
     success: true,
@@ -38,7 +40,10 @@ export const dashboard: Handler = async (req) => {
       totalEvents: events.length,
       liveToday: events.filter((e) => e.status === 'LIVE').length,
       totalBookings: bookings.length,
-      todayAttendance: bookings.filter((b) => b.attendanceStatus === 'PRESENT' && b.date === todayOf.get(b.eventId)).length,
+      // Slot bookings count on their slot's day; registrations without a slot on the day they checked in.
+      todayAttendance: bookings.filter((b) => b.attendanceStatus === 'PRESENT' && (b.slotId
+        ? b.date === todayOf.get(b.eventId)
+        : !!b.checkedInAt && zonedDate(new Date(b.checkedInAt), eventTimeZone(events.find((e) => e.eventId === b.eventId)?.timeZone)) === todayOf.get(b.eventId))).length,
       availableSlots,
     },
     recentBookings: [...bookings].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5).map((b) => ({

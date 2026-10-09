@@ -64,6 +64,9 @@ type BookingData = {
   dayScheduleId:
     GenericRecord | null;
 
+  /** Registration for an event without time slots. */
+  registrationOnly?: boolean;
+
   attendanceStatus?:
     AttendanceStatus;
 
@@ -1389,11 +1392,9 @@ export default function BookingDetailsPage() {
 
               <SummaryItem
                 label="Time"
-                value={
-                  formatTimeRange(
-                    slot, toText(event.timeZone),
-                  )
-                }
+                  value={
+                    booking.registrationOnly ? 'No time slot (registration only)' : formatTimeRange(slot, toText(event.timeZone))
+                  }
               />
 
               <SummaryItem

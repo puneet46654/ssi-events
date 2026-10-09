@@ -6,7 +6,7 @@ import { bumpRealtime, logActivity } from '../lib/activity.js';
 import { allEvents, eventBookings } from '../lib/admin-data.js';
 import { requireAdmin } from '../lib/admins.js';
 import { assertSameOrigin, jsonBody } from '../lib/body.js';
-import { getBooking, getSlots, isBookingId, slotStart, type BookingItem, type SlotItem } from '../lib/bookings.js';
+import { getBooking, getSlots, isBookingId, isOpenRegistration, slotStart, type BookingItem, type SlotItem } from '../lib/bookings.js';
 import { eventStatus, eventTimeZone, zonedDate } from '../lib/dates.js';
 import { NOT_EDIT_LOCKED } from '../lib/event-lock.js';
 import { isId } from '../lib/ids.js';
@@ -136,8 +136,9 @@ export const checkIn: Handler = async (req) => {
     },
   });
   if (booking.attendanceStatus === 'PRESENT') return respond(booking, true);
-  const window = checkInWindow(booking, event.timeZone);
-  const moveTo = typeof body?.moveToSlotId === 'string' ? body.moveToSlotId : '';
+  // A registration without a time slot is admitted at any time while the event is live (checked above).
+  const window = isOpenRegistration(booking) ? { allowed: true, message: '' } : checkInWindow(booking, event.timeZone);
+  const moveTo = typeof body?.moveToSlotId === 'string' && !isOpenRegistration(booking) ? body.moveToSlotId : '';
   if (moveTo) return moveAndCheckIn(booking, moveTo, event.timeZone, admin.username, method, respond);
   if (!window.allowed) {
     const openSlots = await openSlotsNow(booking, event.timeZone);

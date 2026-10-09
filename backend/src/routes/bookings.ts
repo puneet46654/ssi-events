@@ -5,7 +5,7 @@ import { error, HttpError, json } from '../http.js';
 import { bumpRealtime } from '../lib/activity.js';
 import { assertSameOrigin, jsonBody } from '../lib/body.js';
 import {
-  bookingFingerprint, getBooking, getEventCore, getSlots, grantCookie, hasGrant, hasSlotEnded, isBookingId, newBookingId,
+  bookingEnded, bookingFingerprint, getBooking, getEventCore, getSlots, grantCookie, hasGrant, hasSlotEnded, isBookingId, isOpenRegistration, newBookingId, registrationEndsAt,
   phoneIdentity, publicBooking, readBookingDetails, sha256, slotStart, type BookingItem, type EventCore, type SlotItem,
 } from '../lib/bookings.js';
 import { calendarDate, eventStatus, eventTimeZone, zonedDate } from '../lib/dates.js';
@@ -62,6 +62,9 @@ export const eventSlots: Handler = async (req) => {
       timeZone, _id: event.eventId, eventName: event.eventName, venue: event.venue, description: event.description,
       startDate: `${event.startDate}T00:00:00.000Z`, endDate: `${event.endDate}T00:00:00.000Z`,
       status: eventStatus(event.startDate, event.endDate, new Date(), timeZone, event.status),
+      registrationMode: event.registrationMode === 'open' ? 'open' : 'slots',
+      capacity: event.registrationMode === 'open' ? event.capacity ?? null : null,
+      remaining: event.registrationMode === 'open' && event.capacity !== undefined ? Math.max(0, event.capacity - (event.bookedSlots ?? 0)) : null,
     },
     days: dayItems.map((d) => ({
       _id: d.dayId, dayNumber: d.dayNumber, date: `${d.date}T00:00:00.000Z`, startTime: d.startTime, endTime: d.endTime,
@@ -141,7 +144,7 @@ export const createBooking: Handler = async (req) => {
   const eventId = typeof body?.eventId === 'string' ? body.eventId.trim() : '';
   const slotId = typeof body?.slotId === 'string' ? body.slotId.trim() : '';
   const dayId = typeof body?.dayScheduleId === 'string' ? body.dayScheduleId.trim() : '';
-  if (![eventId, slotId, dayId].every(isId)) return error(400, 'Valid event, schedule and slot references are required.');
+  if (!isId(eventId)) return error(400, 'A valid event reference is required.');
   if (typeof body?.idempotencyKey !== 'string' || !UUID.test(body.idempotencyKey)) {
     return error(400, 'A valid booking retry key is required. Reopen the booking form.');
   }
@@ -153,6 +156,8 @@ export const createBooking: Handler = async (req) => {
   if (replay) return bookingResponse(replay, true);
 
   const event = bookableEvent(await getEventCore(eventId));
+  if (event.registrationMode === 'open') return createRegistration(eventId, event, details, requestKeyHash, fingerprint);
+  if (![slotId, dayId].every(isId)) return error(400, 'Valid schedule and slot references are required.');
   const slot = findSlot(await getSlots(eventId), dayId, slotId);
   if (hasSlotEnded(slot.date, slot.endTime, event.timeZone)) throw new HttpError(409, 'This time slot has already ended. Please choose another slot.');
 
@@ -218,6 +223,66 @@ export const createBooking: Handler = async (req) => {
   return bookingResponse(booking, false, event);
 };
 
+/**
+ * A registration for an event without time slots. One transaction: count it on the event (only
+ * while the event stands, is not being edited, and is under its registration limit, if it has
+ * one), store the registration and its retry key.
+ */
+async function createRegistration(eventId: string, event: EventCore, details: BookingItem['details'], requestKeyHash: string, fingerprint: string) {
+  const now = new Date().toISOString();
+  const booking: BookingItem = {
+    bookingId: newBookingId(zonedDate(new Date(), eventTimeZone(event.timeZone)).slice(0, 4)),
+    eventId, slotId: '', slotSK: '', dayId: '', dayNumber: 0, date: event.startDate, startTime: '', endTime: '', details,
+    phone: phoneIdentity(details.mobile, details.countryCode), email: details.email,
+    requestKeyHash, requestFingerprint: fingerprint, attendanceStatus: 'NOT_PRESENT', checkedInAt: null,
+    createdAt: now, updatedAt: now,
+  };
+  try {
+    await db.send(new TransactWriteCommand({
+      TransactItems: [
+        { Update: {
+          TableName: TABLE_NAME, Key: keys.event(eventId),
+          UpdateExpression: 'ADD bookedSlots :one',
+          ConditionExpression: `attribute_exists(PK) AND #s <> :cancelled AND ${NOT_EDIT_LOCKED} AND (attribute_not_exists(#cap) OR bookedSlots < #cap)`,
+          ExpressionAttributeNames: { '#s': 'status', '#cap': 'capacity' },
+          ExpressionAttributeValues: { ':one': 1, ':cancelled': 'CANCELLED', ':now': Date.now() },
+        } },
+        { Put: {
+          TableName: TABLE_NAME,
+          Item: {
+            ...keys.booking(booking.bookingId), ...booking,
+            GSI1PK: `EVENT#${eventId}#BOOKINGS`, GSI1SK: `00##${booking.bookingId}`,
+            GSI2PK: `PHONE#${booking.phone}`, GSI2SK: `${now}#${booking.bookingId}`,
+          },
+          ConditionExpression: 'attribute_not_exists(PK)',
+        } },
+        { Put: {
+          TableName: TABLE_NAME,
+          Item: { ...keys.bookingRequest(eventId, requestKeyHash), bookingId: booking.bookingId, fingerprint, createdAt: now },
+          ConditionExpression: 'attribute_not_exists(PK)',
+        } },
+      ],
+    }));
+  } catch (err) {
+    const failed = cancelledParts(err);
+    if (!failed) throw err;
+    if (failed[2]) {
+      const original = await existingForKey(eventId, requestKeyHash, fingerprint);
+      if (original) return bookingResponse(original, true);
+    }
+    if (failed[0]) {
+      const current = await getEventCore(eventId);
+      if (!current || current.status === 'CANCELLED') throw new HttpError(409, 'This event has been cancelled. Tickets are not valid for admission.');
+      if (current.capacity !== undefined && (current.bookedSlots ?? 0) >= current.capacity) throw new HttpError(409, 'Registration for this event is full.');
+      throw new HttpError(409, EDIT_LOCKED_MESSAGE);
+    }
+    throw new HttpError(409, 'The registration could not be completed. Please retry.');
+  }
+  try { await clearPending(eventId, booking); } catch (err) { console.error('Pending cleanup failed', err); }
+  await Promise.all([bumpRealtime('bookings'), notifyAttendee('confirmed', booking, event)]);
+  return bookingResponse(booking, false, event);
+}
+
 async function bookingResponse(booking: BookingItem, existing: boolean, event?: EventCore) {
   const ev = event ?? await getEventCore(booking.eventId);
   return json(existing ? 200 : 201, { success: true, existing, booking: publicBooking(booking, ev) }, {}, [grantCookie(booking.bookingId)]);
@@ -240,7 +305,9 @@ async function manageable(bookingId: string): Promise<{ booking: BookingItem; ev
   const event = await getEventCore(booking.eventId);
   if (!event || event.status === 'CANCELLED') throw new HttpError(409, 'This event has been cancelled.');
   if (booking.attendanceStatus === 'PRESENT') throw new HttpError(409, 'You have already checked in for this booking.');
-  if (!(slotStart(booking.date, booking.startTime, event.timeZone) > Date.now())) {
+  if (isOpenRegistration(booking)) {
+    if (!(Date.now() < registrationEndsAt(event))) throw new HttpError(409, 'This event has ended, so the registration can no longer be changed.');
+  } else if (!(slotStart(booking.date, booking.startTime, event.timeZone) > Date.now())) {
     throw new HttpError(409, 'This time slot has already started, so the booking can no longer be changed.');
   }
   return { booking, event };
@@ -267,6 +334,7 @@ export const rescheduleBooking: Handler = async (req) => {
   const slotId = typeof body?.slotId === 'string' ? body.slotId : '';
   if (!isId(dayId) || !isId(slotId)) throw new HttpError(400, 'Choose a valid time slot.');
   const { booking, event } = await manageable(bookingId);
+  if (isOpenRegistration(booking)) throw new HttpError(409, 'This registration has no time slot to change.');
   if (booking.slotId === slotId) throw new HttpError(409, 'You are already booked in this time slot.');
   const slot = findSlot(await getSlots(booking.eventId), dayId, slotId);
   if (hasSlotEnded(slot.date, slot.endTime, event.timeZone)) throw new HttpError(409, 'This time slot has already ended. Please choose another slot.');
@@ -330,11 +398,12 @@ export const cancelBooking: Handler = async (req) => {
           ConditionExpression: 'attribute_exists(PK) AND attendanceStatus <> :present',
           ExpressionAttributeValues: { ':present': 'PRESENT' },
         } },
-        { Update: {
+        // A registration without a time slot has no seat to release.
+        ...(isOpenRegistration(booking) ? [] : [{ Update: {
           TableName: TABLE_NAME, Key: { PK: keys.event(booking.eventId).PK, SK: booking.slotSK },
           UpdateExpression: 'SET bookedCount = bookedCount - :one', ConditionExpression: 'bookedCount > :zero',
           ExpressionAttributeValues: { ':one': 1, ':zero': 0 },
-        } },
+        } }]),
         { Update: {
           TableName: TABLE_NAME, Key: keys.event(booking.eventId),
           UpdateExpression: 'ADD bookedSlots :minus', ExpressionAttributeValues: { ':minus': -1 },
@@ -380,7 +449,8 @@ export const myTickets: Handler = async (req) => {
   await Promise.all([...new Set(visible.map((b) => b.eventId))].map(async (id) => events.set(id, await getEventCore(id))));
   const tickets = visible.map((b) => {
     const ticket = publicBooking(b, events.get(b.eventId));
-    return { ...ticket, canManage: ticket.status === 'ACTIVE' && slotStart(b.date, b.startTime, ticket.timeZone) > Date.now() };
+    const before = isOpenRegistration(b) ? !bookingEnded(b, events.get(b.eventId)) : slotStart(b.date, b.startTime, ticket.timeZone) > Date.now();
+    return { ...ticket, canManage: ticket.status === 'ACTIVE' && before };
   });
   // `referenceNeeded` depends only on what this browser can see, never on whether the number has
   // other bookings, so the response can't be used to test which phone numbers are registered.
