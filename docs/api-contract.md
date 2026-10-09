@@ -7,7 +7,7 @@ This file is the agreement between frontend and backend. A change to an endpoint
 ## Conventions
 
 - **Base URL:** same origin as the site (`https://events.ssistudios.com/api/...`). Call it with relative URLs (`fetch('/api/events')`), so there's no CORS.
-- **Format:** JSON request and response bodies, `content-type: application/json`. Image uploads use `multipart/form-data` and must be under 4 MB, because Lambda caps request bodies at 6 MB.
+- **Format:** JSON request and response bodies, `content-type: application/json`. Image uploads use `multipart/form-data` and must be 4 MB or less, because Lambda caps request bodies at 6 MB.
 - **Success:** `{ "success": true, ...data }`, with HTTP 200 or 201.
 - **Failure:** `{ "success": false, "error": "<message safe to show the user>" }`, with:
   - `400` invalid input
@@ -32,12 +32,12 @@ The planned list mirrors the endpoints the current frontend calls. Each one gets
 | --- | --- | --- | --- | --- |
 | GET | `/api/health` | Liveness + database reachability | none | **live** |
 | GET | `/api/events` | Public event catalogue (CDN-cached 5 s) | none | **live** |
-| POST | `/api/events` | Create event (with schedule) | admin: events | planned |
-| GET | `/api/events/:id` | Event details + schedule | none | planned |
+| POST | `/api/events` | Create event (with schedule) | admin: events + create | **live** |
+| GET | `/api/events/:id` | Event details + schedule | none | **live** |
 | PUT | `/api/events/:id` | Edit event (keeps booked slots) | admin: events | planned |
 | DELETE | `/api/events/:id` | Delete empty event / cancel booked event | admin: events | planned |
 | GET | `/api/events/:id/slots` | Slot availability for a day | none | planned |
-| GET | `/api/events/:id/image` | Event image (validated, re-encoded) | none | planned |
+| GET | `/api/events/:id/image` | Event image (validated, re-encoded at upload) | none | **live** |
 | POST | `/api/events/mytickets` | Ticket recovery (reference + full mobile) | none | planned |
 | GET, POST, PATCH, DELETE | `/api/bookings` | Look up / create / reschedule / cancel own booking | booking grant | planned |
 | POST | `/api/bookings/pending` | Save attendee details before slot choice | none | planned |
@@ -46,9 +46,9 @@ The planned list mirrors the endpoints the current frontend calls. Each one gets
 | GET | `/api/location/countries` | Country list | none | planned |
 | GET | `/api/location/states` | States for a country | none | planned |
 | POST | `/api/analytics/collect` | Anonymous page analytics (always 204; storage planned) | none | **live** |
-| POST | `/api/admin/login` | Sign in | none | planned |
-| POST | `/api/admin/logout` | Sign out | admin | planned |
-| GET | `/api/admin/session` | Current admin + permissions | admin | planned |
+| POST | `/api/admin/login` | Sign in | none | **live** |
+| POST | `/api/admin/logout` | Sign out | admin | **live** |
+| GET | `/api/admin/session` | Current admin + permissions | admin | **live** |
 | GET, POST | `/api/admin/users` | List / create admins | admin: auth | planned |
 | PUT, DELETE | `/api/admin/users/:id` | Edit / remove admin | admin: auth | planned |
 | GET | `/api/admin/bookings` | Search bookings (paginated) | admin: bookings | planned |
@@ -99,3 +99,99 @@ Poll every few seconds while the tab is visible. Refetch a resource when its num
 Body: `{ visitorId, sessionId, events: [{ kind: "pageview" | "api", path, ts, ... }], presence?: { path } }`
 
 Always returns `204` with no body. Views aren't stored yet; storage comes with the admin analytics endpoints.
+
+## Admin sign-in
+
+**Who has access:**
+- Admin accounts live in DynamoDB. The first superadmin is created with `backend/scripts/create-admin.ts`; nothing is hard-coded.
+- **Roles:**
+  - `superadmin` can do everything, including User & Access (`auth`).
+  - `admin` and `staff` get the modules listed in `permissions` (`dashboard`, `events`, `bookings`, `check-in`, `reports`).
+  - `canCreate` and `canDelete` gate changes within those modules.
+
+**The session cookie (`ssi_admin_session`):**
+- `HttpOnly; Secure; SameSite=Lax`, valid for 8 hours.
+- Its value is an HMAC-SHA256-signed token holding only the username, the sign-in time and a credential version.
+- Access is re-read from the table on every request, so deactivating a user or changing their permissions applies immediately.
+- Resetting a password ends all of that admin's earlier sessions.
+
+**Protections:**
+- **Lockout:** 5 failed sign-ins within 15 minutes lock the ID for 15 minutes (`429`).
+- **Same error for every failure:** unknown IDs, inactive accounts and wrong passwords all return the same `401`, after the same password-hashing work.
+- **Cross-site requests:** requests that change data are refused if they come from another website's `Origin` (`403`).
+- **Audit log:** every sign-in, failed sign-in, sign-out and change is written to the admin activity log (kept for 1 year).
+
+### `POST /api/admin/login`
+
+Body: `{ "username": "...", "password": "..." }`
+
+`200` (plus the `Set-Cookie` session):
+```json
+{ "success": true, "loggedInAt": 1791521749589,
+  "user": { "username": "naveen", "name": "Naveen", "role": "superadmin",
+            "permissions": ["dashboard","events","bookings","check-in","reports","auth"],
+            "canCreate": true, "canDelete": true } }
+```
+Errors:
+- `400` missing fields
+- `401` invalid login ID or password
+- `429` locked
+
+### `POST /api/admin/logout`
+
+`200 { "success": true }`. Clears the cookie.
+
+### `GET /api/admin/session`
+
+`200 { "success": true, "user": { ...as above, "loggedInAt": <ms> } }`, or `401` (clears the cookie).
+
+## Events (admin)
+
+### `POST /api/events`
+
+Requires `events` permission plus `canCreate`. Body: `multipart/form-data` with these fields:
+
+| Field | Value |
+| --- | --- |
+| `eventName` | max 200 characters |
+| `eventType` | `conference`, `mantram` or `event` |
+| `bookingFormTemplate` | `practitioner-institutional`, `template-2` or `template-3` |
+| `venue` | max 300 characters |
+| `description` | max 5000 characters |
+| `timeZone` | IANA zone, e.g. `Asia/Kolkata` |
+| `startDate`, `endDate` | `YYYY-MM-DD` |
+| `numberOfDays` | 1-10 |
+| `daySchedules` | JSON array, one entry per day: `{ date, startTime "HH:mm", endTime, lunchEnabled, lunchStart, lunchEnd, slotDuration (min), slotGap (min), capacity 1-20, sameAsDay1 }` |
+| `thumbnail` | optional JPG/PNG/WebP, max 4 MB and 25 megapixels |
+
+**Validation:**
+- Schedule dates must be ascending and inside the event dates.
+- Lunch must fall inside the day.
+- Every day must produce at least one slot.
+- Times that a clock change skips or repeats in the event's timezone are rejected.
+
+**Image handling:** the image is decoded and re-encoded, which strips its metadata, before it's stored in S3.
+
+`201`:
+```json
+{ "success": true, "message": "Event created successfully.", "eventId": "<ULID>",
+  "bookingFormTemplate": "practitioner-institutional", "imageUrl": "/api/events/<id>/image?v=<ms>" }
+```
+Errors:
+- `400` with the specific reason
+- `401` not signed in
+- `403` no permission
+
+### `GET /api/events/:id`
+
+`200 { "success": true, "event": { ...same fields as the catalogue, "numberOfDays", "daySchedules": [{ "_id", "dayNumber", "date" (ISO), "startTime", "endTime", "lunchEnabled", "lunchStart", "lunchEnd", "slotDuration", "slotGap", "capacity", "sameAsDay1" }] } }`
+
+`slotDuration`, `slotGap` and `capacity` are strings, as the edit form expects.
+
+Errors:
+- `400` malformed ID
+- `404` not found
+
+### `GET /api/events/:id/image`
+
+The image bytes, with `cache-control: public, max-age=31536000, immutable`; the URL carries a version. Returns `404` if the event has no image.

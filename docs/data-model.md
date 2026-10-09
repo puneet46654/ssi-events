@@ -23,6 +23,7 @@ Key builders live in `backend/src/db/table.ts`. Keep this file and that one in s
 | Pending booking | `EVENT#<eventId>` | `PENDING#<draftId>` | | | `expiresAt` |
 | Booking | `BOOKING#<bookingId>` | `META` | `EVENT#<eventId>#BOOKINGS` / `<nn>#<HH:mm>#<bookingId>` | `EVENT#<eventId>#ATTENDANCE` / `<checkedInAt>` (set at check-in) | |
 | Admin user | `ADMIN#<username>` | `META` | `ADMINS` / `<username>` | | |
+| Failed sign-in | `LOGINFAIL#<username>` | `<timestamp>#<id>` | | | 15 minutes |
 | Admin activity | `ADMINLOG#<yyyy-mm>` | `<timestamp>#<id>` | | | 1 year |
 | Feedback | `FEEDBACK#<eventId or APP>` | `<timestamp>#<id>` | | | |
 | Analytics event | `ANALYTICS#<yyyy-mm-dd>` | `<timestamp>#<id>` | | | 90 days |
@@ -59,3 +60,15 @@ If the request key already exists, it's a retry. The backend then returns the bo
 
 - **Event images:** stored in S3 bucket `ssi-studio-events` (prefix `events/`). The item stores only the object key.
 - **Secrets** (session/ticket signing keys): stored in SSM Parameter Store `/ssi-events/*` and copied to the backend's environment by `infra/set-secrets.sh`.
+
+## Item attributes (implemented)
+
+| Item | Attributes |
+| --- | --- |
+| Event | `eventId`, `eventName`, `eventType`, `bookingFormTemplate`, `venue`, `description`, `imageKey` (S3 key), `numberOfDays`, `startDate`/`endDate` (`YYYY-MM-DD`), `timeZone`, `status` (`ACTIVE` or `CANCELLED`; `LIVE`/`UPCOMING`/`COMPLETED` is computed when read), `totalSlots`, `bookedSlots`, `createdBy`, `createdAt`, `updatedAt` |
+| Day schedule | `dayId`, `dayNumber`, `date`, `startTime`, `endTime`, `lunchEnabled`, `lunchStart`, `lunchEnd`, `slotDuration`, `slotGap`, `capacity`, `sameAsDay1` (numbers stored as numbers) |
+| Slot | `slotId`, `dayId`, `dayNumber`, `date`, `startTime`, `endTime`, `capacity`, `bookedCount` |
+| Admin user | `username`, `name`, `role` (`superadmin`, `admin` or `staff`), `permissions[]`, `canCreate`, `canDelete`, `isActive`, `passwordHash` + `passwordSalt` (scrypt, 64-byte key, 16-byte salt), `createdAt`, `updatedAt`, `lastLoginAt` |
+| Admin activity | `admin`, `action`, `resource`, `resourceId`, `details` (sensitive keys removed), `createdAt` |
+
+**Event creation** writes the day and slot items first, in batches of 25, and the event item last. A create that fails midway leaves no event in the catalogue; its orphaned day and slot items are never read.

@@ -1,8 +1,9 @@
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import { error, HttpError, type Response } from './http.js';
 import { Router } from './router.js';
+import { login, logout, session } from './routes/admin-auth.js';
 import { collectAnalytics } from './routes/analytics.js';
-import { listEvents } from './routes/events.js';
+import { createEvent, eventImage, getEvent, listEvents } from './routes/events.js';
 import { health } from './routes/health.js';
 import { realtimeVersions } from './routes/realtime.js';
 
@@ -10,8 +11,14 @@ import { realtimeVersions } from './routes/realtime.js';
 export const router = new Router()
   .get('/api/health', health)
   .get('/api/events', listEvents)
+  .post('/api/events', createEvent)
+  .get('/api/events/:id', getEvent)
+  .get('/api/events/:id/image', eventImage)
   .get('/api/realtime', realtimeVersions)
-  .post('/api/analytics/collect', collectAnalytics);
+  .post('/api/analytics/collect', collectAnalytics)
+  .post('/api/admin/login', login)
+  .post('/api/admin/logout', logout)
+  .get('/api/admin/session', session);
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<Response> {
   try {

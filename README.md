@@ -63,6 +63,18 @@ curl https://events.ssistudios.com/api/health
 
 To roll back, revert the merge commit in GitLab. The revert goes through the same pipeline. Each release's zips are kept for 30 days under `s3://ssi-events-site-051826716001/releases/`.
 
+## Admin accounts
+
+There are no built-in or hard-coded admins. To create the first superadmin, or to reset any admin's password, run this with AWS administrator credentials:
+
+```bash
+cd backend && npm ci
+npx tsx scripts/create-admin.ts --username <id> --name "<Full name>"   # new superadmin
+npx tsx scripts/create-admin.ts --username <id> --reset                 # new password, signs out everywhere
+```
+
+The script prints a generated 20-character password once. Only its scrypt hash is stored.
+
 ## GitLab settings (owner, one-time)
 
 - **Protect `main`:** allowed to merge = Maintainers, allowed to push = No one.
