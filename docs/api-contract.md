@@ -123,7 +123,7 @@ Always returns `204` with no body. Views aren't stored yet; storage comes with t
 
 ### `POST /api/admin/login`
 
-Body: `{ "username": "...", "password": "..." }`
+Body: `{ "username": "...", "password": "..." }`. `username` may be the login ID or the email address on the admin account. Failed attempts count against the account, whichever was typed.
 
 `200` (plus the `Set-Cookie` session):
 ```json
@@ -362,6 +362,7 @@ Body: `{ username, name, password, role, permissions, canCreate, canDelete, isAc
 
 - `username`: 3-40 characters, `a-z 0-9 . _ -` (stored lower-case)
 - `name`: 2-100 characters
+- `email`: optional, valid and unique among admins (stored lower-case); can be used at sign-in in place of the login ID. An empty string removes it.
 - `role`: `superadmin`, `admin` or `staff`; superadmins always get every module and both rights
 - `permissions`: at least one of `dashboard`, `events`, `bookings`, `check-in`, `reports` (others are ignored)
 

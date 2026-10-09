@@ -256,3 +256,26 @@ test('activity log lists changes newest first and filters by admin and action', 
   const none = await call('GET', '/api/admin/activity?admin=someone', { cookies });
   assert.equal(none.data.logs.length, 0);
 });
+
+/* ---------- Sign-in by email ---------- */
+
+test('admins can sign in with their email; it must be unique; failures lock the account either way', async () => {
+  const created = await call('POST', '/api/admin/users', { body: newUser({ email: ' Priya.Sharma@SSInnovations.org ' }), cookies });
+  assert.equal(created.status, 201, JSON.stringify(created.data));
+  assert.equal(created.data.user.email, 'priya.sharma@ssinnovations.org');
+
+  const byEmail = await call('POST', '/api/admin/login', { body: { username: 'priya.sharma@ssinnovations.org', password: 'Strong-Pass-123' } });
+  assert.equal(byEmail.status, 200);
+  assert.equal(byEmail.data.user.username, 'priya');
+
+  const taken = await call('POST', '/api/admin/users', { body: newUser({ username: 'other', email: 'priya.sharma@ssinnovations.org' }), cookies });
+  assert.equal(taken.status, 409);
+  assert.equal((await call('PUT', '/api/admin/users/priya', { body: { email: 'not-an-email' }, cookies })).status, 400);
+
+  // Five failures split across ID and email still lock the account.
+  for (const username of ['priya', 'priya.sharma@ssinnovations.org', 'priya', 'priya.sharma@ssinnovations.org', 'priya']) {
+    assert.equal((await call('POST', '/api/admin/login', { body: { username, password: 'wrong-Password-1' } })).status, 401);
+  }
+  assert.equal((await call('POST', '/api/admin/login', { body: { username: 'priya.sharma@ssinnovations.org', password: 'Strong-Pass-123' } })).status, 429);
+  assert.equal((await call('POST', '/api/admin/login', { body: { username: 'nobody@example.com', password: 'x' } })).status, 401);
+});
