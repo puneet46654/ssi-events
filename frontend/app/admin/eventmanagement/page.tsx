@@ -1607,7 +1607,7 @@ export default function EventsManagementPage() {
             </span>
 
             <span>
-              SSI Maya Connect •
+              SSInnovations Events •
               Event Management
             </span>
           </div>

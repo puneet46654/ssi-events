@@ -1,4 +1,4 @@
-# SSI Maya Connect
+# SSInnovations Events
 
 Event registration, appointment slots, QR tickets and admin check-in for SSI. Built with Next.js 16, React 19, TypeScript, Tailwind CSS, MongoDB/Mongoose, S3 and Socket.IO. The custom Node server runs both Next.js and Socket.IO.
 
@@ -35,7 +35,7 @@ npm ci
 Set local application configuration in `.env.local` (ignored by Git):
 
 ```dotenv
-MONGODB_URI=mongodb://127.0.0.1:27017/ssimaya?replicaSet=rs0
+MONGODB_URI=mongodb://127.0.0.1:27017/ssievents?replicaSet=rs0
 ADMIN_SESSION_SECRET=replace-with-a-long-random-value
 BOOKING_ACCESS_SECRET=replace-with-another-long-random-value
 ```
@@ -95,25 +95,25 @@ npx tsc --noEmit
 npm run build
 ```
 
-Integration and browser tests require a separate running server and isolated MongoDB. The helpers refuse application port 3000 and databases outside `127.0.0.1:27027/ssimaya_oct01_test` (or localhost). They create synthetic fixtures and remove their own records. Never point these tests at a real event database.
+Integration and browser tests require a separate running server and isolated MongoDB. The helpers refuse application port 3000 and databases outside `127.0.0.1:27027/ssievents_oct01_test` (or localhost). They create synthetic fixtures and remove their own records. Never point these tests at a real event database.
 
-1. Start a local MongoDB replica set on port 27027, named `ssimayaTest`. For example, use a disposable data directory outside this repository:
+1. Start a local MongoDB replica set on port 27027, named `ssieventsTest`. For example, use a disposable data directory outside this repository:
 
    ```powershell
-   mongod --dbpath C:\temp\ssimaya-test-mongo --port 27027 --bind_ip 127.0.0.1 --replSet ssimayaTest
+   mongod --dbpath C:\temp\ssievents-test-mongo --port 27027 --bind_ip 127.0.0.1 --replSet ssieventsTest
    ```
 
    Create that directory first. In another terminal, initialize it once with `mongosh`:
 
    ```javascript
    // mongosh mongodb://127.0.0.1:27027
-   rs.initiate({ _id: 'ssimayaTest', members: [{ _id: 0, host: '127.0.0.1:27027' }] })
+   rs.initiate({ _id: 'ssieventsTest', members: [{ _id: 0, host: '127.0.0.1:27027' }] })
    ```
 
 2. Start the isolated app with these **test-only** values. They match the synthetic cookie helpers and must never be used for a real deployment. Leave Resend unset for the test server.
 
    ```powershell
-   $env:MONGODB_URI='mongodb://127.0.0.1:27027/ssimaya_oct01_test?replicaSet=ssimayaTest'
+   $env:MONGODB_URI='mongodb://127.0.0.1:27027/ssievents_oct01_test?replicaSet=ssieventsTest'
    $env:ADMIN_SESSION_SECRET='local-test-session-secret-for-oct01-only'
    $env:BOOKING_ACCESS_SECRET='local-test-booking-secret-for-oct01-only'
    $env:PORT='3101'

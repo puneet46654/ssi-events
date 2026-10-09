@@ -482,7 +482,7 @@ export default function TimeSlotsPage() {
   if (event?.status === 'CANCELLED') {
     return <main className="mx-auto max-w-xl p-8 text-center"><h1 className="text-xl font-bold">Event cancelled</h1>
       <p className="my-4">Bookings are closed. Existing tickets are not valid for admission.</p>
-      <button type="button" onClick={() => router.push('/events')}>Back to events</button></main>;
+      <button type="button" onClick={() => router.push('/')}>Back to events</button></main>;
   }
 
   if (!event) {

@@ -14,14 +14,14 @@ after(async () => {
 const cookies = (response: Response) => response.headers.getSetCookie().map(value => value.split(';')[0]).join('; ');
 async function post(body: Record<string, unknown>, cookie = '') {
   const response = await api('/api/feedback', { method: 'POST', headers: { Cookie: cookie, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  const session = /ssimaya_session_id=([^;]+)/.exec(cookies(response))?.[1]; if (session) sessions.push(session);
+  const session = /ssievents_session_id=([^;]+)/.exec(cookies(response))?.[1]; if (session) sessions.push(session);
   return { response, data: await response.json(), cookie: cookies(response) };
 }
 
 test('app feedback stores a star rating and optional comment without attendee identity', async () => {
   const first = await post({ rating: 4, message: '  Easy to book  ', eventId: 'forged', bookingId: 'SSI-FORGED' });
   assert.equal(first.response.status, 200, JSON.stringify(first.data));
-  const session = /ssimaya_session_id=([^;]+)/.exec(first.cookie)?.[1];
+  const session = /ssievents_session_id=([^;]+)/.exec(first.cookie)?.[1];
   const saved = await db.collection('feedbacks').findOne({ sessionId: session });
   assert.equal(saved?.scope, 'application');
   assert.equal(saved?.rating, 4);
@@ -45,7 +45,7 @@ test('one rating per browser, including concurrent submissions, and status refle
   assert.equal(await status(), true);
   const repeats = await Promise.all(Array.from({ length: 4 }, () => post({ rating: 1 }, first.cookie)));
   assert.ok(repeats.every(r => r.response.status === 409 && r.data.duplicate));
-  const session = /ssimaya_session_id=([^;]+)/.exec(first.cookie)?.[1];
+  const session = /ssievents_session_id=([^;]+)/.exec(first.cookie)?.[1];
   assert.equal(await db.collection('feedbacks').countDocuments({ sessionId: session }), 1);
   assert.equal((await (await api('/api/feedback')).json()).submitted, false, 'a new browser has not rated yet');
 });

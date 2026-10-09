@@ -528,7 +528,7 @@ export async function POST(
       if (qr) {
         if (
           qr.type !==
-          'SSI_MAYA_CONNECT_ATTENDANCE'
+          'SSI_EVENTS_ATTENDANCE'
         ) {
           return NextResponse.json(
             {

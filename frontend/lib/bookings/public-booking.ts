@@ -41,6 +41,6 @@ export async function loadPublicBooking(bookingId: string): Promise<ServerBookin
     checkedInBy: booking.checkedInBy || '', checkInMethod: booking.checkInMethod || '',
     status: event?.status === 'CANCELLED' ? 'CANCELLED' : booking.attendanceStatus === 'PRESENT' ? 'ATTENDED'
       : !event || !slot || !day || hasSlotEnded(day.date, slot.endTime, new Date(), timeZone) ? 'EXPIRED' : 'ACTIVE',
-    qrData: event?.status === 'CANCELLED' ? '' : JSON.stringify({ type: 'SSI_MAYA_CONNECT_ATTENDANCE', doctorId: id, bookingId, eventId }),
+    qrData: event?.status === 'CANCELLED' ? '' : JSON.stringify({ type: 'SSI_EVENTS_ATTENDANCE', doctorId: id, bookingId, eventId }),
   };
 }

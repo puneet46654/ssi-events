@@ -5,7 +5,7 @@ import { Feedback } from '@/models/Feedback';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-const SESSION_COOKIE = 'ssimaya_session_id';
+const SESSION_COOKIE = 'ssievents_session_id';
 const text = (value: unknown) => typeof value === 'string' ? value.trim() : '';
 function sessionId(request: NextRequest) { return request.cookies.get(SESSION_COOKIE)?.value || randomUUID(); }
 function reply(session: string, body: Record<string, unknown>, status = 200) {

@@ -62,7 +62,7 @@ export function AppFeedbackForm({ onDone, compact = false }: { onDone?: () => vo
   const shown = hover || rating;
   return (
     <div>
-      <p className={`font-semibold text-secondary ${compact ? 'text-[14px]' : 'text-[16px]'}`}>How was your experience with SSI Maya Connect?</p>
+      <p className={`font-semibold text-secondary ${compact ? 'text-[14px]' : 'text-[16px]'}`}>How was your experience with SSInnovations Events?</p>
       <div className="mt-3 flex items-center gap-1" role="radiogroup" aria-label="Rating" onMouseLeave={() => setHover(0)}>
         {[1, 2, 3, 4, 5].map(star => (
           <button

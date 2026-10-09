@@ -130,7 +130,7 @@ if ! aws lambda get-function --function-name "$WEB_FUNCTION" >/dev/null 2>&1; th
   tmp=.tmp-placeholder; rm -rf "$tmp"; mkdir "$tmp"
   printf '#!/bin/bash\nexec node placeholder.js\n' > "$tmp/run.sh"
   cat > "$tmp/placeholder.js" <<'JS'
-require('http').createServer((q, s) => { s.writeHead(503, { 'content-type': 'text/plain', 'cache-control': 'no-store' }); s.end('SSI Maya Connect is being set up.'); })
+require('http').createServer((q, s) => { s.writeHead(503, { 'content-type': 'text/plain', 'cache-control': 'no-store' }); s.end('SSInnovations Events is being set up.'); })
   .listen(process.env.PORT || 8080, '127.0.0.1');
 JS
   zip_files "$tmp/placeholder.zip" "$tmp" run.sh:755 placeholder.js:644

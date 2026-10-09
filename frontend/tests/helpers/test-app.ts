@@ -3,10 +3,10 @@ import { createHmac, randomBytes, scryptSync } from 'node:crypto';
 import { MongoClient } from 'mongodb';
 
 export const baseURL = process.env.TEST_BASE_URL || 'http://127.0.0.1:3101';
-export const testMongoUri = process.env.TEST_MONGODB_URI || 'mongodb://127.0.0.1:27027/ssimaya_oct01_test?replicaSet=ssimayaTest';
+export const testMongoUri = process.env.TEST_MONGODB_URI || 'mongodb://127.0.0.1:27027/ssievents_oct01_test?replicaSet=ssieventsTest';
 const address = new URL(baseURL);
 assert.ok(['127.0.0.1', 'localhost'].includes(address.hostname) && address.port !== '3000', 'Tests must use a separate local application port.');
-assert.match(testMongoUri, /^mongodb:\/\/(127\.0\.0\.1|localhost):27027\/ssimaya_oct01_test(?:\?|$)/, 'Tests must use the isolated test database.');
+assert.match(testMongoUri, /^mongodb:\/\/(127\.0\.0\.1|localhost):27027\/ssievents_oct01_test(?:\?|$)/, 'Tests must use the isolated test database.');
 
 export async function testDatabase() {
   const client = new MongoClient(testMongoUri);

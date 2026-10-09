@@ -644,7 +644,7 @@ export default function MyTicketsPage() {
           <motion.section
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            aria-label="Rate SSI Maya Connect"
+            aria-label="Rate SSInnovations Events"
             className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-4"
           >
             <AppFeedbackForm compact onDone={markFeedbackDone} />

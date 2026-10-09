@@ -108,7 +108,7 @@ function getSecret() {
     // A guessable secret would let anyone forge an admin session.
     throw new Error('ADMIN_SESSION_SECRET must be set (min 32 chars) in production.');
   }
-  return 'ssimaya-development-secret-change-me';
+  return 'ssievents-development-secret-change-me';
 }
 
 function sign(value: string) {

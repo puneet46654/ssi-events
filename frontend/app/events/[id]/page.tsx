@@ -293,7 +293,7 @@ export default function EventDetailsPage() {
         }
         onBack={() =>
           router.push(
-            '/events',
+            '/',
           )
         }
         onRetry={() =>

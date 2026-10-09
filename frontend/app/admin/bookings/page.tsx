@@ -899,7 +899,7 @@ export default function AdminBookingsPage() {
             >
               Search, review and manage
               registrations across all
-              SSI Maya Connect events.
+              SSInnovations Events events.
             </p>
           </div>
 
