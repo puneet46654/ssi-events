@@ -55,7 +55,7 @@ The planned list mirrors the endpoints the current frontend calls. Each one gets
 | GET, PATCH, DELETE | `/api/admin/bookings/:id` | Booking detail / edit / delete | admin: bookings | **live** |
 | DELETE | `/api/admin/bookings/pending/:id` | Discard a pending booking | admin: bookings + delete | **live** |
 | GET, POST | `/api/admin/attendance` | Check-in lookup / QR or manual check-in | admin: check-in | **live** |
-| GET | `/api/admin/dashboard` | Dashboard figures | admin: dashboard | planned |
+| GET | `/api/admin/dashboard` | Dashboard figures | admin: dashboard | **live** |
 | GET | `/api/admin/reports` | Report data for CSV/Excel/print | admin: reports | **live** |
 | GET | `/api/admin/analytics` | Analytics summary | admin: dashboard | planned |
 | GET | `/api/admin/analytics/live` | Live visitors | admin: dashboard | planned |
@@ -501,3 +501,16 @@ Requires `reports`. Everything the reports screen shows and exports (CSV, Excel,
 - `eventOptions` (every event, for the filter), `filters`, `timeZone`, `generatedAt`
 
 Capacity comes from each event's seat counters; attendance figures count the bookings that match the filters. Cancelled bookings are deleted, so they are not in reports.
+
+## Dashboard
+
+### `GET /api/admin/dashboard`
+
+Requires `dashboard`. The admin landing page.
+
+`200`:
+- `stats`: `totalEvents`, `liveToday` (events live today), `totalBookings`, `todayAttendance` (check-ins for today's slots), `availableSlots` (free seats in slots from today onward, at events that are live or upcoming and not cancelled)
+- `recentBookings`: the five latest bookings: `{ id, bookingId, fullName, eventName, date, startTime, endTime, attendanceStatus }`
+- `upcomingEvents`: the next three live or upcoming events: `{ id, eventName, venue, startDate, endDate, status, booked, capacity, percentage }`
+
+"Today" is each event's own calendar day in its timezone.
