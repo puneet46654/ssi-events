@@ -24,11 +24,11 @@ export function CategoryCards({ events, loading = false }: Props) {
           const past = events.filter((e) => e.eventType === category.type && e.status === 'COMPLETED').length;
           const externalUrl = category.external?.externalUrl;
           const status = category.external
-            ? (externalUrl ? 'Register on the conference website' : 'Registration details to follow')
+            ? (externalUrl ? 'Register on the conference website' : 'Registration link to follow')
             : category.archive
-              ? open > 0 ? (open === 1 ? '1 current or upcoming conference' : `${open} current or upcoming conferences`)
-                : past > 0 ? 'See our recent conferences' : 'No conferences listed at present'
-              : open > 0 ? (open === 1 ? '1 event open for registration' : `${open} events open for registration`) : 'No events open at present';
+              ? open > 0 ? (open === 1 ? '1 upcoming conference' : `${open} upcoming conferences`)
+                : past > 0 ? 'Past conferences' : 'No upcoming conferences'
+              : open > 0 ? (open === 1 ? '1 event open for registration' : `${open} events open for registration`) : 'No events open';
           const active = category.external ? Boolean(externalUrl) : open > 0 || (Boolean(category.archive) && past > 0);
           const body = (
             <>

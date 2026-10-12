@@ -351,17 +351,6 @@ export default function MyTicketsPage() {
           </h1>
 
 
-          <p
-            className="
-              mt-1
-
-              text-[12px]
-
-              text-gray-500
-            "
-          >
-            Access your registered event tickets.
-          </p>
 
           {(savedMobile || loading) && (
             <button

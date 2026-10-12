@@ -32,7 +32,7 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
         .sort((a, b) => String(b.startDate).localeCompare(String(a.startDate))));
       setError('');
     } catch {
-      setError('We could not load the events just now. Please try again.');
+      setError('Unable to load events. Please retry.');
     }
   }, [type]);
 
@@ -49,7 +49,7 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
       <h1 className="mt-2 text-[24px] font-semibold leading-tight tracking-[-0.01em] text-secondary md:text-[30px]">
         {page.title}
       </h1>
-      <p className="mt-1 text-[15px] text-gray-500">{category.description}</p>
+      <p className="mt-1 text-[14px] text-gray-500">{category.description}</p>
 
       {category.external ? (
         <section aria-labelledby="category-list" className="mt-6 max-w-[62ch] rounded-[22px] bg-gray-50 p-6 md:mt-8 md:p-8">
@@ -61,7 +61,7 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
             </a>
           ) : (
             <p className="mt-2 text-[16px] leading-[1.6] text-gray-600">
-              <span className="mb-2 block font-semibold text-secondary">Registration details to follow</span>
+              <span className="mb-2 block font-semibold text-secondary">Registration link to follow</span>
               {category.external.comingSoon}
             </p>
           )}
@@ -102,13 +102,29 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
         </section>
       )}
 
-      {/* Background on the category, kept below the events. */}
-      <section aria-labelledby="category-about" className="mt-12 border-t border-gray-200 pt-8 md:mt-16">
-        <h2 id="category-about" className="text-[16px] font-semibold text-secondary">About {page.title}</h2>
-        <div className="mt-2 max-w-[70ch] space-y-2 text-[14px] leading-[1.65] text-gray-500 md:text-[15px]">
-          {page.intro.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-        </div>
-      </section>
+      {/* The category explained: below the events, so open events lead the page. */}
+      {page.intro.length > 0 && (
+        <section aria-labelledby="category-about" className="mt-12 border-t border-gray-200 pt-6 md:mt-14 md:pt-8">
+          <h2 id="category-about" className="text-[16px] font-semibold text-secondary md:text-[17px]">About {page.title}</h2>
+          <div className="mt-2 max-w-[72ch] space-y-2 text-[13.5px] leading-[1.65] text-gray-600 md:text-[14px]">
+            {page.intro.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+          </div>
+
+          {page.steps && (
+            <div className="mt-6">
+              <h3 className="text-[14px] font-semibold text-secondary">{page.steps.heading}</h3>
+              <ol className="mt-3 grid gap-2.5 md:grid-cols-3 md:gap-x-8">
+                {page.steps.items.map((step, index) => (
+                  <li key={step} className="flex gap-3">
+                    <span aria-hidden="true" className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/[0.08] text-[12px] font-semibold text-primary">{index + 1}</span>
+                    <span className="pt-0.5 text-[13.5px] leading-[1.55] text-gray-600 md:text-[14px]">{step}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+        </section>
+      )}
     </main>
   );
 }

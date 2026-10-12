@@ -571,21 +571,9 @@ export default function EventsPage() {
               <span className="ssi-highlight">SS Innovations</span> events
             </h1>
 
-            <p
-              className="
-                                mt-2
-                text-[16px]
-                leading-[1.5]
-                text-gray-500
-              "
-            >
-              Register for our conferences and CME
-              programmes, or book a session with
-              SSi MantraM.
-            </p>
           </div>
 
-          {/* SEARCH */}
+          {/* FILTERS */}
 
           <div
             className="
@@ -688,17 +676,6 @@ export default function EventsPage() {
               <span className="ssi-highlight">SS Innovations</span> events
             </h1>
 
-            <p
-              className="
-                mt-3
-                max-w-[46ch]
-                text-[19px]
-                leading-[1.5]
-                text-gray-500
-              "
-            >
-              Register for our conferences and CME programmes, or book a session with SSi MantraM.
-            </p>
           </div>
               <div className="flex shrink-0 items-center gap-2">
                 <div className="relative">
@@ -965,16 +942,15 @@ export default function EventsPage() {
               <AnimatedSection>
                 <SectionHeading
                   title="Open for Registration"
-                  subtitle="Events currently accepting registrations"
                 />
 
                 <div
                   className="
                     grid
-                    grid-cols-2
+                    grid-cols-1
                     gap-3
 
-                    min-[520px]:grid-cols-2
+                    sm:grid-cols-2
 
                     md:gap-5
                   "
@@ -1008,7 +984,6 @@ export default function EventsPage() {
               <AnimatedSection>
                 <SectionHeading
                                     title="SMRSC"
-                  subtitle="The SSI Multi-Specialty Robotic Surgery Conference"
                 />
 
                 <UpcomingGrid
@@ -1026,7 +1001,6 @@ export default function EventsPage() {
               <AnimatedSection>
                 <SectionHeading
                                     title="MantraM"
-                  subtitle="Upcoming MantraM visits"
                 />
 
                 <UpcomingGrid
@@ -1044,7 +1018,6 @@ export default function EventsPage() {
               <AnimatedSection>
                 <SectionHeading
                                     title="CME and workshops"
-                  subtitle="Continuing medical education and hands-on workshops"
                 />
 
                 <UpcomingGrid
@@ -1061,7 +1034,6 @@ export default function EventsPage() {
               <AnimatedSection>
                 <SectionHeading
                   title="Conferences"
-                  subtitle="Congresses and conferences where we exhibit and present"
                 />
 
                 <UpcomingGrid events={upcomingParticipation} />
@@ -1077,7 +1049,6 @@ export default function EventsPage() {
                 <AnimatedSection>
                   <SectionHeading
                     title="Completed Events"
-                    subtitle="Previously concluded programmes"
                   />
 
                   <UpcomingGrid
@@ -1098,7 +1069,6 @@ export default function EventsPage() {
         <section className="mt-10 md:mt-14">
           <SectionHeading
             title="Browse by category"
-            subtitle="SMRSC, MantraM, CME and workshops, and the conferences we attend"
           />
           <CategoryCards events={events} loading={loading && events.length === 0} />
         </section>
@@ -1323,17 +1293,6 @@ function FilterContents({
             Filter events
           </h3>
 
-          <p
-            className="
-              mt-0.5
-
-              text-[12px]
-
-              text-gray-400
-            "
-          >
-            Refine the events shown below.
-          </p>
         </div>
 
         <button

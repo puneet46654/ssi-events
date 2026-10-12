@@ -4,7 +4,7 @@ import { CategoryPage } from '@/components/user/CategoryPage';
 
 export const metadata: Metadata = {
   title: 'SMRSC | SS Innovations Events',
-  description: 'The SSI Multi-Specialty Robotic Surgery Conference. Registration opens on the conference website.',
+  description: 'SSI Multi-Specialty Robotic Surgery Conference. Registration is on the conference website.',
   alternates: { canonical: '/smrsc' },
 };
 

@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { calendarDateFormatter } from '@/lib/events/dates';
+import { categoryOf } from '@/lib/event-categories';
 
 export interface IEvent {
   _id: string;
@@ -236,6 +237,7 @@ const UpcomingEventCard = memo(function UpcomingEventCard({
           "
         >
 
+          <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-primary">{categoryOf(event.eventType).cardLabel}</span>
           <h3
             className="
               mt-1
@@ -589,6 +591,7 @@ export const OpenEventCard = memo(function OpenEventCard({
           "
         >
           {/* TYPE */}
+          <span className="block text-[12px] font-semibold uppercase tracking-[0.06em] text-primary">{categoryOf(event.eventType).cardLabel}</span>
 
           {/* NAME */}
 
