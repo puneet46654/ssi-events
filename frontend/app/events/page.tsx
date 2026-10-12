@@ -4,23 +4,20 @@
 import { ticketStorage } from '@/lib/booking-contracts';
 import PendingRegistrations from '@/components/user/PendingRegistrations';
 import { CategoryCards } from '@/components/user/CategoryCards';
-import { ArrowIcon, EventPlaceholder, UpcomingGrid, formatDate } from '@/components/user/EventGrid';
+import { OpenEventCard, UpcomingGrid } from '@/components/user/EventGrid';
 import { categoryOf } from '@/lib/event-categories';
+import { setEventSearch, useEventSearch } from '@/lib/event-search';
 
-import { calendarDateFormatter } from '@/lib/events/dates';
 
 import type {
   ReactNode,
 } from 'react';
 
-import Image from 'next/image';
-import Link from 'next/link';
 
 import {
   useCallback,
   useDeferredValue,
   useEffect,
-  memo,
   useMemo,
   useRef,
   useState,
@@ -133,10 +130,9 @@ export default function EventsPage() {
      SEARCH + FILTERS
   ========================================================== */
 
-  const [
-    search,
-    setSearch,
-  ] = useState('');
+  // The search box is in the site header; the text is kept in the URL (?q=).
+  const search = useEventSearch();
+  const setSearch = setEventSearch;
 
   const deferredSearch =
     useDeferredValue(search);
@@ -595,30 +591,14 @@ export default function EventsPage() {
             className="
               relative
               mt-3
+              flex
+              justify-end
             "
           >
-            <SearchBar
-              value={
-                search
-              }
-              onChange={
-                setSearch
-              }
-              mobile
-              showFilters={
-                showFilters
-              }
-              onToggleFilters={() =>
-                setShowFilters(
-                  (
-                    current,
-                  ) =>
-                    !current,
-                )
-              }
-              hasActiveFilters={
-                hasActiveFilters
-              }
+            <FilterButton
+              showFilters={showFilters}
+              onToggle={() => setShowFilters((current) => !current)}
+              hasActiveFilters={hasActiveFilters}
             />
 
             <AnimatePresence>
@@ -720,36 +700,19 @@ export default function EventsPage() {
               Register for our conferences and CME programmes, or book a session with SSi MantraM.
             </p>
           </div>
-              <div className="flex w-full max-w-[600px] items-center gap-2">
-                <div className="relative min-w-0 flex-1">
+              <div className="flex shrink-0 items-center gap-2">
+                <div className="relative">
   
                   <div
                     className="
                       relative
                     "
                   >
-                    <SearchBar
-                      value={
-                        search
-                      }
-                      onChange={
-                        setSearch
-                      }
-                      showFilters={
-                        showFilters
-                      }
-                      onToggleFilters={() =>
-                        setShowFilters(
-                          (
-                            current,
-                          ) =>
-                            !current,
-                        )
-                      }
-                      hasActiveFilters={
-                        hasActiveFilters
-                      }
-                    />
+                    <FilterButton
+              showFilters={showFilters}
+              onToggle={() => setShowFilters((current) => !current)}
+              hasActiveFilters={hasActiveFilters}
+            />
   
                     <AnimatePresence>
                       {showFilters && (
@@ -832,9 +795,6 @@ export default function EventsPage() {
           </div>
         </section>
 
-        <div className="mt-1 md:mt-10">
-          <CategoryCards events={events} loading={loading && events.length === 0} />
-        </div>
         <div id="event-results" className="scroll-mt-[calc(72px+env(safe-area-inset-top))]" />
 
         {/* ====================================================
@@ -947,7 +907,7 @@ export default function EventsPage() {
             <LoadingState />
           </div>
         ) : loadError && events.length === 0 ? null
-          // With no events at all, the category cards already say none are open.
+          // With no events at all, the category cards below already say none are open.
           : events.length === 0 ? null
           : filteredEvents.length ===
           0 ? (
@@ -1130,6 +1090,18 @@ export default function EventsPage() {
               )}
           </motion.div>
         )}
+
+        {/* ====================================================
+            CATEGORIES: below the events, so open events lead the page
+        ==================================================== */}
+
+        <section className="mt-10 md:mt-14">
+          <SectionHeading
+            title="Browse by category"
+            subtitle="SMRSC, MantraM, CME and workshops, and the conferences we attend"
+          />
+          <CategoryCards events={events} loading={loading && events.length === 0} />
+        </section>
       </main>
 
       {/* ======================================================
@@ -1145,177 +1117,33 @@ export default function EventsPage() {
 }
 
 /* ============================================================
-   BRAND
+   FILTER BUTTON (search itself is in the site header)
 ============================================================ */
-
-/* ============================================================
-   SEARCH BAR
-============================================================ */
-
-function SearchBar({
-  value,
-  onChange,
-  mobile = false,
+function FilterButton({
   showFilters,
-  onToggleFilters,
+  onToggle,
   hasActiveFilters,
 }: {
-  value: string;
-
-  onChange:
-    (
-      value:
-        string,
-    ) => void;
-
-  mobile?: boolean;
-
   showFilters: boolean;
-
-  onToggleFilters:
-    () => void;
-
-  hasActiveFilters:
-    boolean;
+  onToggle: () => void;
+  hasActiveFilters: boolean;
 }) {
   return (
-    <div
-      className="
-        relative
-        w-full
-      "
+    <button
+      type="button"
+      aria-label="Filter events"
+      aria-expanded={showFilters}
+      onClick={onToggle}
+      className={`relative inline-flex h-10 items-center gap-2 rounded-lg border px-3.5 text-[14px] font-medium transition-all ${
+        showFilters || hasActiveFilters
+          ? 'border-primary/30 bg-primary/[0.06] text-primary'
+          : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-secondary'
+      }`}
     >
-      <span
-        className="
-          pointer-events-none
-
-          absolute
-          left-3.5
-          top-1/2
-
-          -translate-y-1/2
-
-          text-gray-400
-        "
-      >
-        <SearchIcon />
-      </span>
-
-      <input aria-label="Search events, venue or type"
-        type="search"
-        value={
-          value
-        }
-        onChange={(
-          event,
-        ) =>
-          onChange(
-            event.target.value,
-          )
-        }
-        placeholder={
-          mobile
-            ? 'Search events...'
-            : 'Search events, venue or type...'
-        }
-        className={`
-          w-full
-
-          rounded-lg
-
-          border
-          border-gray-200
-
-          bg-white
-
-          pl-10
-          pr-12
-
-          text-secondary
-
-          outline-none
-
-          transition-all
-          duration-150
-
-          placeholder:text-gray-400
-
-          hover:border-gray-300
-
-          focus:border-primary/40
-          focus:ring-2
-          focus:ring-primary/10
-
-          ${
-            mobile
-              ? 'h-11 text-[12px]'
-              : 'h-10 text-[13px]'
-          }
-        `}
-      />
-
-      <button
-        type="button"
-        aria-label="Filter events"
-        aria-expanded={
-          showFilters
-        }
-        onClick={
-          onToggleFilters
-        }
-        className={`
-          absolute
-          right-1.5
-          top-1/2
-
-          grid
-          h-8
-          w-8
-
-          -translate-y-1/2
-
-          place-items-center
-
-          rounded-md
-
-          transition-all
-
-          ${
-            showFilters ||
-            hasActiveFilters
-              ? `
-                  bg-primary/[0.08]
-                  text-primary
-                `
-              : `
-                  text-gray-400
-
-                  hover:bg-gray-100
-                  hover:text-secondary
-                `
-          }
-        `}
-      >
-        <FilterIcon />
-
-        {hasActiveFilters && (
-          <span
-            className="
-              absolute
-              right-[4px]
-              top-[4px]
-
-              h-[5px]
-              w-[5px]
-
-              rounded-full
-
-              bg-primary
-            "
-          />
-        )}
-      </button>
-    </div>
+      <FilterIcon />
+      Filters
+      {hasActiveFilters && <span className="h-[6px] w-[6px] rounded-full bg-primary" aria-label="Filters applied" />}
+    </button>
   );
 }
 
@@ -1432,14 +1260,14 @@ function DesktopFilterPanel(
       className="
         absolute
 
-        left-1/2
+        right-0
         top-[48px]
 
         z-50
 
         w-[400px]
 
-        -translate-x-1/2
+        
 
         rounded-xl
 
@@ -1973,311 +1801,6 @@ function SectionHeading({
 }
 
 /* ============================================================
-   OPEN EVENT CARD
-============================================================ */
-
-const OpenEventCard = memo(function OpenEventCard({
-  event,
-  index,
-}: {
-  event:
-    IEvent;
-
-  index:
-    number;
-}) {
-  return (
-    <motion.div
-      initial={{
-        opacity: 0,
-        y: 8,
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-      }}
-      transition={{
-        duration:
-          0.32,
-
-        delay:
-          index *
-          0.035,
-
-        ease:
-          EASE,
-      }}
-      className="
-        h-full
-      "
-    >
-      <Link
-        href={`/events/${event._id}`}
-        className="
-          group
-
-          flex
-          h-full
-          flex-col
-
-          overflow-hidden
-
-          rounded-xl
-
-          border
-          border-gray-200
-
-          bg-white
-
-          shadow-[0_3px_12px_rgba(15,23,41,0.025)]
-
-          transition-all
-          duration-200
-
-          hover:border-gray-300
-          hover:shadow-[0_8px_24px_rgba(15,23,41,0.055)]
-        "
-      >
-        {/* IMAGE */}
-
-        <div
-          className="
-            relative
-
-            aspect-[16/8.5]
-
-            overflow-hidden
-
-            bg-gray-100
-
-            sm:aspect-[16/8]
-
-            md:aspect-[16/7.4]
-          "
-        >
-          {event.imageUrl ? (
-            <Image
-              src={
-                event.imageUrl
-              }
-              alt={
-                event.eventName
-              }
-              fill
-              unoptimized
-              loading={
-                index < 2
-                  ? 'eager'
-                  : 'lazy'
-              }
-              sizes="
-                (max-width: 520px) 100vw,
-                (max-width: 768px) 50vw,
-                45vw
-              "
-              className="
-                object-cover
-
-                transition-transform
-                duration-500
-
-                group-hover:scale-[1.02]
-              "
-            />
-          ) : (
-            <EventPlaceholder />
-          )}
-        </div>
-
-        {/* CONTENT */}
-
-        <div
-          className="
-            flex
-            flex-1
-            flex-col
-
-            p-3.5
-
-            md:p-4
-          "
-        >
-          {/* TYPE */}
-
-          {/* NAME */}
-
-          <h3
-            className="
-              mt-1
-
-              line-clamp-2
-
-              font-heading
-
-              text-[15px]
-              font-semibold
-
-              leading-5
-
-              text-secondary
-
-              md:text-[16px]
-            "
-          >
-            {event.eventName}
-          </h3>
-
-          {/* META */}
-
-          <div
-            className="
-              mt-2.5
-
-              space-y-1.5
-            "
-          >
-            <MetaRow
-              type="location"
-              value={
-                event.venue
-              }
-            />
-
-            <MetaRow
-              type="date"
-              value={formatDateRange(
-                event.startDate,
-                event.endDate,
-              )}
-            />
-          </div>
-
-          {/* ABOUT
-
-              This replaces the old booked/remaining capacity bar.
-          */}
-
-          <div
-            className="
-              mt-3
-
-              border-t
-              border-gray-100
-
-              pt-3
-            "
-          >
-            <div
-              className="
-                flex
-                min-w-0
-                items-baseline
-                gap-2
-              "
-            >
-              <span
-                className="
-                  shrink-0
-
-                  text-[12px]
-                  font-semibold
-
-                  text-secondary
-                "
-              >
-                About
-              </span>
-
-              <p
-                className="
-                  min-w-0
-                  flex-1
-
-                  truncate
-
-                  text-[12px]
-                  leading-4
-
-                  text-gray-500
-
-                  md:text-[13px]
-                "
-              >
-                {event.description
-                  ?.trim() ||
-                  'View event information, schedule and registration details.'}
-              </p>
-            </div>
-          </div>
-
-          {/* ACTION */}
-
-          <div
-            className="
-              mt-auto
-              pt-3
-            "
-          >
-            <div
-              className="
-                flex
-                items-center
-                justify-between
-
-                border-t
-                border-gray-100
-
-                pt-3
-              "
-            >
-              <span
-                className="
-                  text-[12px]
-                  font-medium
-
-                  text-gray-400
-                "
-              >
-                Registration available
-              </span>
-
-              <span
-                className="
-                  inline-flex
-                  items-center
-                  gap-1.5
-
-                  text-[12px]
-                  font-semibold
-
-                  text-primary
-
-                  transition-colors
-
-                  group-hover:text-primary-dark
-                "
-              >
-                View event
-
-                <ArrowIcon />
-              </span>
-            </div>
-          </div>
-        </div>
-      </Link>
-    </motion.div>
-  );
-});
-
-/* ============================================================
-   UPCOMING GRID
-============================================================ */
-
-/* ============================================================
-   UPCOMING CARD
-============================================================ */
-
-/* ============================================================
    EMPTY STATE
 ============================================================ */
 
@@ -2540,62 +2063,6 @@ function LoadingState() {
 }
 
 /* ============================================================
-   META ROW
-============================================================ */
-
-function MetaRow({
-  type,
-  value,
-}: {
-  type:
-    | 'location'
-    | 'date';
-
-  value:
-    string;
-}) {
-  return (
-    <div
-      className="
-        flex
-        min-w-0
-        items-center
-        gap-1.5
-
-        text-gray-500
-      "
-    >
-      {type ===
-      'location' ? (
-        <LocationIcon />
-      ) : (
-        <CalendarIcon />
-      )}
-
-      <span
-        className="
-          truncate
-
-          text-[12px]
-
-          md:text-[12px]
-        "
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
-/* ============================================================
-   MOBILE NAV ITEM
-============================================================ */
-
-/* ============================================================
-   PLACEHOLDER
-============================================================ */
-
-/* ============================================================
    FORMATTERS
 ============================================================ */
 
@@ -2635,103 +2102,9 @@ function formatType(
   return value === 'ALL' ? 'All' : categoryOf(value).name;
 }
 
-function formatDateRange(
-  startValue:
-    string,
-
-  endValue:
-    string,
-) {
-  const start =
-    new Date(
-      startValue,
-    );
-
-  const end =
-    new Date(
-      endValue,
-    );
-
-  if (
-    Number.isNaN(
-      start.getTime(),
-    )
-  ) {
-    return '';
-  }
-
-  if (
-    Number.isNaN(
-      end.getTime(),
-    ) ||
-    start.toDateString() ===
-      end.toDateString()
-  ) {
-    return formatDate(
-      startValue,
-    );
-  }
-
-  const startLabel =
-    calendarDateFormatter(
-      'en-GB',
-      {
-        day:
-          '2-digit',
-
-        month:
-          'short',
-      },
-    ).format(
-      start,
-    );
-
-  const endLabel =
-    calendarDateFormatter(
-      'en-GB',
-      {
-        day:
-          '2-digit',
-
-        month:
-          'short',
-
-        year:
-          'numeric',
-      },
-    ).format(
-      end,
-    );
-
-  return `${startLabel} – ${endLabel}`;
-}
-
 /* ============================================================
    ICONS
 ============================================================ */
-
-function SearchIcon() {
-  return (
-    <svg
-      className="h-4 w-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={1.9}
-    >
-      <circle
-        cx="11"
-        cy="11"
-        r="6.5"
-      />
-
-      <path
-        strokeLinecap="round"
-        d="m16 16 4 4"
-      />
-    </svg>
-  );
-}
 
 function SearchLargeIcon() {
   return (
@@ -2785,47 +2158,6 @@ function CloseIcon() {
       <path
         strokeLinecap="round"
         d="M6 6l12 12M18 6 6 18"
-      />
-    </svg>
-  );
-}
-
-function LocationIcon() {
-  return (
-    <svg
-      className="h-3.5 w-3.5 shrink-0"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={1.8}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M12 21s6-5.2 6-11a6 6 0 10-12 0c0 5.8 6 11 6 11Z"
-      />
-
-      <circle
-        cx="12"
-        cy="10"
-        r="2"
-      />
-    </svg>
-  );
-}
-
-function CalendarIcon() {
-  return (
-    <svg
-      className="h-3.5 w-3.5 shrink-0"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={1.8}
-    >
-      <path
-        strokeLinecap="round"
-        d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 011 1v14H4V6a1 1 0 011-1Z"
       />
     </svg>
   );
