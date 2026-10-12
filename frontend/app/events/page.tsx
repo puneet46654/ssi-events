@@ -571,21 +571,9 @@ export default function EventsPage() {
               <span className="ssi-highlight">SS Innovations</span> events
             </h1>
 
-            <p
-              className="
-                                mt-2
-                text-[16px]
-                leading-[1.5]
-                text-gray-500
-              "
-            >
-              Register for our conferences and CME
-              programmes, or book a session with
-              SSi MantraM.
-            </p>
           </div>
 
-          {/* SEARCH */}
+          {/* FILTERS */}
 
           <div
             className="
@@ -688,17 +676,6 @@ export default function EventsPage() {
               <span className="ssi-highlight">SS Innovations</span> events
             </h1>
 
-            <p
-              className="
-                mt-3
-                max-w-[46ch]
-                text-[19px]
-                leading-[1.5]
-                text-gray-500
-              "
-            >
-              Register for our conferences and CME programmes, or book a session with SSi MantraM.
-            </p>
           </div>
               <div className="flex shrink-0 items-center gap-2">
                 <div className="relative">
