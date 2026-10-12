@@ -3,8 +3,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AppFeedbackDialog } from '@/components/user/AppFeedback';
+import { refreshEventSearch, searchHref, setEventSearch, useEventSearch } from '@/lib/event-search';
 
 /*
  * One header and (on phones) bottom nav for every user-side page,
@@ -56,10 +57,49 @@ function useShare() {
   return { shared, share };
 }
 
+/**
+ * Event search in the header. On the home page it filters the list as you type; elsewhere,
+ * Enter opens the home page with the search applied.
+ */
+function HeaderSearch({ className = '', autoFocus = false, onSubmitted }: { className?: string; autoFocus?: boolean; onSubmitted?: () => void }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const onHome = pathname === '/';
+  const query = useEventSearch();
+  const [draft, setDraft] = useState('');
+  const value = onHome ? query : draft;
+  // The header outlives page changes: read the search again once a navigation has updated the URL.
+  useEffect(refreshEventSearch, [pathname]);
+  return (
+    <form
+      role="search"
+      className={`relative ${className}`}
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!onHome) router.push(searchHref(draft));
+        (document.activeElement as HTMLElement | null)?.blur();
+        onSubmitted?.();
+      }}
+    >
+      <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"><SearchIcon /></span>
+      <input
+        type="search"
+        aria-label="Search events"
+        placeholder="Search events, venue or type"
+        autoFocus={autoFocus}
+        value={value}
+        onChange={(e) => (onHome ? setEventSearch(e.target.value) : setDraft(e.target.value))}
+        className="h-10 w-full rounded-full border border-gray-200 bg-gray-50 pl-10 pr-4 text-[14px] text-secondary outline-none transition-colors placeholder:text-gray-400 hover:border-gray-300 focus:border-primary/40 focus:bg-white focus:ring-2 focus:ring-primary/10"
+      />
+    </form>
+  );
+}
+
 export function UserHeader() {
   const chrome = useChrome();
   const { shared, share } = useShare();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const shareLabel = shared ? 'Link copied' : 'Share this event';
 
   return (
@@ -74,6 +114,10 @@ export function UserHeader() {
           )}
           <Brand compact />
           <div className="ml-auto flex items-center gap-1">
+            <button type="button" onClick={() => setSearchOpen((open) => !open)} aria-label="Search events" aria-expanded={searchOpen}
+              className={`h-11 w-11 active:bg-gray-100 ${ROUND} ${searchOpen ? 'bg-gray-100' : ''}`}>
+              <SearchIcon />
+            </button>
             {chrome.isEventDetails && (
               <button type="button" onClick={() => void share()} aria-label={shareLabel} className={`h-11 w-11 active:bg-gray-100 ${ROUND}`}>
                 <ShareIcon done={shared} />
@@ -84,6 +128,12 @@ export function UserHeader() {
             </button>
           </div>
         </div>
+
+        {searchOpen && (
+          <div className="mx-auto max-w-[560px] px-4 pb-3 md:hidden">
+            <HeaderSearch autoFocus onSubmitted={() => setSearchOpen(false)} />
+          </div>
+        )}
 
         {/* Tablets and desktops */}
         <div className="mx-auto hidden h-[72px] w-full max-w-[1200px] items-center justify-between gap-6 px-6 md:flex">
@@ -96,6 +146,7 @@ export function UserHeader() {
             )}
             <Brand />
           </div>
+          <HeaderSearch className="min-w-0 max-w-[380px] flex-1" />
           <nav aria-label="Main" className="flex items-center gap-1">
             {chrome.isEventDetails && (
               <button type="button" onClick={() => void share()} className={`${NAV} ${NAV_IDLE}`}>
@@ -209,6 +260,15 @@ function ShareIcon({ done }: { done: boolean }) {
   ) : (
     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12 4 4m-4-4L8 7M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.9} aria-hidden="true">
+      <circle cx="11" cy="11" r="6.5" />
+      <path strokeLinecap="round" d="m16 16 4 4" />
     </svg>
   );
 }

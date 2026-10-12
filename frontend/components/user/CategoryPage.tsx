@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { categoryOf, type EventCategoryType } from '@/lib/event-categories';
 import { useRealtimeRefresh } from '@/components/realtime/RealtimeProvider';
-import { UpcomingGrid, type IEvent } from '@/components/user/EventGrid';
+import { OpenEventCard, UpcomingGrid, type IEvent } from '@/components/user/EventGrid';
 
 /**
- * A category's own page (e.g. /mantram): its introduction and the events of that kind that are
- * open for registration, soonest first. Copy comes from lib/event-categories.ts.
+ * A category's own page (e.g. /mantram): the events of that kind that are open, soonest first,
+ * lead the page; the category's introduction follows as background. Copy comes from
+ * lib/event-categories.ts.
  */
 export function CategoryPage({ type }: { type: EventCategoryType }) {
   const category = categoryOf(type);
@@ -43,17 +44,15 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
   useRealtimeRefresh('events', () => { void load(); });
 
   return (
-    <main className="mx-auto w-full max-w-[1200px] px-4 pb-16 pt-8 md:px-8 md:pt-14">
+    <main className="mx-auto w-full max-w-[1200px] px-4 pb-16 pt-5 md:px-8 md:pt-8">
       <Link href="/" className="text-[13px] font-medium text-primary underline-offset-4 hover:underline">All events</Link>
-      <h1 className="mt-4 text-[32px] font-semibold leading-tight tracking-[-0.01em] text-secondary md:text-[44px]">
+      <h1 className="mt-2 text-[24px] font-semibold leading-tight tracking-[-0.01em] text-secondary md:text-[30px]">
         {page.title}
       </h1>
-      <div className="mt-4 max-w-[62ch] space-y-3 text-[16px] leading-[1.6] text-gray-600 md:text-[18px]">
-        {page.intro.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-      </div>
+      <p className="mt-1 text-[15px] text-gray-500">{category.description}</p>
 
       {category.external ? (
-        <section aria-labelledby="category-list" className="mt-10 max-w-[62ch] rounded-[22px] bg-gray-50 p-6 md:mt-14 md:p-8">
+        <section aria-labelledby="category-list" className="mt-6 max-w-[62ch] rounded-[22px] bg-gray-50 p-6 md:mt-8 md:p-8">
           <h2 id="category-list" className="text-[20px] font-semibold text-secondary md:text-[24px]">{page.listHeading}</h2>
           {category.external.externalUrl ? (
             <a href={category.external.externalUrl} target="_blank" rel="noopener"
@@ -68,8 +67,11 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
           )}
         </section>
       ) : (
-      <section aria-labelledby="category-list" className="mt-10 md:mt-14">
-        <h2 id="category-list" className="text-[20px] font-semibold text-secondary md:text-[24px]">{page.listHeading}</h2>
+      <section aria-labelledby="category-list" className="mt-6 md:mt-8">
+        <h2 id="category-list" className="text-[20px] font-semibold text-secondary md:text-[24px]">
+          {page.listHeading}
+          {events && events.length > 0 && <span className="ml-2 text-[15px] font-medium text-gray-400 md:text-[17px]">{events.length}</span>}
+        </h2>
         <div className="mt-4">
           {error ? (
             <p role="alert" className="text-[14px] text-gray-600">
@@ -77,11 +79,13 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
               <button type="button" onClick={() => { void load(); }} className="font-medium text-primary underline underline-offset-4">Try again</button>
             </p>
           ) : events === null ? (
-            <div aria-busy="true" aria-label="Loading" className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3 md:gap-3">
-              {[0, 1].map((i) => <div key={i} className="h-[108px] animate-pulse rounded-xl bg-gray-100" />)}
+            <div aria-busy="true" aria-label="Loading" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[0, 1].map((i) => <div key={i} className="h-[320px] animate-pulse rounded-xl bg-gray-100" />)}
             </div>
           ) : events.length ? (
-            <UpcomingGrid events={events} />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 md:gap-5">
+              {events.map((event, index) => <OpenEventCard key={event._id} event={event} index={index} />)}
+            </div>
           ) : (
             <p className="max-w-[56ch] rounded-xl border border-gray-200 bg-white p-5 text-[14px] leading-[1.6] text-gray-600">{page.empty}</p>
           )}
@@ -97,6 +101,14 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
           </div>
         </section>
       )}
+
+      {/* Background on the category, kept below the events. */}
+      <section aria-labelledby="category-about" className="mt-12 border-t border-gray-200 pt-8 md:mt-16">
+        <h2 id="category-about" className="text-[16px] font-semibold text-secondary">About {page.title}</h2>
+        <div className="mt-2 max-w-[70ch] space-y-2 text-[14px] leading-[1.65] text-gray-500 md:text-[15px]">
+          {page.intro.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+        </div>
+      </section>
     </main>
   );
 }

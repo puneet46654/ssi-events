@@ -58,7 +58,7 @@ export const EVENT_CATEGORIES: EventCategory[] = [
       title: 'SSi MantraM',
       intro: [
         'SSi MantraM is our mobile tele-surgical unit. It carries the SSI Mantra surgical robotic system to host sites, bringing robotic surgery closer to the surgeons and patients who need it.',
-        'Choose a visit below and book a time slot. Your ticket is shown on screen and sent to you by email.',
+        'Choose a visit and book a time slot. Your ticket is shown on screen and sent to you by email.',
       ],
       listHeading: 'Upcoming visits',
       empty: 'No MantraM visits are open for registration at present. New visits are published here as they are scheduled.',
@@ -76,7 +76,7 @@ export const EVENT_CATEGORIES: EventCategory[] = [
       title: 'CME and workshops',
       intro: [
         'Our continuing medical education programmes and hands-on workshops give surgeons and clinical teams structured experience with robotic surgery.',
-        'Choose a programme below and book a time slot. Your ticket is shown on screen and sent to you by email.',
+        'Choose a programme and book a time slot. Your ticket is shown on screen and sent to you by email.',
       ],
       listHeading: 'Upcoming programmes',
       empty: 'No CME programmes or workshops are open for registration at present. New programmes are published here as they are scheduled.',
@@ -94,7 +94,7 @@ export const EVENT_CATEGORIES: EventCategory[] = [
       title: 'Conferences',
       intro: [
         'SS Innovations takes part in leading surgical congresses and conferences around the world, with live demonstrations of the SSI Mantra surgical robotic system, scientific sessions and meetings with our clinical teams.',
-        'Below are the conferences we are attending and those we have attended recently, with where to find us and links to further information.',
+        'Each listing shows the dates and venue, where to find us, and links to further information.',
       ],
       listHeading: 'Current and upcoming',
       empty: 'No upcoming conferences are listed at present. New conferences are published here as they are confirmed.',

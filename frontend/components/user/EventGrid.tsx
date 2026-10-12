@@ -34,6 +34,9 @@ export interface IEvent {
     | 'COMPLETED'
     | 'UPCOMING'
     | 'CANCELLED';
+
+  /** `info`: listed for information only, no booking. */
+  registrationMode?: 'slots' | 'open' | 'info';
 }
 
 export const EASE = [
@@ -453,6 +456,456 @@ export function EventSmallIcon() {
       <path
         strokeLinecap="round"
         d="M8 9h8M8 13h5"
+      />
+    </svg>
+  );
+}
+
+/* Large card with image, used for events open for registration (home page and category pages). */
+export const OpenEventCard = memo(function OpenEventCard({
+  event,
+  index,
+}: {
+  event:
+    IEvent;
+
+  index:
+    number;
+}) {
+  return (
+    <motion.div
+      initial={{
+        opacity: 0,
+        y: 8,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration:
+          0.32,
+
+        delay:
+          index *
+          0.035,
+
+        ease:
+          EASE,
+      }}
+      className="
+        h-full
+      "
+    >
+      <Link
+        href={`/events/${event._id}`}
+        className="
+          group
+
+          flex
+          h-full
+          flex-col
+
+          overflow-hidden
+
+          rounded-xl
+
+          border
+          border-gray-200
+
+          bg-white
+
+          shadow-[0_3px_12px_rgba(15,23,41,0.025)]
+
+          transition-all
+          duration-200
+
+          hover:border-gray-300
+          hover:shadow-[0_8px_24px_rgba(15,23,41,0.055)]
+        "
+      >
+        {/* IMAGE */}
+
+        <div
+          className="
+            relative
+
+            aspect-[16/8.5]
+
+            overflow-hidden
+
+            bg-gray-100
+
+            sm:aspect-[16/8]
+
+            md:aspect-[16/7.4]
+          "
+        >
+          {event.imageUrl ? (
+            <Image
+              src={
+                event.imageUrl
+              }
+              alt={
+                event.eventName
+              }
+              fill
+              unoptimized
+              loading={
+                index < 2
+                  ? 'eager'
+                  : 'lazy'
+              }
+              sizes="
+                (max-width: 520px) 100vw,
+                (max-width: 768px) 50vw,
+                45vw
+              "
+              className="
+                object-cover
+
+                transition-transform
+                duration-500
+
+                group-hover:scale-[1.02]
+              "
+            />
+          ) : (
+            <EventPlaceholder />
+          )}
+        </div>
+
+        {/* CONTENT */}
+
+        <div
+          className="
+            flex
+            flex-1
+            flex-col
+
+            p-3.5
+
+            md:p-4
+          "
+        >
+          {/* TYPE */}
+
+          {/* NAME */}
+
+          <h3
+            className="
+              mt-1
+
+              line-clamp-2
+
+              font-heading
+
+              text-[15px]
+              font-semibold
+
+              leading-5
+
+              text-secondary
+
+              md:text-[16px]
+            "
+          >
+            {event.eventName}
+          </h3>
+
+          {/* META */}
+
+          <div
+            className="
+              mt-2.5
+
+              space-y-1.5
+            "
+          >
+            <MetaRow
+              type="location"
+              value={
+                event.venue
+              }
+            />
+
+            <MetaRow
+              type="date"
+              value={formatDateRange(
+                event.startDate,
+                event.endDate,
+              )}
+            />
+          </div>
+
+          {/* ABOUT
+
+              This replaces the old booked/remaining capacity bar.
+          */}
+
+          <div
+            className="
+              mt-3
+
+              border-t
+              border-gray-100
+
+              pt-3
+            "
+          >
+            <div
+              className="
+                flex
+                min-w-0
+                items-baseline
+                gap-2
+              "
+            >
+              <span
+                className="
+                  shrink-0
+
+                  text-[12px]
+                  font-semibold
+
+                  text-secondary
+                "
+              >
+                About
+              </span>
+
+              <p
+                className="
+                  min-w-0
+                  flex-1
+
+                  truncate
+
+                  text-[12px]
+                  leading-4
+
+                  text-gray-500
+
+                  md:text-[13px]
+                "
+              >
+                {event.description
+                  ?.trim() ||
+                  'View event information, schedule and registration details.'}
+              </p>
+            </div>
+          </div>
+
+          {/* ACTION */}
+
+          <div
+            className="
+              mt-auto
+              pt-3
+            "
+          >
+            <div
+              className="
+                flex
+                items-center
+                justify-between
+
+                border-t
+                border-gray-100
+
+                pt-3
+              "
+            >
+              <span
+                className="
+                  text-[12px]
+                  font-medium
+
+                  text-gray-400
+                "
+              >
+                {event.registrationMode === 'info' ? 'Information only' : 'Registration available'}
+              </span>
+
+              <span
+                className="
+                  inline-flex
+                  items-center
+                  gap-1.5
+
+                  text-[12px]
+                  font-semibold
+
+                  text-primary
+
+                  transition-colors
+
+                  group-hover:text-primary-dark
+                "
+              >
+                View event
+
+                <ArrowIcon />
+              </span>
+            </div>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
+  );
+});
+
+function MetaRow({
+  type,
+  value,
+}: {
+  type:
+    | 'location'
+    | 'date';
+
+  value:
+    string;
+}) {
+  return (
+    <div
+      className="
+        flex
+        min-w-0
+        items-center
+        gap-1.5
+
+        text-gray-500
+      "
+    >
+      {type ===
+      'location' ? (
+        <LocationIcon />
+      ) : (
+        <CalendarIcon />
+      )}
+
+      <span
+        className="
+          truncate
+
+          text-[12px]
+
+          md:text-[12px]
+        "
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+export function formatDateRange(
+  startValue:
+    string,
+
+  endValue:
+    string,
+) {
+  const start =
+    new Date(
+      startValue,
+    );
+
+  const end =
+    new Date(
+      endValue,
+    );
+
+  if (
+    Number.isNaN(
+      start.getTime(),
+    )
+  ) {
+    return '';
+  }
+
+  if (
+    Number.isNaN(
+      end.getTime(),
+    ) ||
+    start.toDateString() ===
+      end.toDateString()
+  ) {
+    return formatDate(
+      startValue,
+    );
+  }
+
+  const startLabel =
+    calendarDateFormatter(
+      'en-GB',
+      {
+        day:
+          '2-digit',
+
+        month:
+          'short',
+      },
+    ).format(
+      start,
+    );
+
+  const endLabel =
+    calendarDateFormatter(
+      'en-GB',
+      {
+        day:
+          '2-digit',
+
+        month:
+          'short',
+
+        year:
+          'numeric',
+      },
+    ).format(
+      end,
+    );
+
+  return `${startLabel} – ${endLabel}`;
+}
+
+function LocationIcon() {
+  return (
+    <svg
+      className="h-3.5 w-3.5 shrink-0"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 21s6-5.2 6-11a6 6 0 10-12 0c0 5.8 6 11 6 11Z"
+      />
+
+      <circle
+        cx="12"
+        cy="10"
+        r="2"
+      />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg
+      className="h-3.5 w-3.5 shrink-0"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
+      <path
+        strokeLinecap="round"
+        d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 011 1v14H4V6a1 1 0 011-1Z"
       />
     </svg>
   );
