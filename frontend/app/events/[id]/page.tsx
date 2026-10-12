@@ -590,7 +590,7 @@ export default function EventDetailsPage() {
                     text-gray-500
                   "
                 >
-                  {unlimited ? 'registration, no limit' : registrationOnly ? 'registration places remaining' : 'booking places remaining'}
+                  {unlimited ? 'No registration limit' : remainingCapacity === 1 ? 'seat left' : 'seats left'}
                 </p>
               </div>
               )}
