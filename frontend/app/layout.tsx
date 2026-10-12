@@ -15,7 +15,7 @@ const figtree = Figtree({
 
 export const metadata: Metadata = {
   title: "SS Innovations Events",
-  description: "Register for SS Innovations conferences and CME programmes, or book a session with SSi MantraM, our mobile tele-surgical unit.",
+  description: "Events by SS Innovations: SMRSC, SSi MantraM visits, CME programmes and conferences.",
   applicationName: "SS Innovations Events",
   icons: { icon: "/logos/ssilogo.png", apple: "/logos/ssilogo.png" },
   appleWebApp: { capable: true, title: "SSi Events", statusBarStyle: "default" },

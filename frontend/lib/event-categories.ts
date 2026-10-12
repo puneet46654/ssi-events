@@ -16,8 +16,15 @@ export type EventCategory = {
   /** Card image in /public (SSI's own library) and its description for screen readers. */
   image: string;
   imageAlt: string;
-  /** Its own page: introduction, list heading and empty state. */
-  page: { path: string; title: string; intro: string[]; listHeading: string; empty: string };
+  /**
+   * Its own page: list heading and empty state, then the About section below the events:
+   * paragraphs and optional numbered steps.
+   */
+  page: {
+    path: string; title: string; listHeading: string; empty: string;
+    intro: string[];
+    steps?: { heading: string; items: string[] };
+  };
   /**
    * Registration happens on another site. Until `externalUrl` is set, the page is a
    * "registration details to follow" notice; once it is, the card links straight there.
@@ -27,26 +34,27 @@ export type EventCategory = {
   archive?: { pastHeading: string };
 };
 
+// Product facts follow SS Innovations' published descriptions of SSi Mantra 3 and SSi MantraM.
 export const EVENT_CATEGORIES: EventCategory[] = [
   {
     type: 'conference',
     name: 'SMRSC',
     cardLabel: 'SMRSC',
     heading: 'SMRSC',
-    description: 'The SSI Multi-Specialty Robotic Surgery Conference.',
+    description: 'The Global SSI Multi-Specialty Robotic Surgery Conference, hosted by SS Innovations.',
     image: '/images/categories/smrsc.webp',
     imageAlt: 'Delegates in the audience at an SMRSC session',
     page: {
       path: '/smrsc',
       title: 'SMRSC',
       intro: [
-        'The SSI Multi-Specialty Robotic Surgery Conference brings together surgeons from across specialties to share clinical experience with robotic surgery.',
+        'Surgeons who operate with SSi Mantra present their clinical work across specialties, alongside sessions on telesurgery and training. SSi MantraM was unveiled at SMRSC 2025 in Gurugram.',
       ],
       listHeading: 'Registration',
       empty: '',
     },
     external: {
-      comingSoon: 'Registration for SMRSC will open on the conference website. We will publish the link here as soon as it is available.',
+      comingSoon: 'Registration is on the conference website. The link will be added here when registration opens.',
     },
   },
   {
@@ -54,18 +62,25 @@ export const EVENT_CATEGORIES: EventCategory[] = [
     name: 'MantraM',
     cardLabel: 'SSi MantraM',
     heading: 'MantraM',
-    description: 'Our mobile tele-surgical unit, carrying the SSI Mantra surgical robotic system.',
+    description: 'India’s first mobile tele-robotic surgery unit, bringing SSi Mantra 3 to your hospital.',
     image: '/images/categories/mantram.webp',
     imageAlt: 'The SSi MantraM mobile unit, parked with its awning extended',
     page: {
       path: '/mantram',
       title: 'SSi MantraM',
       intro: [
-        'SSi MantraM is our mobile tele-surgical unit. It carries the SSI Mantra surgical robotic system to host sites, bringing robotic surgery closer to the surgeons and patients who need it.',
-        'Choose a visit and book a time slot. Your ticket is shown on screen and sent to you by email.',
+        'SSi MantraM brings the SSi Mantra 3 system to hospitals so that surgeons and theatre teams can work with it where they practise, and its connectivity supports telesurgery and tele-proctoring, for which SSi Mantra is approved by India’s CDSCO.',
       ],
+      steps: {
+        heading: 'Your visit',
+        items: [
+          'Book a time slot. Your QR ticket is shown on screen and sent by email.',
+          'Check in at the unit up to 15 minutes before your slot.',
+          'Our clinical team takes you through the system, then you take the console.',
+        ],
+      },
       listHeading: 'Upcoming visits',
-      empty: 'No MantraM visits are open for registration at present. New visits are published here as they are scheduled.',
+      empty: 'No visits are open for registration.',
     },
   },
   {
@@ -73,18 +88,17 @@ export const EVENT_CATEGORIES: EventCategory[] = [
     name: 'CME / Workshop',
     cardLabel: 'CME / Workshop',
     heading: 'CME and workshops',
-    description: 'Continuing medical education and hands-on workshops.',
+    description: 'Structured robotic surgery training on SSi Mantra for surgeons and theatre teams.',
     image: '/images/categories/cme.webp',
     imageAlt: 'The SSI Mantra training simulator showing a simulated procedure',
     page: {
       path: '/cme',
       title: 'CME and workshops',
       intro: [
-        'Our continuing medical education programmes and hands-on workshops give surgeons and clinical teams structured experience with robotic surgery.',
-        'Choose a programme and book a time slot. Your ticket is shown on screen and sent to you by email.',
+        'Hands-on training on SSi Mantra for surgeons and theatre teams: console skills with 3D 4K vision, positioning and docking the arm carts at the bedside, and specialty sessions led by surgeons who perform these procedures with the system.',
       ],
       listHeading: 'Upcoming programmes',
-      empty: 'No CME programmes or workshops are open for registration at present. New programmes are published here as they are scheduled.',
+      empty: 'No programmes are open for registration.',
     },
   },
   {
@@ -92,20 +106,19 @@ export const EVENT_CATEGORIES: EventCategory[] = [
     name: 'Conferences',
     cardLabel: 'Conference',
     heading: 'Conferences',
-    description: 'Congresses and conferences where SS Innovations exhibits and presents.',
+    description: 'Meet our team and see SSi Mantra at surgical congresses in India and abroad.',
     image: '/images/categories/conferences.webp',
     imageAlt: '',
     page: {
       path: '/conferences',
       title: 'Conferences',
       intro: [
-        'SS Innovations takes part in leading surgical congresses and conferences around the world, with live demonstrations of the SSI Mantra surgical robotic system, scientific sessions and meetings with our clinical teams.',
-        'Each listing shows the dates and venue, where to find us, and links to further information.',
+        'Visit our stand to see SSi Mantra working, sit at the console and talk to our clinical team. Each listing gives the dates, venue and stand, with links to the congress website and our posts from the event.',
       ],
       listHeading: 'Current and upcoming',
-      empty: 'No upcoming conferences are listed at present. New conferences are published here as they are confirmed.',
+      empty: 'No upcoming conferences.',
     },
-    archive: { pastHeading: 'Recent conferences' },
+    archive: { pastHeading: 'Past conferences' },
   },
 ];
 

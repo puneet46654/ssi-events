@@ -942,7 +942,6 @@ export default function EventsPage() {
               <AnimatedSection>
                 <SectionHeading
                   title="Open for Registration"
-                  subtitle="Events currently accepting registrations"
                 />
 
                 <div
@@ -985,7 +984,6 @@ export default function EventsPage() {
               <AnimatedSection>
                 <SectionHeading
                                     title="SMRSC"
-                  subtitle="The SSI Multi-Specialty Robotic Surgery Conference"
                 />
 
                 <UpcomingGrid
@@ -1003,7 +1001,6 @@ export default function EventsPage() {
               <AnimatedSection>
                 <SectionHeading
                                     title="MantraM"
-                  subtitle="Upcoming MantraM visits"
                 />
 
                 <UpcomingGrid
@@ -1021,7 +1018,6 @@ export default function EventsPage() {
               <AnimatedSection>
                 <SectionHeading
                                     title="CME and workshops"
-                  subtitle="Continuing medical education and hands-on workshops"
                 />
 
                 <UpcomingGrid
@@ -1038,7 +1034,6 @@ export default function EventsPage() {
               <AnimatedSection>
                 <SectionHeading
                   title="Conferences"
-                  subtitle="Congresses and conferences where we exhibit and present"
                 />
 
                 <UpcomingGrid events={upcomingParticipation} />
@@ -1054,7 +1049,6 @@ export default function EventsPage() {
                 <AnimatedSection>
                   <SectionHeading
                     title="Completed Events"
-                    subtitle="Previously concluded programmes"
                   />
 
                   <UpcomingGrid
@@ -1075,7 +1069,6 @@ export default function EventsPage() {
         <section className="mt-10 md:mt-14">
           <SectionHeading
             title="Browse by category"
-            subtitle="SMRSC, MantraM, CME and workshops, and the conferences we attend"
           />
           <CategoryCards events={events} loading={loading && events.length === 0} />
         </section>
@@ -1300,17 +1293,6 @@ function FilterContents({
             Filter events
           </h3>
 
-          <p
-            className="
-              mt-0.5
-
-              text-[12px]
-
-              text-gray-400
-            "
-          >
-            Refine the events shown below.
-          </p>
         </div>
 
         <button

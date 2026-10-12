@@ -4,7 +4,7 @@ import { CategoryPage } from '@/components/user/CategoryPage';
 
 export const metadata: Metadata = {
   title: 'Conferences | SS Innovations Events',
-  description: 'Congresses and conferences where SS Innovations exhibits and presents the SSI Mantra surgical robotic system.',
+  description: 'Surgical congresses where SS Innovations is exhibiting SSi Mantra, with dates, venue and stand.',
   alternates: { canonical: '/conferences' },
 };
 

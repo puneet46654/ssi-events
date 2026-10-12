@@ -4,7 +4,7 @@ import { CategoryPage } from '@/components/user/CategoryPage';
 
 export const metadata: Metadata = {
   title: 'CME and workshops | SS Innovations Events',
-  description: 'Continuing medical education programmes and hands-on workshops in robotic surgery by SS Innovations.',
+  description: 'Hands-on robotic surgery training on SSi Mantra for surgeons and theatre teams.',
   alternates: { canonical: '/cme' },
 };
 

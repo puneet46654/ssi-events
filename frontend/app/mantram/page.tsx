@@ -4,7 +4,7 @@ import { CategoryPage } from '@/components/user/CategoryPage';
 
 export const metadata: Metadata = {
   title: 'SSi MantraM | SS Innovations Events',
-  description: 'Book a session with SSi MantraM, our mobile tele-surgical unit carrying the SSI Mantra surgical robotic system.',
+  description: 'Book a hands-on session with SSi MantraM, the SSi Mantra 3 surgical robotic system in a mobile unit.',
   alternates: { canonical: '/mantram' },
 };
 
