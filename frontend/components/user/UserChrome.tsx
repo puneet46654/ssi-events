@@ -173,19 +173,60 @@ export function UserHeader() {
   );
 }
 
-/** Every page closes on the dark band, as on the SS Innovations website. */
+// Explicit colour: the global link style would otherwise turn these blue on the dark band.
+const FOOTER_LINK = 'text-[#B8C0CF] transition-colors hover:text-white';
+const FOOTER_LINKS: { heading: string; links: { label: string; href: string; external?: boolean }[] }[] = [
+  { heading: 'Events', links: [
+    { label: 'All events', href: '/' },
+    { label: 'SMRSC', href: '/smrsc' },
+    { label: 'SSi MantraM', href: '/mantram' },
+    { label: 'CME and workshops', href: '/cme' },
+    { label: 'Conferences', href: '/conferences' },
+  ] },
+  { heading: 'Attendees', links: [
+    { label: 'My tickets', href: '/events/mytickets' },
+    { label: 'Event terms', href: '/terms' },
+    { label: 'Privacy notice', href: '/privacy' },
+  ] },
+  { heading: 'SS Innovations', links: [
+    { label: 'ssinnovations.com', href: 'https://ssinnovations.com', external: true },
+  ] },
+];
+
+/**
+ * Every page closes on the dark band, as on the SS Innovations website: site map, the
+ * regulatory notice (draft pending regulatory review) and the copyright line.
+ */
 export function UserFooter() {
   return (
     <footer className="relative mt-16 bg-[#0B1120] text-[#B8C0CF] before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:bg-[image:var(--ssi-gradient-90)]">
-      <div className="mx-auto flex max-w-[1200px] flex-col gap-6 px-5 py-10 md:flex-row md:items-center md:justify-between md:px-6">
-        <div className="flex items-center gap-3">
-          <Image src="/logos/ssii-logo-white.png" alt="SS Innovations" width={520} height={227} className="h-8 w-auto" />
-          <span className="h-6 w-px bg-white/20" aria-hidden="true" />
-          <span className="text-[17px] font-medium tracking-[-0.01em] text-white">Events</span>
+      <div className="mx-auto max-w-[1200px] px-5 pb-8 pt-10 md:px-6 md:pt-12">
+        <div className="grid gap-8 md:grid-cols-[1.3fr_1fr_1fr_1fr]">
+          <div className="flex items-center gap-3 self-start">
+            <Image src="/logos/ssii-logo-white.png" alt="SS Innovations" width={520} height={227} className="h-8 w-auto" />
+            <span className="h-6 w-px bg-white/20" aria-hidden="true" />
+            <span className="text-[17px] font-medium tracking-[-0.01em] text-white">Events</span>
+          </div>
+          {FOOTER_LINKS.map((group) => (
+            <nav key={group.heading} aria-label={group.heading}>
+              <h2 className="text-[13px] font-semibold uppercase tracking-[0.06em] text-white">{group.heading}</h2>
+              <ul className="mt-3 space-y-2 text-[14px]">
+                {group.links.map((link) => (
+                  <li key={link.href}>
+                    {link.external
+                      ? <a href={link.href} className={FOOTER_LINK}>{link.label}</a>
+                      : <Link href={link.href} className={FOOTER_LINK}>{link.label}</Link>}
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
         </div>
-        <div className="flex flex-col gap-1.5 text-[14px] md:items-end">
-          <a href="https://ssinnovations.com" className="text-[#8FD8C4] transition-colors hover:text-white">ssinnovations.com</a>
-          <p className="text-[#8C95A8]">© {new Date().getFullYear()} SS Innovations · Developed by SSI Maya</p>
+        <div className="mt-10 border-t border-white/10 pt-6 text-[12.5px] leading-[1.6] text-[#8C95A8]">
+          <p className="max-w-[90ch]">
+            Information on this site is intended for healthcare professionals. SSi Mantra and SSi MantraM are not available in all countries; availability and approved uses depend on local regulatory approval.
+          </p>
+          <p className="mt-3">© {new Date().getFullYear()} SS Innovations · Developed by SSI Maya</p>
         </div>
       </div>
     </footer>
