@@ -8,6 +8,8 @@ export type EventCategoryType = 'conference' | 'mantram' | 'event' | 'participat
 export type EventCategory = {
   type: EventCategoryType;
   name: string;
+  /** Shown on each event's card to say what kind of event it is, e.g. "SSi MantraM". */
+  cardLabel: string;
   /** Plural form for headings, e.g. "Upcoming CME and workshops". */
   heading: string;
   description: string;
@@ -29,6 +31,7 @@ export const EVENT_CATEGORIES: EventCategory[] = [
   {
     type: 'conference',
     name: 'SMRSC',
+    cardLabel: 'SMRSC',
     heading: 'SMRSC',
     description: 'The SSI Multi-Specialty Robotic Surgery Conference.',
     image: '/images/categories/smrsc.webp',
@@ -49,6 +52,7 @@ export const EVENT_CATEGORIES: EventCategory[] = [
   {
     type: 'mantram',
     name: 'MantraM',
+    cardLabel: 'SSi MantraM',
     heading: 'MantraM',
     description: 'Our mobile tele-surgical unit, carrying the SSI Mantra surgical robotic system.',
     image: '/images/categories/mantram.webp',
@@ -67,6 +71,7 @@ export const EVENT_CATEGORIES: EventCategory[] = [
   {
     type: 'event',
     name: 'CME / Workshop',
+    cardLabel: 'CME / Workshop',
     heading: 'CME and workshops',
     description: 'Continuing medical education and hands-on workshops.',
     image: '/images/categories/cme.webp',
@@ -85,6 +90,7 @@ export const EVENT_CATEGORIES: EventCategory[] = [
   {
     type: 'participation',
     name: 'Conferences',
+    cardLabel: 'Conference',
     heading: 'Conferences',
     description: 'Congresses and conferences where SS Innovations exhibits and presents.',
     image: '/images/categories/conferences.webp',

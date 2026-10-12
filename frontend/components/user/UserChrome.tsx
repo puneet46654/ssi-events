@@ -13,8 +13,10 @@ import { refreshEventSearch, searchHref, setEventSearch, useEventSearch } from '
  * Pages render only their own content below the header.
  */
 
-// The event catalogue is the home page (`/`); `/events` permanently redirects there.
-const ROOT_PAGES = ['/', '/events/mytickets'];
+// The event catalogue is the home page (`/`); `/events` permanently redirects there, but the page is
+// prerendered under /events (the rewrite target), so both count as home when rendering.
+const HOME_PAGES = ['/', '/events'];
+const ROOT_PAGES = [...HOME_PAGES, '/events/mytickets'];
 
 // Desktop navigation: medium-weight links; the active page carries the insignia-gradient underline.
 const NAV = 'relative inline-flex h-11 items-center gap-2 rounded-full px-4 text-[15px] font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30';
@@ -64,7 +66,7 @@ function useShare() {
 function HeaderSearch({ className = '', autoFocus = false, onSubmitted }: { className?: string; autoFocus?: boolean; onSubmitted?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
-  const onHome = pathname === '/';
+  const onHome = HOME_PAGES.includes(pathname);
   const query = useEventSearch();
   const [draft, setDraft] = useState('');
   const value = onHome ? query : draft;
