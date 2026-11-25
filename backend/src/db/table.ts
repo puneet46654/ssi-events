@@ -26,6 +26,8 @@ export const keys = {
 export const lists = {
   events: 'EVENTS',
   eventBookings: (eventId: string) => `EVENT#${eventId}#BOOKINGS`,
+  /** Waitlist places for full slots; kept apart so they never count as bookings. */
+  eventWaitlist: (eventId: string) => `EVENT#${eventId}#WAITLIST`,
   admins: 'ADMINS',
 };
 

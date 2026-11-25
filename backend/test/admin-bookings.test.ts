@@ -55,7 +55,7 @@ beforeEach(async () => {
 
 /* ---------- Bookings list ---------- */
 
-test('lists bookings and pending registrations with stats, filters and pagination', async () => {
+test('lists confirmed bookings (never details saved without a slot) with stats, filters and pagination', async () => {
   await book(LIVE, DAY_L, SLOT_L, 1);
   await book(SOON, DAY_S, SLOT_S, 2);
   await book(SOON, DAY_S, SLOT_S, 3);
@@ -63,9 +63,9 @@ test('lists bookings and pending registrations with stats, filters and paginatio
 
   const all = await call('GET', '/api/admin/bookings', { cookies: admin });
   assert.equal(all.status, 200, JSON.stringify(all.data));
-  assert.equal(all.data.pagination.total, 4);
-  assert.deepEqual(all.data.stats, { total: 3, upcoming: 3, past: 0, pending: 1 });
-  assert.equal(all.data.bookings.filter((b: any) => b.pending).length, 1);
+  assert.equal(all.data.pagination.total, 3);
+  assert.deepEqual(all.data.stats, { total: 3, upcoming: 3, past: 0, pending: 0, waitlisted: 0 });
+  assert.equal(all.data.bookings.filter((b: any) => b.pending).length, 0);
   assert.deepEqual(all.data.filterOptions.specialty, ['Cardiology', 'Urology']);
 
   const pune = await call('GET', `/api/admin/bookings?eventId=${SOON}&status=confirmed`, { cookies: admin });
@@ -76,8 +76,8 @@ test('lists bookings and pending registrations with stats, filters and paginatio
   const uro = await call('GET', '/api/admin/bookings?specialty=urology', { cookies: admin });
   assert.equal(uro.data.pagination.total, 2);
   const paged = await call('GET', '/api/admin/bookings?limit=3&page=2&sort=name', { cookies: admin });
-  assert.equal(paged.data.bookings.length, 1);
-  assert.equal(paged.data.pagination.pages, 2);
+  assert.equal(paged.data.bookings.length, 0);
+  assert.equal(paged.data.pagination.pages, 1);
 });
 
 test('the bookings list needs the bookings module', async () => {

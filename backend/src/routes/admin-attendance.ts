@@ -1,12 +1,13 @@
 import { TransactWriteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { TransactionCanceledException } from '@aws-sdk/client-dynamodb';
-import { db, keys, TABLE_NAME } from '../db/table.js';
+import { db, keys, lists, TABLE_NAME } from '../db/table.js';
 import { error, json } from '../http.js';
 import { bumpRealtime, logActivity } from '../lib/activity.js';
-import { allEvents, eventBookings } from '../lib/admin-data.js';
+import { allEvents, eventBookings, eventWaitlist, waitlistPositions } from '../lib/admin-data.js';
 import { requireAdmin } from '../lib/admins.js';
 import { assertSameOrigin, jsonBody } from '../lib/body.js';
-import { getBooking, getSlots, isBookingId, isOpenRegistration, slotStart, type BookingItem, type SlotItem } from '../lib/bookings.js';
+import { moveWaitlistEntry, seatWaitlistEntry } from '../lib/waitlist.js';
+import { getBooking, getEventCore, getSlots, isBookingId, isOpenRegistration, slotStart, type BookingItem, type SlotItem } from '../lib/bookings.js';
 import { eventStatus, eventTimeZone, zonedDate } from '../lib/dates.js';
 import { NOT_EDIT_LOCKED } from '../lib/event-lock.js';
 import { isId } from '../lib/ids.js';
@@ -127,6 +128,7 @@ export const checkIn: Handler = async (req) => {
   if (!event || !isLive(event)) return error(409, 'This event is cancelled or is not live. Admission is unavailable.');
   const booking = isBookingId(reference) ? await getBooking(reference) : undefined;
   if (!booking || booking.eventId !== eventId) return error(404, 'Ticket not found for the selected event.');
+  if (booking.waitlisted) return error(409, 'This reference is a waitlist place, not a ticket. Seat the attendee from the Waitlist list.');
 
   const respond = (b: BookingItem, alreadyPresent: boolean) => json(200, {
     success: true, alreadyPresent,
@@ -236,3 +238,103 @@ async function moveAndCheckIn(
   body.booking = { ...body.booking, startTime: slot.startTime, endTime: slot.endTime };
   return json(200, body);
 }
+
+/*
+ * GET /api/admin/waitlist?eventId= — a live event's waitlist, per slot in join order, with how many
+ * booked attendees of that slot have arrived so staff can see when a no-show leaves room.
+ */
+export const waitlistForEvent: Handler = async (req) => {
+  await requireAdmin(req, 'check-in');
+  const eventId = (req.query.eventId || '').trim();
+  if (!isId(eventId)) return error(400, 'Invalid event.');
+  const event = (await allEvents()).find((e) => e.eventId === eventId);
+  if (!event) return error(404, 'Event not found.');
+  const [entries, bookings, slots] = await Promise.all([eventWaitlist(eventId), eventBookings(eventId), getSlots(eventId)]);
+  const positions = waitlistPositions(entries);
+  const bySlot = new Map<string, BookingItem[]>();
+  for (const b of entries) bySlot.set(b.slotId, [...(bySlot.get(b.slotId) ?? []), b]);
+  const groups = slots
+    .filter((s) => bySlot.has(s.slotId))
+    .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
+    .map((s) => {
+      const inSlot = bookings.filter((b) => b.slotId === s.slotId);
+      return {
+        slotId: s.slotId, date: s.date, startTime: s.startTime, endTime: s.endTime, capacity: s.capacity,
+        booked: inSlot.length, arrived: inSlot.filter((b) => b.attendanceStatus === 'PRESENT').length,
+        entries: bySlot.get(s.slotId)!
+          .sort((a, b) => positions.get(a.bookingId)! - positions.get(b.bookingId)!)
+          .map((b) => ({
+            bookingId: b.bookingId, position: positions.get(b.bookingId)!, joinedAt: b.createdAt,
+            title: b.details.title || '', fullName: b.details.fullName || 'Attendee', mobile: b.details.mobile || '',
+            email: b.details.email || '', hospitalName: b.details.hospitalName || '', specialty: b.details.specialty || '',
+          })),
+      };
+    });
+  return json(200, { success: true, total: entries.length, slots: groups }, { 'cache-control': 'no-store' });
+};
+
+/*
+ * POST /api/admin/waitlist/seat — `{ eventId, bookingId }`. Staff seat a waitlisted attendee in place
+ * of a no-show: the place becomes a normal booking, already checked in (manual), counted on its slot
+ * and the event. Slot capacity is not enforced: the no-show's booking still holds its seat.
+ */
+export const seatFromWaitlist: Handler = async (req) => {
+  assertSameOrigin(req);
+  const admin = await requireAdmin(req, 'check-in');
+  const body = jsonBody<{ eventId?: unknown; bookingId?: unknown }>(req);
+  const eventId = typeof body?.eventId === 'string' ? body.eventId.trim() : '';
+  const bookingId = typeof body?.bookingId === 'string' ? body.bookingId.trim().toUpperCase() : '';
+  if (!isId(eventId) || !isBookingId(bookingId)) return error(400, 'Choose a waitlisted attendee.');
+  const event = (await allEvents()).find((e) => e.eventId === eventId);
+  if (!event || !isLive(event)) return error(409, 'This event is cancelled or is not live. Waitlisted attendees can be seated only during the event.');
+  const entry = await getBooking(bookingId);
+  if (!entry || entry.eventId !== eventId) return error(404, 'Waitlist place not found for this event.');
+  if (!entry.waitlisted) return error(409, entry.attendanceStatus === 'PRESENT' ? 'This attendee has already been seated.' : 'This person is not on the waitlist.');
+
+  const at = await seatWaitlistEntry(entry, admin.username);
+  await Promise.all([
+    bumpRealtime('attendance'), bumpRealtime('bookings'),
+    logActivity({
+      admin: admin.username, action: 'update', resource: 'booking', resourceId: bookingId,
+      details: { bookingId, seatedFromWaitlist: `${entry.date} ${entry.startTime}` },
+    }),
+  ]);
+  return json(200, {
+    success: true, message: `${entry.details.fullName || 'Attendee'} seated and marked present.`,
+    booking: { bookingId, fullName: entry.details.fullName || 'Attendee', attendanceStatus: 'PRESENT', checkedInAt: at },
+  });
+};
+
+/*
+ * POST /api/admin/waitlist/move — `{ eventId, bookingId, dayScheduleId, slotId }`. Staff change a
+ * waitlisted attendee's slot: into a free seat (they become a confirmed booking with a QR ticket),
+ * or onto another full slot's waitlist (at the back of its queue).
+ */
+export const moveWaitlisted: Handler = async (req) => {
+  assertSameOrigin(req);
+  const admin = await requireAdmin(req, 'bookings', 'write');
+  const body = jsonBody<{ eventId?: unknown; bookingId?: unknown; dayScheduleId?: unknown; slotId?: unknown }>(req);
+  const eventId = typeof body?.eventId === 'string' ? body.eventId.trim() : '';
+  const bookingId = typeof body?.bookingId === 'string' ? body.bookingId.trim().toUpperCase() : '';
+  const dayId = typeof body?.dayScheduleId === 'string' ? body.dayScheduleId : '';
+  const slotId = typeof body?.slotId === 'string' ? body.slotId : '';
+  if (!isId(eventId) || !isBookingId(bookingId) || !isId(dayId) || !isId(slotId)) return error(400, 'Choose a waitlisted attendee and a time slot.');
+  const entry = await getBooking(bookingId);
+  if (!entry || entry.eventId !== eventId) return error(404, 'Waitlist place not found for this event.');
+  const event = await getEventCore(eventId);
+  if (!event) return error(404, 'Event not found.');
+  const { booking, confirmed } = await moveWaitlistEntry(entry, event, dayId, slotId);
+  await Promise.all([
+    bumpRealtime('bookings'),
+    logActivity({
+      admin: admin.username, action: 'update', resource: 'booking', resourceId: bookingId,
+      details: { bookingId, waitlistMove: { from: `${entry.date} ${entry.startTime}`, to: `${booking.date} ${booking.startTime}`, confirmed } },
+    }),
+  ]);
+  return json(200, {
+    success: true, confirmed,
+    message: confirmed
+      ? `${booking.details.fullName || 'Attendee'} now has a confirmed booking for ${booking.startTime}–${booking.endTime}; the QR ticket has been emailed.`
+      : `${booking.details.fullName || 'Attendee'} moved to the waitlist for ${booking.startTime}–${booking.endTime}.`,
+  });
+};

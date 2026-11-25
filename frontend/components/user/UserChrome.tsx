@@ -198,6 +198,9 @@ const FOOTER_LINKS: { heading: string; links: { label: string; href: string; ext
  * regulatory notice (draft pending regulatory review) and the copyright line.
  */
 export function UserFooter() {
+  const pathname = usePathname();
+  // The booking form and time-slot pages end at their action bar: no dark footer to scroll into.
+  if (/^\/events\/[^/]+\/book(\/slots)?\/?$/.test(pathname)) return null;
   return (
     <footer className="relative mt-16 bg-[#0B1120] text-[#B8C0CF] before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:bg-[image:var(--ssi-gradient-90)]">
       <div className="mx-auto max-w-[1200px] px-5 pb-8 pt-10 md:px-6 md:pt-12">

@@ -1,6 +1,7 @@
 'use client';
 
 import { labelFieldControl } from '@/lib/field-control';
+import BookingStepper from '@/components/user/BookingStepper';
 import { useId } from 'react';
 
 import { bookingStorage } from '@/lib/booking-contracts';
@@ -40,13 +41,15 @@ type CountryOption = {
 };
 
 const inputClass = `
-  h-12
+  h-11
+  sm:h-12
   w-full
   min-w-0
   rounded-xl
   border
   border-gray-200
   bg-white
+  glass-input
   px-3.5
   text-sm
   font-medium
@@ -58,6 +61,7 @@ const inputClass = `
   placeholder:text-gray-400
   hover:border-primary/35
   focus:border-primary
+  focus:bg-white
   focus:ring-4
   focus:ring-primary/[0.08]
   disabled:cursor-not-allowed
@@ -68,12 +72,12 @@ const inputClass = `
 const labelClass = `
   mb-1.5
   block
-  text-[12px]
-  font-semibold
-  uppercase
-  tracking-[0.035em]
-  text-gray-500
+  text-[14px]
+  font-medium
+  text-secondary
 `;
+
+const selectClass = `${inputClass} select-chevron cursor-pointer`;
 
 export default function ConferenceTemplate({
   eventId,
@@ -514,36 +518,20 @@ export default function ConferenceTemplate({
 
           {/* HEADER */}
 
-          <header
-            className="
-              mt-0 max-md:mb-1 md:mt-6
-              max-w-2xl
+          <BookingStepper step={1} />
 
-              sm:mt-7
-
-              lg:mt-8
-            "
-          >
-            <h1
-              className="
-                font-heading
-
-                text-[19px]
-                font-bold
-
-                leading-[1.16]
-
-                tracking-[-0.025em]
-
-                text-secondary
-
-                sm:text-[28px]
-
-                lg:text-[30px]
-              "
-            >
-              Practitioner Details
+          <header className="mt-3.5">
+            <h1 className="font-heading text-[21px] font-bold leading-tight tracking-[-0.02em] text-secondary sm:text-[24px]">
+              Your details
             </h1>
+            <p className="mt-0.5 text-[13.5px] text-gray-500">
+              {eventName && (
+                <>
+                  For <span className="font-semibold text-secondary">{eventName}</span> ·{' '}
+                </>
+              )}
+              all fields required
+            </p>
           </header>
 
           {/* ERROR */}
@@ -615,7 +603,7 @@ export default function ConferenceTemplate({
               grid-cols-1
 
               gap-x-5
-              gap-y-4
+              gap-y-3.5
 
               md:grid-cols-2
 
@@ -636,7 +624,7 @@ export default function ConferenceTemplate({
                     : ''
                 }
                 aria-label="Faculty or Delegate"
-                className={`${inputClass} cursor-pointer`}
+                className={`${selectClass}`}
               >
                 {!removeDesignationPlaceholder && (
                   <option
@@ -659,15 +647,15 @@ export default function ConferenceTemplate({
 
             {/* FULL NAME */}
 
-            <Field label="Full Name & Title">
+            <Field label="Full name">
               <div
                 className="
                   grid
                   min-w-0
-                  grid-cols-[76px_minmax(0,1fr)]
+                  grid-cols-[92px_minmax(0,1fr)]
                   gap-2
 
-                  sm:grid-cols-[84px_minmax(0,1fr)]
+                  sm:grid-cols-[100px_minmax(0,1fr)]
                 "
               >
                 <select
@@ -675,7 +663,7 @@ export default function ConferenceTemplate({
                   required
                   defaultValue="Dr."
                   aria-label="Title"
-                  className={`${inputClass} cursor-pointer px-3`}
+                  className={`${selectClass} px-3.5`}
                 >
                   <option value="Dr.">
                     Dr.
@@ -713,7 +701,7 @@ export default function ConferenceTemplate({
 
             {/* SPECIALTY */}
 
-            <Field label="Specialty / Department">
+            <Field label="Specialty / department">
               <input
                 name="specialty"
                 type="text"
@@ -727,7 +715,7 @@ export default function ConferenceTemplate({
 
             {/* PHONE */}
 
-            <Field label="Mobile Number">
+            <Field label="Mobile number">
               <div
                 className="
                   grid
@@ -808,7 +796,7 @@ export default function ConferenceTemplate({
             {/* EMAIL */}
 
             <div className="md:col-span-2">
-              <Field label="Email Address">
+              <Field label="Email">
                 <input
                   name="email"
                   type="email"
@@ -825,7 +813,7 @@ export default function ConferenceTemplate({
             {/* HOSPITAL */}
 
             <div className="md:col-span-2">
-              <Field label="Hospital Name">
+              <Field label="Hospital">
                 <input
                   name="hospitalName"
                   type="text"
@@ -888,7 +876,8 @@ export default function ConferenceTemplate({
 
             {/* STATE */}
 
-            <Field label="State / Province">
+            <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-x-6">
+            <Field label="State">
               {states.length > 0 ? (
                 <select
                   name="state"
@@ -906,7 +895,7 @@ export default function ConferenceTemplate({
                       event.target.value,
                     )
                   }
-                  className={`${inputClass} cursor-pointer`}
+                  className={`${selectClass}`}
                 >
                   <option value="">
                     {statesLoading
@@ -959,8 +948,8 @@ export default function ConferenceTemplate({
 
             {/* CITY */}
 
-            <div className="md:col-span-2">
-              <Field label="City / Town">
+            <div className="min-w-0">
+              <Field label="City">
                 <input
                   name="city"
                   type="text"
@@ -972,6 +961,7 @@ export default function ConferenceTemplate({
                   }
                 />
               </Field>
+            </div>
             </div>
           </div>
 
@@ -990,7 +980,7 @@ export default function ConferenceTemplate({
               sm:gap-3
 
               lg:mt-8
-              max-md:fixed max-md:inset-x-0 max-md:bottom-[var(--user-nav-h,0px)] max-md:z-30 max-md:mt-0 max-md:flex-row max-md:border-t max-md:border-gray-200/80 max-md:bg-white/95 max-md:px-4 max-md:py-2.5 max-md:backdrop-blur-xl
+              max-md:fixed max-md:inset-x-0 max-md:bottom-[var(--user-nav-h,0px)] max-md:z-30 max-md:mt-0 max-md:flex-row max-md:glass-bar max-md:px-4 max-md:py-2.5
             "
           >
             <button
@@ -998,7 +988,7 @@ export default function ConferenceTemplate({
               onClick={() =>
                 router.back()
               }
-              className="
+              className="max-md:hidden 
                 max-md:order-1 max-md:h-11 max-md:w-auto max-md:shrink-0 max-md:px-5 order-2
 
                 flex
@@ -1042,7 +1032,7 @@ export default function ConferenceTemplate({
                 submitting
               }
               className="
-                max-md:order-2 max-md:h-11 max-md:flex-1 order-1
+                max-md:order-2 max-md:h-[52px] max-md:flex-1 max-md:text-[17px] order-1
 
                 flex
                 h-12
@@ -1053,7 +1043,7 @@ export default function ConferenceTemplate({
                 items-center
                 justify-center
 
-                rounded-xl
+                rounded-full
 
                 bg-primary
 
@@ -1106,7 +1096,7 @@ export default function ConferenceTemplate({
                   Loading Time Slots...
                 </span>
               ) : (
-                'Continue to Time Slots'
+                'Continue to time slots'
               )}
             </button>
           </div>
@@ -1692,9 +1682,6 @@ function Field({
       >
         {label}
 
-        <span className="ml-1 text-red-500">
-          *
-        </span>
       </label>
 
       {labelFieldControl(children, fieldId)}

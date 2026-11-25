@@ -1,6 +1,7 @@
 'use client';
 
 import { labelFieldControl } from '@/lib/field-control';
+import BookingStepper from '@/components/user/BookingStepper';
 import { useId } from 'react';
 
 import { bookingStorage } from '@/lib/booking-contracts';
@@ -51,6 +52,7 @@ const inputClass = `
   border-gray-200
 
   bg-white
+  glass-input
 
   px-3
   sm:px-3.5
@@ -72,6 +74,7 @@ const inputClass = `
   hover:border-primary/35
 
   focus:border-primary
+  focus:bg-white
   focus:ring-4
   focus:ring-primary/[0.08]
 
@@ -83,13 +86,12 @@ const inputClass = `
 const labelClass = `
   mb-1.5
   block
-  text-[12px]
-  sm:text-[12px]
-  font-semibold
-  uppercase
-  tracking-[0.035em]
-  text-gray-500
+  text-[14px]
+  font-medium
+  text-secondary
 `;
+
+const selectClass = `${inputClass} select-chevron cursor-pointer`;
 
 export default function MantramTemplate({
   eventId,
@@ -528,40 +530,20 @@ export default function MantramTemplate({
 
           {/* HEADER */}
 
-          <header
-            className="
-              mt-0 max-md:mb-1 md:mt-6
-              max-w-[650px]
+          <BookingStepper step={1} />
 
-              sm:mt-7
-              md:mt-8
-              lg:mt-9
-            "
-          >
-            <h1
-              className="
-                font-heading
-
-                text-[23px]
-                font-bold
-
-                leading-[1.13]
-
-                tracking-[-0.025em]
-
-                text-secondary
-
-                min-[390px]:text-[19px]
-
-                sm:text-[27px]
-
-                md:text-[29px]
-
-                lg:text-[30px]
-              "
-            >
-              Practitioner Details
+          <header className="mt-3.5">
+            <h1 className="font-heading text-[21px] font-bold leading-tight tracking-[-0.02em] text-secondary sm:text-[24px]">
+              Your details
             </h1>
+            <p className="mt-0.5 text-[13.5px] text-gray-500">
+              {eventName && (
+                <>
+                  For <span className="font-semibold text-secondary">{eventName}</span> ·{' '}
+                </>
+              )}
+              all fields required
+            </p>
           </header>
 
           {formError && (
@@ -621,7 +603,7 @@ export default function MantramTemplate({
               grid
               grid-cols-1
               gap-x-5
-              gap-y-4
+              gap-y-3.5
 
               sm:gap-y-5
 
@@ -633,15 +615,15 @@ export default function MantramTemplate({
           >
             {/* FULL NAME */}
 
-            <Field label="Full Name & Title">
+            <Field label="Full name">
               <div
                 className="
                   grid
                   min-w-0
-                  grid-cols-[74px_minmax(0,1fr)]
+                  grid-cols-[92px_minmax(0,1fr)]
                   gap-2
 
-                  sm:grid-cols-[84px_minmax(0,1fr)]
+                  sm:grid-cols-[100px_minmax(0,1fr)]
                 "
               >
                 <select
@@ -649,7 +631,7 @@ export default function MantramTemplate({
                   required
                   defaultValue="Dr."
                   aria-label="Title"
-                  className={`${inputClass} cursor-pointer px-2.5 sm:px-3`}
+                  className={`${selectClass} px-3.5`}
                 >
                   <option value="Dr.">
                     Dr.
@@ -687,7 +669,7 @@ export default function MantramTemplate({
 
             {/* SPECIALTY */}
 
-            <Field label="Specialty / Department">
+            <Field label="Specialty / department">
               <input
                 name="specialty"
                 type="text"
@@ -701,7 +683,7 @@ export default function MantramTemplate({
 
             {/* PHONE */}
 
-            <Field label="Mobile Number">
+            <Field label="Mobile number">
               <div
                 className="
                   grid
@@ -781,7 +763,7 @@ export default function MantramTemplate({
 
             {/* EMAIL */}
 
-            <Field label="Email Address">
+            <Field label="Email">
               <input
                 name="email"
                 type="email"
@@ -797,7 +779,7 @@ export default function MantramTemplate({
             {/* HOSPITAL */}
 
             <div className="md:col-span-2">
-              <Field label="Hospital Name">
+              <Field label="Hospital">
                 <input
                   name="hospitalName"
                   type="text"
@@ -860,7 +842,8 @@ export default function MantramTemplate({
 
             {/* STATE */}
 
-            <Field label="State / Province">
+            <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-x-6">
+            <Field label="State">
               {states.length > 0 ? (
                 <select
                   name="state"
@@ -878,7 +861,7 @@ export default function MantramTemplate({
                       event.target.value,
                     )
                   }
-                  className={`${inputClass} cursor-pointer`}
+                  className={`${selectClass}`}
                 >
                   <option value="">
                     {statesLoading
@@ -933,8 +916,8 @@ export default function MantramTemplate({
 
             {/* CITY */}
 
-            <div className="md:col-span-2">
-              <Field label="City / Town">
+            <div className="min-w-0">
+              <Field label="City">
                 <input
                   name="city"
                   type="text"
@@ -946,6 +929,7 @@ export default function MantramTemplate({
                   }
                 />
               </Field>
+            </div>
             </div>
           </div>
 
@@ -964,7 +948,7 @@ export default function MantramTemplate({
               sm:gap-3
 
               lg:mt-8
-              max-md:fixed max-md:inset-x-0 max-md:bottom-[var(--user-nav-h,0px)] max-md:z-30 max-md:mt-0 max-md:flex-row max-md:border-t max-md:border-gray-200/80 max-md:bg-white/95 max-md:px-4 max-md:py-2.5 max-md:backdrop-blur-xl
+              max-md:fixed max-md:inset-x-0 max-md:bottom-[var(--user-nav-h,0px)] max-md:z-30 max-md:mt-0 max-md:flex-row max-md:glass-bar max-md:px-4 max-md:py-2.5
             "
           >
             <button
@@ -972,7 +956,7 @@ export default function MantramTemplate({
               onClick={() =>
                 router.back()
               }
-              className="
+              className="max-md:hidden 
                 max-md:order-1 max-md:h-11 max-md:w-auto max-md:shrink-0 max-md:px-5 order-2
                 flex
                 h-11
@@ -1006,14 +990,14 @@ export default function MantramTemplate({
                 submitting
               }
               className="
-                max-md:order-2 max-md:h-11 max-md:flex-1 order-1
+                max-md:order-2 max-md:h-[52px] max-md:flex-1 max-md:text-[17px] order-1
                 flex
                 h-11
                 w-full
                 cursor-pointer
                 items-center
                 justify-center
-                rounded-xl
+                rounded-full
                 bg-primary
                 px-4
                 text-[14px]
@@ -1050,7 +1034,7 @@ export default function MantramTemplate({
                   Loading Time Slots...
                 </span>
               ) : (
-                'Continue to Time Slots'
+                'Continue to time slots'
               )}
             </button>
           </div>
@@ -1130,6 +1114,9 @@ function PhoneCountrySelector({
           transition-all
           duration-200
           hover:border-primary/35
+  transition-[border-color,box-shadow,background-color]
+  duration-200
+  ease-out
           focus:border-primary
           focus:ring-4
           focus:ring-primary/[0.08]
@@ -1328,6 +1315,9 @@ function CountrySelector({
           transition-all
           duration-200
           hover:border-primary/35
+  transition-[border-color,box-shadow,background-color]
+  duration-200
+  ease-out
           focus:border-primary
           focus:ring-4
           focus:ring-primary/[0.08]
@@ -1722,14 +1712,6 @@ function Field({
       >
         {label}
 
-        <span
-          className="
-            ml-1
-            text-red-500
-          "
-        >
-          *
-        </span>
       </label>
 
       {labelFieldControl(children, fieldId)}

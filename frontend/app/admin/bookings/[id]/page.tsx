@@ -51,6 +51,7 @@ type BookingData = {
 
   /** Details submitted but no slot chosen: no ticket or attendance yet. */
   pending?: boolean;
+  waitlisted?: boolean;
 
   details:
     GenericRecord;
@@ -975,7 +976,9 @@ export default function BookingDetailsPage() {
                   : 'Booking Details'}
               </h1>
 
-              {booking.pending ? (
+              {booking.waitlisted ? (
+                <span className="badge bg-amber-100 text-amber-800" title="No QR ticket yet. Change slot or seat from the Check-in screen.">Waitlisted · no QR yet</span>
+              ) : booking.pending ? (
                 <span className="badge badge--warning">Pending</span>
               ) : (
               <AttendanceBadge

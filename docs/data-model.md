@@ -88,3 +88,13 @@ If the request key already exists, it's a retry. The backend then returns the bo
 | Feedback (implemented) | `FEEDBACK#APP` / `<timestamp>#<id>`: `rating`, `message`, `submittedAt`. `FEEDBACK#APP` / `SESSION#<sha256 of session ID>`: marks a browser that has rated |
 
 A registration for an `open` event is a normal booking item with `slotId`, `slotSK`, `dayId` empty, `dayNumber` 0, `date` = event start date and `GSI1SK` `00##<bookingId>`.
+
+## Slot waitlist (implemented)
+
+When a slot is full and still running, attendees may join its waitlist (`POST /api/bookings` with `waitlist: true`; if a seat is free, it books normally instead).
+
+- A waitlist place is a booking item with `waitlisted: true`, no seat taken, no QR code. Its `GSI1PK` is `EVENT#<id>#WAITLIST` (not `#BOOKINGS`), so it never appears in booking lists, counts, reports or check-in figures. `GSI2` (phone) is set, so it shows in My Tickets as "Waitlist #N".
+- Position is the join order within the slot (`createdAt`). One place per phone number per slot; joining again returns the same place. The attendee gets a "You're on the waitlist" email and may leave the waitlist from My Tickets.
+- Nothing moves automatically when a seat frees up. At the venue, staff use the Waitlist list on the check-in screen (`GET /api/admin/waitlist?eventId=`) and **Seat & mark present** (`POST /api/admin/waitlist/seat`): one transaction turns the place into a normal booking (`GSI1PK` `#BOOKINGS`), sets `seatedFromWaitlist: true`, `attendanceStatus` `PRESENT`, `checkInMethod` `MANUAL`, and adds 1 to the slot's `bookedCount` and the event's `bookedSlots` without a capacity check (the no-show's booking still holds its seat).
+- **Changing slot.** A waitlisted attendee (My Tickets, `PATCH /api/bookings`) or staff (`POST /api/admin/waitlist/move`) can move the place. Into a slot with a free seat (including its own slot once a seat frees up), it becomes a confirmed booking with a QR ticket (`confirmedFromWaitlist: true`, confirmation email sent). Into another full slot, it joins that slot's queue at the back (`waitlistedAt`).
+- **Admin Bookings** lists confirmed bookings and waitlist places (filter `status=waitlisted`, badge "Waitlist #N"); details saved without a slot (pending) are no longer listed there.

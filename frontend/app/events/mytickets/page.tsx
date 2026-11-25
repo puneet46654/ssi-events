@@ -42,7 +42,8 @@ type TicketStatus =
   | 'ACTIVE'
   | 'EXPIRED'
   | 'ATTENDED'
-  | 'CANCELLED';
+  | 'CANCELLED'
+  | 'WAITLISTED';
 
 
 interface Ticket {
@@ -75,6 +76,9 @@ interface Ticket {
 
   status:
     TicketStatus;
+
+  /** Place in the slot's waitlist queue (waitlist entries only). */
+  waitlistPosition?: number | null;
 
 
   attendanceStatus:
@@ -144,6 +148,7 @@ export default function MyTicketsPage() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   // Set when the attendee arrives straight from booking a slot.
   const [justBooked, setJustBooked] = useState('');
+  const justBookedWaitlist = tickets.some(ticket => ticket.bookingId === justBooked && ticket.status === 'WAITLISTED');
   // Asked on My Tickets (right after booking, or on any later visit) until this device has rated the app.
   const [feedbackDone, markFeedbackDone] = useAppFeedbackDone();
   const [managing, setManaging] = useState<{ ticket: Ticket; mode: 'reschedule' | 'cancel' } | null>(null);
@@ -289,10 +294,8 @@ export default function MyTicketsPage() {
     <main
       className="
         min-h-dvh
-
-        bg-white
-
-        pb-[76px]
+        booking-bg
+        pb-4
 
         md:pb-0
       "
@@ -308,10 +311,9 @@ export default function MyTicketsPage() {
           w-full
           max-w-[1200px]
 
-          px-4
-
-          py-5
-
+          px-3.5
+          pt-3
+          pb-6
           md:px-6
           md:py-8
 
@@ -324,6 +326,7 @@ export default function MyTicketsPage() {
 
 
         <motion.div
+          className="flex items-center justify-between gap-3"
           initial={{
             opacity:0,
             y:5,
@@ -338,7 +341,7 @@ export default function MyTicketsPage() {
             className="
               font-heading
 
-              text-[26px]
+              text-[22px]
 
               font-bold
 
@@ -357,10 +360,15 @@ export default function MyTicketsPage() {
               type="button"
               onClick={resetTickets}
               className="
-                mt-3
+                shrink-0
+                rounded-full
+                px-3
+                py-1.5
                 text-[13px]
                 font-semibold
                 text-primary
+                transition-colors
+                hover:bg-primary/[0.06]
                 hover:text-primary-dark
               "
             >
@@ -390,16 +398,10 @@ export default function MyTicketsPage() {
               y:0,
             }}
             className="
-              mt-6
-
-              rounded-xl
-
-              border
-              border-gray-200
-
-              bg-white
-
-              p-5
+              glass
+              mt-3
+              rounded-2xl
+              p-4
             "
           >
 
@@ -425,7 +427,7 @@ export default function MyTicketsPage() {
                   const next = countries.find(country => country.iso2 === e.target.value);
                   if (next) { setPhoneCountry(next); changeMobile(mobile); }
                 }}
-                className="h-11 w-28 shrink-0 rounded-lg border border-gray-200 bg-white px-2 text-[13px] outline-none focus:border-primary/40"
+                className="select-chevron h-11 w-28 shrink-0 rounded-xl border border-gray-200 bg-white/80 px-2.5 text-[13px] outline-none focus:border-primary/40"
               >
                 {countries.map(country => (
                   <option key={country.iso2} value={country.iso2}>{country.flag} {country.callingCode} {country.name}</option>
@@ -455,10 +457,11 @@ export default function MyTicketsPage() {
 
 
                 h-11
-
                 min-w-0 flex-1
-
-                rounded-lg
+                rounded-xl
+                bg-white/80
+                transition-colors
+                focus:bg-white
 
                 border
                 border-gray-200
@@ -476,7 +479,7 @@ export default function MyTicketsPage() {
 
 
 
-            <label htmlFor="ticket-reference" className="mt-4 block text-[12px] font-semibold text-secondary">
+            <label htmlFor="ticket-reference" className="mt-3 block text-[13px] font-semibold text-secondary">
               Booking reference{referenceNeeded ? '' : ' (optional)'}
             </label>
             <input disabled={!hydrated}
@@ -488,7 +491,7 @@ export default function MyTicketsPage() {
               autoCapitalize="characters"
               autoComplete="off"
               spellCheck={false}
-              className="mt-2 h-11 w-full rounded-lg border border-gray-200 px-3 text-[13px] uppercase tracking-wide outline-none focus:border-primary/40"
+              className="mt-1.5 h-11 w-full rounded-xl border border-gray-200 bg-white/80 px-3 text-[13px] uppercase transition-colors focus:bg-white tracking-wide outline-none focus:border-primary/40"
             />
 
             <p className="mt-3 text-xs text-gray-500">On the device you booked with, your mobile number is enough. On any other device, also enter the booking reference shown on your confirmation.</p>
@@ -541,9 +544,8 @@ export default function MyTicketsPage() {
 
             <div
               className="
-                mt-5
-
-                rounded-lg
+                mt-3
+                rounded-xl
 
                 border
                 border-red-200
@@ -580,16 +582,10 @@ export default function MyTicketsPage() {
 
             <div
               className="
-                mt-6
-
-                rounded-xl
-
-                border
-                border-gray-200
-
-                bg-white
-
-                p-8
+                glass
+                mt-3
+                rounded-2xl
+                p-6
 
                 text-center
               "
@@ -639,13 +635,15 @@ export default function MyTicketsPage() {
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             role="status"
-            className="mt-6 flex items-start gap-3 rounded-xl border border-primary/25 bg-primary/[0.06] px-4 py-3"
+            className="glass mt-3 flex items-start gap-3 rounded-2xl px-3.5 py-3"
           >
             <span aria-hidden="true" className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[13px] font-bold text-white">✓</span>
             <div className="min-w-0 flex-1">
-              <p className="text-[14px] font-semibold text-secondary">Booking confirmed</p>
+              <p className="text-[14px] font-semibold text-secondary">{justBookedWaitlist ? "You're on the waitlist" : 'Booking confirmed'}</p>
               <p className="mt-0.5 text-[12px] text-gray-600">
-                Your ticket {justBooked} is below, and we have emailed a copy to the address you registered with. Open QR Ticket to save it to your phone, and present it at the venue for check-in.
+                {justBookedWaitlist
+                  ? 'Your waitlist place is below, and we have emailed you the details. If a booked attendee does not arrive, staff at the venue will seat waitlisted attendees in the order they joined. Give your name or reference at the registration desk.'
+                  : `Your ticket ${justBooked} is below, and we have emailed a copy to the address you registered with. Open QR Ticket to save it to your phone, and present it at the venue for check-in.`}
               </p>
             </div>
             <button type="button" onClick={() => setJustBooked('')} aria-label="Dismiss" className="text-[18px] leading-none text-gray-400 hover:text-gray-600">×</button>
@@ -657,7 +655,7 @@ export default function MyTicketsPage() {
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             aria-label="Rate SSInnovations Events"
-            className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-4"
+            className="mt-3 rounded-2xl border border-amber-200/80 bg-amber-50/70 p-4 backdrop-blur-md"
           >
             <AppFeedbackForm compact onDone={markFeedbackDone} />
           </motion.section>
@@ -665,11 +663,10 @@ export default function MyTicketsPage() {
 
         <div
           className="
-            mt-6
-
+            mt-3
             grid
             grid-cols-1
-            gap-4
+            gap-3
 
             md:grid-cols-2
 
@@ -745,13 +742,12 @@ export default function MyTicketsPage() {
 
                 flex
 
-                items-center
-
+                items-end
                 justify-center
-
-                bg-black/40
-
-                px-4
+                bg-black/35
+                backdrop-blur-[3px]
+                sm:items-center
+                sm:px-4
               "
 
               onClick={() =>
@@ -765,24 +761,23 @@ export default function MyTicketsPage() {
 
               <motion.div
 
-                initial={{
-                  scale:.95,
-                  opacity:0,
-                }}
-
-                animate={{
-                  scale:1,
-                  opacity:1,
-                }}
+                initial={{ y: 48, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 48, opacity: 0 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
 
                 className="
                   w-full
                   max-w-sm
-                  rounded-2xl
-
+                  max-h-[92dvh]
+                  overflow-y-auto
+                  rounded-t-3xl
                   bg-white
-
-                  p-5
+                  px-5
+                  pt-3
+                  pb-[max(20px,env(safe-area-inset-bottom))]
+                  sm:rounded-3xl
+                  sm:p-5
 
                   text-center
                 "
@@ -836,319 +831,135 @@ function TicketCard({
   onClick,
   onManage,
   highlighted = false,
-}:{
-  ticket:
-    Ticket;
-  onClick:
-    ()=>void;
-  onManage:
-    (mode: 'reschedule' | 'cancel')=>void;
+}: {
+  ticket: Ticket;
+  onClick: () => void;
+  onManage: (mode: 'reschedule' | 'cancel') => void;
   highlighted?: boolean;
 }) {
   const upcoming = ticket.status === 'ACTIVE';
-  const changeable = upcoming && !!ticket.canManage;
-
+  const waitlisted = ticket.status === 'WAITLISTED';
+  const changeable = (upcoming || waitlisted) && !!ticket.canManage;
+  const date = ticket.date
+    ? new Date(ticket.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
+    : '';
+  const when = ticket.registrationOnly
+    ? ticket.eventEndDate && ticket.eventEndDate !== ticket.date
+      ? `${date} – ${new Date(ticket.eventEndDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' })} · Any time`
+      : `${date} · Any time`
+    : `${date} · ${ticket.startTime} – ${ticket.endTime}`;
 
   return (
-
     <motion.article
       id={`ticket-${ticket.bookingId}`}
-
-      initial={{
-        opacity:0,
-        y:8,
-      }}
-
-      animate={{
-        opacity:1,
-        y:0,
-      }}
-
-      className={`overflow-hidden rounded-xl border bg-white shadow-sm ${highlighted ? 'border-primary ring-2 ring-primary/30' : 'border-gray-200'}`}
-
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      className={`glass overflow-hidden rounded-2xl p-3 ${highlighted ? 'ring-2 ring-primary/40' : ''}`}
     >
-
-
-      <div
-        className="
-          relative
-
-          h-[150px]
-
-          bg-gray-100
-        "
-      >
-
-        {
-          ticket.imageUrl ? (
-
-            <Image width={1200} height={600} unoptimized
-
-              src={
-                ticket.imageUrl
-              }
-
-              alt=""
-
-              className="
-                h-full
-
-                w-full
-
-                object-cover
-              "
-
-            />
-
-          ):(
-
-            <div
-              className="
-                flex
-
-                h-full
-
-                items-center
-
-                justify-center
-
-                text-gray-400
-              "
-            >
-              SSI
-            </div>
-
-          )
-        }
-
-
-
-        <StatusBadge
-          status={
-            ticket.status
-          }
-        />
-
-
-      </div>
-
-
-
-
-
-      <div
-        className="
-          p-4
-        "
-      >
-
-
-        <h2
-          className="
-            text-[17px]
-
-            font-semibold
-
-            text-secondary
-          "
-        >
-          {
-            ticket.eventName
-          }
-        </h2>
-
-
-
-        <p
-          className="
-            mt-2
-
-            text-[12px]
-
-            text-gray-500
-          "
-        >
-          {ticket.date
-              ? new Date(ticket.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
-              : ''}
-
-          {ticket.registrationOnly
-            ? (ticket.eventEndDate && ticket.eventEndDate !== ticket.date
-              ? ` – ${new Date(ticket.eventEndDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })} · Any time during the event`
-              : ' · Any time during the event')
-            : <>{' · '}{ticket.startTime}{' - '}{ticket.endTime} {eventTimeZone(ticket.timeZone)}</>}
-
-        </p>
-
-
-
-        <p
-          className="
-            mt-1
-
-            text-[12px]
-
-            text-gray-500
-          "
-        >
-          {
-            ticket.venue
-          }
-        </p>
-
-
-
-
-
-        <div
-          className="
-            mt-4
-
-            flex
-
-            items-center
-
-            justify-between
-          "
-        >
-
-          <span
-            className="
-              text-[13px]
-
-              font-semibold
-
-              text-gray-400
-            "
-          >
-            {
-              ticket.bookingId
-            }
-          </span>
-
-
-
-          <button
-            onClick={
-              onClick
-            }
-
-            className="
-              rounded-lg
-
-              bg-primary
-
-              px-4
-
-              py-2
-
-              text-[13px]
-
-              font-semibold
-
-              text-white
-            "
-          >
-            {ticket.status === 'CANCELLED' ? 'View cancellation' : 'QR Ticket'}
-          </button>
+      <div className="flex gap-3">
+        <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-xl bg-[linear-gradient(135deg,#283F8F,#23879A)]">
+          {ticket.imageUrl ? (
+            <Image width={160} height={160} unoptimized src={ticket.imageUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="grid h-full w-full place-items-center text-[13px] font-semibold text-white/90">SSI</span>
+          )}
         </div>
-        {upcoming && (
-          <div className="mt-3 flex flex-wrap gap-2 border-t border-gray-100 pt-3">
-            <a
-              href={googleCalendarUrl(ticket)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg border border-gray-200 px-3 py-2 text-[13px] font-semibold text-secondary hover:bg-gray-50"
-            >
-              Add to Google Calendar
-            </a>
-            {changeable && (
-              <>
-                {!ticket.registrationOnly && (
-                  <button type="button" onClick={() => onManage('reschedule')}
-                    className="rounded-lg border border-primary/30 px-3 py-2 text-[13px] font-semibold text-primary hover:bg-primary/[0.05]">
-                    Reschedule
-                  </button>
-                )}
-                <button type="button" onClick={() => onManage('cancel')}
-                  className="rounded-lg border border-red-200 px-3 py-2 text-[13px] font-semibold text-red-600 hover:bg-red-50">
-                  Cancel booking
-                </button>
-              </>
-            )}
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="line-clamp-2 text-[15px] font-semibold leading-snug text-secondary">{ticket.eventName}</h2>
+            <StatusBadge status={ticket.status} position={ticket.waitlistPosition} />
           </div>
-        )}
-
-
+          <p className="mt-1 truncate text-[12.5px] font-medium text-secondary/80">
+            {when}
+            {!ticket.registrationOnly && <span className="text-gray-400"> {shortZone(ticket.timeZone)}</span>}
+          </p>
+          {ticket.venue && <p className="truncate text-[12px] text-gray-500">{ticket.venue}</p>}
+        </div>
       </div>
 
+      {waitlisted ? (
+        <p className="mt-3 rounded-xl border border-dashed border-amber-300 bg-amber-50/70 px-3 py-2 text-[12.5px] leading-snug text-amber-800">
+          You are registered and we have your details. This slot is full, so there is no QR code yet. If a seat frees up, use Change slot to take it and get your QR ticket; at the venue, staff also seat waitlisted doctors in order.
+        </p>
+      ) : (
+      <div className="mt-3 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onClick}
+          className="btn-primary h-10 flex-1 rounded-full px-4 text-[14px] font-medium text-white transition-transform active:scale-[0.98]"
+        >
+          {ticket.status === 'CANCELLED' ? 'View cancellation' : 'Show QR ticket'}
+        </button>
+        {upcoming && (
+          <a
+            href={googleCalendarUrl(ticket)}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Add to Google Calendar"
+            title="Add to Google Calendar"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-gray-200/80 bg-white/70 text-secondary transition-colors hover:bg-white"
+          >
+            <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+              <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
+              <path strokeLinecap="round" d="M3.5 10h17M8 3v4M16 3v4M12 13v4M10 15h4" />
+            </svg>
+          </a>
+        )}
+      </div>
+      )}
 
+      {changeable && (
+        <div className="mt-2 flex items-center justify-between border-t border-gray-200/60 pt-2 text-[12.5px] font-semibold">
+          <span className="truncate text-gray-400">{ticket.bookingId}</span>
+          <span className="flex shrink-0 gap-1">
+            {!ticket.registrationOnly && (
+              <button type="button" onClick={() => onManage('reschedule')} className="rounded-full px-3 py-1.5 text-primary transition-colors hover:bg-primary/[0.06]">
+                {waitlisted ? 'Change slot' : 'Reschedule'}
+              </button>
+            )}
+            <button type="button" onClick={() => onManage('cancel')} className="rounded-full px-3 py-1.5 text-red-600 transition-colors hover:bg-red-50">
+              {waitlisted ? 'Leave waitlist' : 'Cancel'}
+            </button>
+          </span>
+        </div>
+      )}
+      {!changeable && <p className="mt-2 truncate text-[12px] font-semibold text-gray-400">{ticket.bookingId}</p>}
     </motion.article>
-
   );
 }
 
+/** Short zone name, e.g. Asia/Kolkata -> IST. */
+function shortZone(timeZone?: string) {
+  try {
+    return new Intl.DateTimeFormat('en-IN', { timeZone: eventTimeZone(timeZone), timeZoneName: 'short' })
+      .formatToParts(new Date())
+      .find((part) => part.type === 'timeZoneName')?.value ?? '';
+  } catch {
+    return '';
+  }
+}
 
-
-
-
-
-function StatusBadge({
-  status,
-}:{
-  status:
-    TicketStatus;
-}) {
-
-
+function StatusBadge({ status, position }: { status: TicketStatus; position?: number | null }) {
   const style =
-    status === 'ACTIVE'
-      ? 'bg-emerald-50 text-emerald-700'
-      :
-      status === 'ATTENDED'
-      ? 'bg-primary/10 text-primary'
-      :
-      'bg-gray-100 text-gray-600';
-
-
-
-  return (
-
-    <span
-      className={`
-        absolute
-
-        right-3
-
-        top-3
-
-        rounded-full
-
-        px-3
-
-        py-1
-
-        text-[12px]
-
-        font-semibold
-
-        ${style}
-      `}
-    >
-
-      {status}
-
-    </span>
-
-  );
-
+    status === 'WAITLISTED'
+      ? 'bg-amber-100 text-amber-800'
+      : status === 'ACTIVE'
+      ? 'bg-emerald-50/90 text-emerald-700'
+      : status === 'ATTENDED'
+        ? 'bg-primary/10 text-primary'
+        : 'bg-gray-100 text-gray-600';
+  const label = status === 'WAITLISTED' ? `Waitlist${position ? ` #${position}` : ''}` : status === 'ACTIVE' ? 'Upcoming' : status === 'ATTENDED' ? 'Attended' : status.charAt(0) + status.slice(1).toLowerCase();
+  return <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${style}`}>{label}</span>;
 }
 
 /* ============================================================
    RESCHEDULE / CANCEL
 ============================================================ */
 
-type SlotOption = { _id: string; startTime: string; endTime: string; remaining: number; available: boolean };
+type SlotOption = { _id: string; startTime: string; endTime: string; remaining: number; available: boolean; waitlistOpen?: boolean; waitlistCount?: number };
 type DayOption = { _id: string; date: string; slots: SlotOption[] };
 
 function ManageTicketDialog({
@@ -1176,12 +987,14 @@ function ManageTicketDialog({
       .then(data => {
         if (!data?.success || !Array.isArray(data.days)) throw new Error(data?.error || 'Unable to load time slots.');
         setDays((data.days as DayOption[]).map(day => ({
-          ...day, slots: day.slots.filter(slot => slot.available && slot._id !== ticket.slotId),
+          ...day, slots: day.slots.filter(slot => ticket.status === 'WAITLISTED'
+            ? slot.available || (slot.waitlistOpen && slot._id !== ticket.slotId)
+            : slot.available && slot._id !== ticket.slotId),
         })).filter(day => day.slots.length));
       })
       .catch(err => { if (!controller.signal.aborted) { setDays([]); setError(err instanceof Error ? err.message : 'Unable to load time slots.'); } });
     return () => controller.abort();
-  }, [mode, ticket.eventId, ticket.slotId]);
+  }, [mode, ticket.eventId, ticket.slotId, ticket.status]);
 
   async function submit() {
     if (saving || (mode === 'reschedule' && !choice)) return;
@@ -1206,23 +1019,31 @@ function ManageTicketDialog({
   const dayLabel = (value: string) => new Date(value).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
-      <div {...dialog} className="max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6" onClick={event => event.stopPropagation()}>
+    <div className="fade-in fixed inset-0 z-50 flex items-end justify-center bg-black/35 backdrop-blur-[3px] sm:items-center sm:px-4" onClick={onClose}>
+      <div {...dialog} className="sheet-in max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white px-5 pt-5 pb-[max(20px,env(safe-area-inset-bottom))] sm:rounded-3xl sm:p-6" onClick={event => event.stopPropagation()}>
         <h2 className="text-[16px] font-semibold text-secondary">
-          {mode === 'cancel' ? 'Cancel this booking?' : 'Choose a new time slot'}
+          {mode === 'cancel' ? (ticket.status === 'WAITLISTED' ? 'Leave the waitlist?' : 'Cancel this booking?') : ticket.status === 'WAITLISTED' ? 'Change your slot' : 'Choose a new time slot'}
         </h2>
         <p className="mt-1 text-[12px] text-gray-500">
           {ticket.eventName} · {ticket.registrationOnly ? 'registration' : <>currently {ticket.date ? dayLabel(ticket.date) : ''}, {ticket.startTime} - {ticket.endTime}</>}
         </p>
 
+        {mode === 'reschedule' && ticket.status === 'WAITLISTED' && (
+          <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-[12.5px] leading-snug text-emerald-800">
+            Pick a slot with seats left to get a confirmed booking and your QR ticket straight away, or another full slot to wait there instead.
+          </p>
+        )}
+
         {mode === 'cancel' ? (
           <p className="mt-4 text-[13px] text-gray-600">
-            Your seat will be released for someone else and this QR ticket will stop working. This cannot be undone.
+            {ticket.status === 'WAITLISTED'
+              ? 'You will lose your place in the queue for this slot. You can join again later, but you would go to the back of the queue.'
+              : 'Your seat will be released for someone else and this QR ticket will stop working. This cannot be undone.'}
           </p>
         ) : days === null ? (
           <p className="mt-4 text-[13px] text-gray-500">Loading available slots...</p>
         ) : days.length === 0 && !error ? (
-          <p className="mt-4 text-[13px] text-gray-500">No other slots have seats left right now.</p>
+          <p className="mt-4 text-[13px] text-gray-500">{ticket.status === 'WAITLISTED' ? 'No other slots are open right now.' : 'No other slots have seats left right now.'}</p>
         ) : (
           <div className="mt-4 space-y-4">
             {days.map(day => (
@@ -1234,9 +1055,11 @@ function ManageTicketDialog({
                     return (
                       <button key={slot._id} type="button" aria-pressed={selected}
                         onClick={() => setChoice({ dayScheduleId: day._id, slotId: slot._id })}
-                        className={`rounded-lg border px-3 py-2 text-left text-[12px] ${selected ? 'border-primary bg-primary/[0.06] text-primary' : 'border-gray-200 text-secondary hover:bg-gray-50'}`}>
+                        className={`rounded-xl border px-3 py-2 text-left text-[12px] transition-colors duration-200 ${selected ? 'border-primary bg-primary/[0.06] text-primary' : 'border-gray-200 text-secondary hover:bg-gray-50'}`}>
                         <span className="block font-semibold">{slot.startTime} - {slot.endTime}</span>
-                        <span className="text-[13px] text-gray-500">{slot.remaining} seat{slot.remaining === 1 ? '' : 's'} left</span>
+                        {slot.available
+                          ? <span className="text-[13px] text-emerald-700">{slot._id === ticket.slotId ? 'Seat free in your slot · ' : ''}{slot.remaining} seat{slot.remaining === 1 ? '' : 's'} left</span>
+                          : <span className="text-[13px] text-amber-700">Full · waitlist{slot.waitlistCount ? ` (${slot.waitlistCount} waiting)` : ''}</span>}
                       </button>
                     );
                   })}
@@ -1249,12 +1072,14 @@ function ManageTicketDialog({
         {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-[12px] text-red-700">{error}</p>}
 
         <div className="mt-6 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="h-10 rounded-lg border border-gray-200 px-4 text-[12px] font-semibold text-secondary">
-            {mode === 'cancel' ? 'Keep booking' : 'Close'}
+          <button type="button" onClick={onClose} className="h-11 flex-1 rounded-full border border-gray-200 px-4 text-[13px] font-semibold text-secondary sm:flex-none">
+            {mode === 'cancel' ? (ticket.status === 'WAITLISTED' ? 'Stay on waitlist' : 'Keep booking') : 'Close'}
           </button>
           <button type="button" onClick={() => void submit()} disabled={saving || (mode === 'reschedule' && !choice)}
-            className={`h-10 rounded-lg px-4 text-[12px] font-semibold text-white disabled:opacity-50 ${mode === 'cancel' ? 'bg-red-600' : 'bg-primary'}`}>
-            {saving ? 'Saving...' : mode === 'cancel' ? 'Cancel booking' : 'Confirm new slot'}
+            className={`h-11 flex-1 rounded-full px-4 text-[13px] font-semibold text-white disabled:opacity-50 sm:flex-none ${mode === 'cancel' ? 'bg-red-600' : 'bg-primary'}`}>
+            {saving ? 'Saving...' : mode === 'cancel' ? (ticket.status === 'WAITLISTED' ? 'Leave waitlist' : 'Cancel booking')
+              : ticket.status === 'WAITLISTED' && choice && !days?.some(d => d.slots.some(sl => sl._id === choice.slotId && sl.available)) ? 'Move to this waitlist'
+              : ticket.status === 'WAITLISTED' ? 'Confirm my seat' : 'Confirm new slot'}
           </button>
         </div>
       </div>
@@ -1312,12 +1137,12 @@ function TicketPass({ ticket, onClose }: { ticket: Ticket; onClose: () => void }
       <div className="mt-4 flex gap-2">
         {!cancelled && (
           <button type="button" onClick={() => { void save(); }} disabled={saving}
-            className="h-11 flex-1 rounded-lg bg-primary px-4 text-[13px] font-semibold text-white disabled:opacity-60">
+            className="btn-primary h-11 flex-1 rounded-full px-4 text-[14px] font-medium text-white disabled:opacity-60">
             {saving ? 'Saving…' : 'Save ticket'}
           </button>
         )}
         <button type="button" onClick={onClose}
-          className="h-11 flex-1 rounded-lg border border-gray-200 px-4 text-[13px] font-semibold text-secondary">
+          className="h-11 flex-1 rounded-full border border-gray-200 px-4 text-[14px] font-semibold text-secondary">
           Close
         </button>
       </div>

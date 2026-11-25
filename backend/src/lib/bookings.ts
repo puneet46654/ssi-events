@@ -30,6 +30,14 @@ export type BookingItem = {
   checkedInAt?: string | null;
   checkedInBy?: string;
   checkInMethod?: 'QR' | 'MANUAL';
+  /** A waitlist place for a full slot: no seat, no QR, listed under `EVENT#<id>#WAITLIST`. */
+  waitlisted?: boolean;
+  /** Was on the waitlist and was seated at the venue by staff. */
+  seatedFromWaitlist?: boolean;
+  /** When the place joined its current slot's queue (set when it moves slot); queue order uses this, else `createdAt`. */
+  waitlistedAt?: string;
+  /** Was on the waitlist and took a free seat (now a normal confirmed booking with a QR ticket). */
+  confirmedFromWaitlist?: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -158,9 +166,10 @@ export function hasSlotEnded(date: string, endTime: string, timeZone: string, no
 }
 
 /** The ticket as the attendee screens receive it. */
-export function publicBooking(b: BookingItem, event: EventCore | undefined) {
+export function publicBooking(b: BookingItem, event: EventCore | undefined, waitlistPosition?: number) {
   const timeZone = eventTimeZone(event?.timeZone);
   const cancelled = event?.status === 'CANCELLED';
+  const waitlisted = !!b.waitlisted;
   return {
     id: b.bookingId,
     bookingId: b.bookingId,
@@ -185,8 +194,12 @@ export function publicBooking(b: BookingItem, event: EventCore | undefined) {
     status: cancelled ? 'CANCELLED' as const
       : b.attendanceStatus === 'PRESENT' ? 'ATTENDED' as const
       : bookingEnded(b, event) ? 'EXPIRED' as const
+      : waitlisted ? 'WAITLISTED' as const
       : 'ACTIVE' as const,
-    qrData: cancelled ? '' : JSON.stringify({ type: 'SSI_EVENTS_ATTENDANCE', doctorId: b.bookingId, bookingId: b.bookingId, eventId: b.eventId }),
+    waitlisted,
+    waitlistPosition: waitlisted ? waitlistPosition ?? null : null,
+    seatedFromWaitlist: !!b.seatedFromWaitlist,
+    qrData: cancelled || waitlisted ? '' : JSON.stringify({ type: 'SSI_EVENTS_ATTENDANCE', doctorId: b.bookingId, bookingId: b.bookingId, eventId: b.eventId }),
   };
 }
 

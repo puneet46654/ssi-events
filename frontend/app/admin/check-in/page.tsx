@@ -1,6 +1,7 @@
 'use client';
 
 import { adminFetch as fetch } from '@/lib/admin-auth';
+import WaitlistPanel from '@/components/admin/WaitlistPanel';
 
 import { eventDateFormatter, eventTimeZone } from '@/lib/events/dates';
 import { startQrScanner } from '@/lib/qr-scanner';
@@ -1369,6 +1370,12 @@ export default function CheckInPage() {
             space-y-5
           "
         >
+          <WaitlistPanel
+            key={selectedEventId}
+            eventId={selectedEventId}
+            onSeated={() => { void loadAttendance(selectedEventId, true); }}
+          />
+
           {/* ==================================================
               PROGRESS
           ================================================== */}
@@ -1882,6 +1889,7 @@ export default function CheckInPage() {
               </div>
             )}
           </section>
+
         </div>
       </div>
     </motion.div>

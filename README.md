@@ -20,7 +20,8 @@ cd frontend && npm ci && npm run dev     # site on :3000, /api proxied to :4000
 ```
 
 Admin: http://localhost:3000/admin/login, `admin` / `Dev-Password-1`. The local API uses an
-in-memory table seeded with two sample events; no AWS access is needed.
+in-memory table seeded with two sample events; no AWS access is needed. In the sample visit,
+the last slot of each day is fully booked with two doctors on its waitlist, for trying the waitlist.
 
 Checks run in CI:
 

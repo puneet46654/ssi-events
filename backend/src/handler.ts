@@ -6,7 +6,7 @@ import { login, logout, session } from './routes/admin-auth.js';
 import { collectAnalytics } from './routes/analytics.js';
 import { cancelBooking, createBooking, eventSlots, getOwnBooking, myTickets, rescheduleBooking, savePending } from './routes/bookings.js';
 import { listActivity } from './routes/admin-activity.js';
-import { attendanceSummary, checkIn } from './routes/admin-attendance.js';
+import { attendanceSummary, checkIn, moveWaitlisted, seatFromWaitlist, waitlistForEvent } from './routes/admin-attendance.js';
 import { analyticsLive, analyticsSummary } from './routes/admin-analytics.js';
 import { dashboard } from './routes/admin-dashboard.js';
 import { feedbackStatus, submitFeedback } from './routes/feedback.js';
@@ -53,6 +53,9 @@ export const router = new Router()
   .delete('/api/admin/bookings/:id', deleteAdminBooking)
   .get('/api/admin/attendance', attendanceSummary)
   .post('/api/admin/attendance', checkIn)
+  .get('/api/admin/waitlist', waitlistForEvent)
+  .post('/api/admin/waitlist/seat', seatFromWaitlist)
+  .post('/api/admin/waitlist/move', moveWaitlisted)
   .get('/api/admin/reports', reports)
   .get('/api/admin/dashboard', dashboard)
   .get('/api/admin/analytics', analyticsSummary)

@@ -9,6 +9,7 @@
  * Sign in at http://localhost:3000/admin/login as `admin` / `Dev-Password-1`.
  * Emails are not sent (MAIL_FROM is unset).
  */
+import { randomUUID } from 'node:crypto';
 import { createServer, type IncomingMessage } from 'node:http';
 import { mock } from 'node:test';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
@@ -66,6 +67,34 @@ await createEvent({
     date, startTime: '09:00', endTime: '17:00', lunchEnabled: true, lunchStart: '13:00', lunchEnd: '14:00', slotDuration: '30', slotGap: '0', capacity: '4',
   }))),
 });
+/* Waitlist demo: the sample visit's last slot of each day is fully booked, with two doctors waiting. */
+{
+  const events = (await call('GET', '/api/events')).data.events as { _id: string; eventName: string }[];
+  const visit = events.find((e) => e.eventName === 'SSi MantraM visit (sample)')!;
+  type Slot = { _id: string; startTime: string; capacity: number; ended: boolean };
+  const days = (await call('GET', `/api/events/${visit._id}/slots`)).data.days as { _id: string; slots: Slot[] }[];
+  const doctors = [
+    ['Ananya Rao', 'Cardiology', 'Apollo Hospital'], ['Vikram Mehta', 'Urology', 'Fortis Memorial'],
+    ['Sara Thomas', 'General Surgery', 'Max Saket'], ['Rohit Kapoor', 'Gynaecology', 'Medanta'],
+    ['Meera Iyer', 'Oncology', 'AIIMS Delhi'], ['Arjun Singh', 'Urology', 'Sir Ganga Ram Hospital'],
+  ];
+  for (const [d, schedule] of days.entries()) {
+    const last = schedule.slots[schedule.slots.length - 1];
+    if (!last || last.ended) continue; // today's last slot may already be over
+    for (const [i, [fullName, specialty, hospitalName]] of doctors.entries()) {
+      const n = d * 10 + i + 1;
+      const res = await call('POST', '/api/bookings', { body: {
+        eventId: visit._id, dayScheduleId: schedule._id, slotId: last._id, idempotencyKey: randomUUID(), waitlist: i >= last.capacity,
+        details: {
+          title: 'Dr.', fullName, specialty, hospitalName, email: `sample${n}@example.com`, mobile: `98100000${String(n).padStart(2, '0')}`,
+          countryCode: '+91', country: 'India', state: 'Delhi', city: 'New Delhi',
+        },
+      } });
+      if (res.status !== 201) throw new Error(`Seeding bookings failed: ${JSON.stringify(res.data)}`);
+    }
+  }
+}
+
 await createEvent({
   ...common, eventName: 'CME open house (sample, registration only)', eventType: 'event', bookingFormTemplate: 'practitioner-institutional',
   registrationMode: 'open', capacity: '50', startDate: day(3), endDate: day(3), numberOfDays: '1',

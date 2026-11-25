@@ -336,7 +336,7 @@ export default function EventBookingPage() {
         min-h-dvh
         w-full
         overflow-x-hidden
-        bg-[#F7F9FB]
+        booking-bg
       "
     >
       {/* EVENT STRIP (the shared header holds back and brand) */}
@@ -355,8 +355,8 @@ export default function EventBookingPage() {
           w-full
           max-w-[1200px]
 
-          pb-8
-          pt-4
+          pb-6
+          pt-3
 
           sm:pt-5
 

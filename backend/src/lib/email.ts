@@ -15,10 +15,12 @@ import { slotInstant } from './schedule.js';
  * An email never decides whether a booking succeeds: failures are logged and recorded on the booking.
  */
 
-export type TicketEmailKind = 'confirmed' | 'rescheduled' | 'cancelled' | 'event-cancelled';
+export type TicketEmailKind = 'confirmed' | 'rescheduled' | 'cancelled' | 'event-cancelled' | 'waitlisted';
 
 /** Kinds where the booking can no longer be used: no QR code, and the email points to other events. */
 const ENDED: TicketEmailKind[] = ['cancelled', 'event-cancelled'];
+/** Kinds without a check-in QR code: the booking is over, or it is only a waitlist place. */
+const NO_QR: TicketEmailKind[] = [...ENDED, 'waitlisted'];
 
 export const ses = new SESv2Client({ maxAttempts: 2 });
 
@@ -70,6 +72,11 @@ const COPY: Record<TicketEmailKind, { subject: (event: string) => string; headin
     heading: 'Your booking has been cancelled',
     lead: 'As requested, we have cancelled the booking below and released the slot. The QR code for this booking is no longer valid. You are welcome to book another slot on our website at any time.',
   },
+  waitlisted: {
+    subject: (event) => `You're on the waitlist: ${event}`,
+    heading: 'You are on the waitlist',
+    lead: 'Thank you for your interest. The time slot below is fully booked, so we have added you to its waitlist. If a booked attendee does not arrive, our staff at the venue will seat waitlisted attendees in the order they joined. This is not a confirmed booking and has no QR code; please give your name or reference at the registration desk.',
+  },
   'event-cancelled': {
     subject: (event) => `Event cancelled: ${event}`,
     heading: 'This event has been cancelled',
@@ -92,13 +99,15 @@ export async function ticketEmail(kind: TicketEmailKind, b: BookingItem, event: 
     [open && event.endDate !== b.date ? 'Dates' : 'Date', dates],
     ...(open ? [] : [['Time', slotTimes(b, event.timeZone)] as [string, string]]),
     ['Venue', event.venue],
-    ['Booking reference', b.bookingId],
+    [kind === 'waitlisted' ? 'Waitlist reference' : 'Booking reference', b.bookingId],
   ];
   const qrData = JSON.stringify({ type: 'SSI_EVENTS_ATTENDANCE', doctorId: b.bookingId, bookingId: b.bookingId, eventId: b.eventId });
-  const qrPng = ENDED.includes(kind) ? undefined : await QRCode.toBuffer(qrData, { type: 'png', width: 480, margin: 2, errorCorrectionLevel: 'M' });
+  const qrPng = NO_QR.includes(kind) ? undefined : await QRCode.toBuffer(qrData, { type: 'png', width: 480, margin: 2, errorCorrectionLevel: 'M' });
 
   const manage = ENDED.includes(kind)
     ? `You can find upcoming events at ${siteUrl()}.`
+    : kind === 'waitlisted'
+    ? `To view your waitlist place or leave the waitlist, open My Tickets on our website and enter your mobile number and reference: ${myTickets}`
     : `To view${open ? '' : ', reschedule'} or cancel this booking, open My Tickets on our website and enter your mobile number and booking reference: ${myTickets}`;
 
   const text = [
@@ -131,6 +140,8 @@ ${qrPng ? `<tr><td align="center" style="padding:24px 28px 8px;">
 <tr><td style="padding:20px 28px 28px;font-size:14px;line-height:22px;color:#3A4052;">
 ${ENDED.includes(kind)
     ? `You can find upcoming events at <a href="${siteUrl()}" style="color:${BRAND};">events.ssistudios.com</a>.`
+    : kind === 'waitlisted'
+    ? `To view your waitlist place or leave the waitlist, open <a href="${myTickets}" style="color:${BRAND};">My Tickets</a> on our website and enter your mobile number and reference.`
     : `To view${open ? '' : ', reschedule'} or cancel this booking, open <a href="${myTickets}" style="color:${BRAND};">My Tickets</a> on our website and enter your mobile number and booking reference.`}
 </td></tr>
 <tr><td style="padding:16px 28px;background:#F8F9FC;font-size:12px;line-height:18px;color:#6B7285;">

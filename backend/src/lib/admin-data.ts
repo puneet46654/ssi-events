@@ -56,3 +56,27 @@ export function parsePendingRowId(id: string): { eventId: string; draftId: strin
   const match = /^([0-9A-HJKMNP-TV-Z]{26})_([0-9a-f-]{36})$/i.exec(id);
   return match ? { eventId: match[1]!.toUpperCase(), draftId: match[2]!.toLowerCase() } : null;
 }
+
+/** An event's waitlist places (see `lists.eventWaitlist`), oldest first within each slot. */
+export async function eventWaitlist(eventId: string): Promise<BookingItem[]> {
+  const items = await queryAll<BookingItem>({
+    TableName: TABLE_NAME, IndexName: 'GSI1',
+    KeyConditionExpression: 'GSI1PK = :pk', ExpressionAttributeValues: { ':pk': lists.eventWaitlist(eventId) },
+  });
+  return items.filter((b) => b.waitlisted).sort((a, b) => a.slotId.localeCompare(b.slotId) || queuedAt(a).localeCompare(queuedAt(b)));
+}
+
+/** When a waitlist place joined its current slot's queue. */
+export const queuedAt = (b: BookingItem) => b.waitlistedAt || b.createdAt;
+
+/** 1-based place of each waitlist entry in its slot's queue, by join time. */
+export function waitlistPositions(entries: BookingItem[]): Map<string, number> {
+  const positions = new Map<string, number>();
+  const counts = new Map<string, number>();
+  for (const b of [...entries].sort((x, y) => queuedAt(x).localeCompare(queuedAt(y)))) {
+    const n = (counts.get(b.slotId) ?? 0) + 1;
+    counts.set(b.slotId, n);
+    positions.set(b.bookingId, n);
+  }
+  return positions;
+}

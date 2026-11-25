@@ -42,6 +42,10 @@ type BookingRow = {
   bookingId: string;
   /** Details submitted but no slot chosen yet: no booking ID, date or slot. */
   pending?: boolean;
+  /** On a full slot's waitlist: no seat yet; seat from the Check-in screen. */
+  waitlisted?: boolean;
+  waitlistPosition?: number | null;
+  seatedFromWaitlist?: boolean;
 
   attendee: {
     fullName: string;
@@ -84,6 +88,7 @@ type Stats = {
   upcoming: number;
   past: number;
   pending: number;
+  waitlisted?: number;
 };
 
 type BookingsResponse = {
@@ -108,7 +113,7 @@ type BookingsResponse = {
 };
 
 type ExtraFilters = {
-  status: '' | 'pending' | 'confirmed';
+  status: '' | 'pending' | 'confirmed' | 'waitlisted';
   attendance: '' | 'present' | 'not_present';
   dayScheduleId: string;
   slotId: string;
@@ -1032,9 +1037,9 @@ export default function AdminBookingsPage() {
 
           <StatCard
             icon={<AlertIcon />}
-            label="Pending"
-            value={stats.pending}
-            description="Details entered, no slot"
+            label="Waitlisted"
+            value={stats.waitlisted ?? 0}
+            description="Full slot, waiting for a seat"
             loading={loading}
           />
         </div>
@@ -1271,8 +1276,8 @@ export default function AdminBookingsPage() {
             <div id="booking-more-filters" className="mt-3 grid grid-cols-1 gap-3 border-t border-gray-100 pt-3 min-[520px]:grid-cols-2 lg:grid-cols-4">
               <FilterSelect label="Status" value={extraInput.status} onChange={value => changeExtra('status', value as ExtraFilters['status'])}>
                 <option value="">All Statuses</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed (QR ticket)</option>
+                <option value="waitlisted">Waitlisted</option>
               </FilterSelect>
 
               <FilterSelect label="Attendance" value={extraInput.attendance} onChange={value => changeExtra('attendance', value as ExtraFilters['attendance'])}>
@@ -2775,6 +2780,13 @@ function BookingStatus({
   booking: BookingRow;
 }) {
   if (booking.pending) return <span className="badge badge--warning">Pending</span>;
+  if (booking.waitlisted) {
+    return (
+      <span className="badge bg-amber-100 text-amber-800" title="On the waitlist for a full slot. Seat from the Check-in screen.">
+        Waitlist{booking.waitlistPosition ? ` #${booking.waitlistPosition}` : ''}
+      </span>
+    );
+  }
   const date =
     booking.daySchedule
       ?.date

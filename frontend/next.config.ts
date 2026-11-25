@@ -13,7 +13,9 @@ const nextConfig: NextConfig = {
     const routes = [{ source: '/', destination: '/events' }];
     // Local development only: /api is served by the backend dev server (backend: npm run dev).
     // In production CloudFront routes /api/* to the backend Lambda and this rewrite does not exist.
-    if (process.env.NODE_ENV === 'development') {
+    // A local production build (`next build && next start`, for realistic speed) opts in by setting
+    // API_PROXY_TARGET at build time; the release pipeline never sets it.
+    if (process.env.NODE_ENV === 'development' || process.env.API_PROXY_TARGET) {
       routes.push({ source: '/api/:path*', destination: `${process.env.API_PROXY_TARGET || 'http://localhost:4000'}/api/:path*` });
     }
     return routes;

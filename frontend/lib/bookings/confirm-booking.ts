@@ -5,6 +5,8 @@ import { clearPendingBooking } from '@/lib/pending-booking';
 
 type BookingIntent = { key: string; fingerprint: string; bookingId?: string };
 export type SlotChoice = { dayScheduleId: string; slotId: string };
+/** `waitlist`: if the slot is full, join its waitlist instead of failing. */
+export type BookingOptions = { waitlist?: boolean };
 
 /** One retry key per exact request (details + slot), so double taps and retries never create two bookings. */
 function readBookingIntent(eventId: string, fingerprint: string): BookingIntent {
@@ -25,7 +27,7 @@ export function readBookingDetails(eventId: string): BookingDetails | null {
 }
 
 /** Creates (or, on retry, re-reads) the booking for the details entered on this device. */
-export async function confirmBooking(eventId: string, slot: SlotChoice): Promise<ServerBooking> {
+export async function confirmBooking(eventId: string, slot: SlotChoice, options: BookingOptions = {}): Promise<ServerBooking> {
   const details = readBookingDetails(eventId);
   if (!details) throw new Error('Your details could not be found. Please fill in the registration form again.');
   const intent = readBookingIntent(eventId, bookingRequestData(eventId, slot.dayScheduleId, slot.slotId, details));
@@ -40,7 +42,7 @@ export async function confirmBooking(eventId: string, slot: SlotChoice): Promise
     const response = await fetch('/api/bookings', {
       method: 'POST', credentials: 'include', cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ eventId, ...slot, details, idempotencyKey: intent.key }),
+      body: JSON.stringify({ eventId, ...slot, details, idempotencyKey: intent.key, ...(options.waitlist ? { waitlist: true } : {}) }),
     });
     const data: BookingApiResponse = await response.json().catch(() => ({}));
     if (!response.ok || !data.success || !data.booking) throw new Error(data.error || data.message || 'Unable to confirm booking. Please retry.');

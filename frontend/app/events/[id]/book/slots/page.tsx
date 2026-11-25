@@ -2,6 +2,7 @@
 
 import { calendarDate, calendarDateFormatter, eventTimeZone, zonedDate } from '@/lib/events/dates';
 import { confirmBooking } from '@/lib/bookings/confirm-booking';
+import BookingStepper from '@/components/user/BookingStepper';
 
 
 import {
@@ -42,6 +43,11 @@ type SlotItem = {
   available: boolean;
 
   ended?: boolean;
+
+  /** Full but still running: the attendee may join its waitlist. */
+  waitlistOpen?: boolean;
+
+  waitlistCount?: number;
 };
 
 type EventDay = {
@@ -408,9 +414,7 @@ export default function TimeSlotsPage() {
   function handleSlotSelect(
     slot: SlotItem,
   ) {
-    if (
-      !slot.available
-    ) {
+    if (!slot.available && !slot.waitlistOpen) {
       return;
     }
 
@@ -425,7 +429,7 @@ export default function TimeSlotsPage() {
     if (submitting) return;
     if (
       event?.status === 'CANCELLED' || !selectedDay ||
-      !selectedSlot || !selectedSlot.available
+      !selectedSlot || !(selectedSlot.available || selectedSlot.waitlistOpen)
     ) {
       setError(
         'Please select an available time slot.',
@@ -438,7 +442,11 @@ export default function TimeSlotsPage() {
     setSubmitting(true);
     setError('');
     try {
-      const booking = await confirmBooking(eventId, { dayScheduleId: selectedDay._id, slotId: selectedSlot._id });
+      const booking = await confirmBooking(
+        eventId,
+        { dayScheduleId: selectedDay._id, slotId: selectedSlot._id },
+        { waitlist: !selectedSlot.available },
+      );
       router.replace(`/events/mytickets?booked=${encodeURIComponent(booking.bookingId)}`);
     } catch (err) {
       // Seats may have changed while the attendee was choosing; refresh first, since loading clears errors.
@@ -520,1375 +528,229 @@ export default function TimeSlotsPage() {
      PAGE
   ============================================================ */
 
+  const timeZoneLabel = shortTimeZone(event.timeZone);
+  const joiningWaitlist = !!selectedSlot && !selectedSlot.available && !!selectedSlot.waitlistOpen;
+  const anyWaitlist = !!selectedDay?.slots.some((slot) => slot.waitlistOpen);
+  const confirmLabel = submitting
+    ? joiningWaitlist ? 'Joining waitlist...' : 'Booking your slot...'
+    : joiningWaitlist ? 'Join waitlist'
+    : availableCount === 0 && !anyWaitlist ? 'No slots left for this date'
+    : 'Confirm booking';
+
   return (
-    <main
-      className="
-        min-h-dvh
-        overflow-x-hidden
-        bg-[#F7F9FB]
+    <main className="booking-bg min-h-dvh overflow-x-hidden pb-[100px] md:pb-10">
+      <div className="mx-auto w-full max-w-[1100px] px-3 pt-3 sm:px-5 sm:pt-5 lg:px-7 lg:pt-7">
+        <BookingStepper step={2} />
 
-        pb-[168px]
-
-        md:pb-10
-      "
-    >
-      {/* STEP (the shared header holds back and brand) */}
-      <div className="max-md:hidden">
-        <div
-          className="
-            border-t
-            border-gray-200/60
-
-            bg-white/40
-          "
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: EASE }}
+          className="glass mt-3 overflow-hidden rounded-[20px]"
         >
-          <div
-            className="
-              mx-auto
-              flex
-              h-9
-              w-full
-              max-w-[1100px]
-
-              items-center
-              justify-center
-
-              px-4
-            "
-          >
-            <p
-              className="
-                truncate
-
-                text-[12px]
-                font-medium
-
-                text-gray-500
-
-                sm:text-[13px]
-              "
-            >
-              Select a date and available time for{' '}
-              <span
-                className="
-                  font-semibold
-                  text-secondary
-                "
-              >
-                {event.eventName}
-              </span>
+          {/* EVENT */}
+          <div className="border-b border-gray-200/70 px-4 py-3.5 sm:px-6 sm:py-4 lg:px-8">
+            <h1 className="font-heading text-[19px] font-bold leading-tight tracking-[-0.02em] text-secondary sm:text-[23px]">
+              {event.eventName}
+            </h1>
+            <p className="mt-1 flex items-start gap-1.5 text-[13px] leading-5 text-gray-500">
+              <span className="mt-[1px] shrink-0 text-primary"><LocationIcon /></span>
+              <span>{event.venue}{timeZoneLabel && ` · ${timeZoneLabel}`}</span>
             </p>
           </div>
-        </div>
-      </div>
 
-      {/* =====================================================
-          CONTENT
-      ===================================================== */}
-
-      <div
-        className="
-          mx-auto
-          w-full
-          max-w-[1100px]
-
-          px-3
-          pt-4
-
-          sm:px-5
-          sm:pt-5
-
-          lg:px-7
-          lg:pt-7
-        "
-      >
-        <motion.section
-          initial={{
-            opacity: 0,
-            y: 10,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
-          transition={{
-            duration:
-              0.4,
-            ease: EASE,
-          }}
-          className="
-            overflow-hidden
-
-            rounded-[18px]
-
-            border
-            border-gray-200
-
-            bg-white
-
-            shadow-[0_8px_28px_rgba(15,23,41,0.05)]
-
-            sm:rounded-[20px]
-          "
-        >
-          {/* =================================================
-              EVENT OVERVIEW
-          ================================================= */}
-
-          <div
-            className="
-              border-b
-              border-gray-200
-
-              px-4
-              py-5
-
-              sm:px-6
-              sm:py-6
-
-              lg:px-8
-              lg:py-7
-            "
-          >
-            <div
-              className="
-                grid
-                gap-5
-
-                md:grid-cols-[minmax(0,1fr)_220px]
-                md:items-start
-                md:gap-8
-              "
-            >
-              <div
-                className="
-                  min-w-0
-                "
-              >
-                <div
-                  className="
-                    flex
-                    flex-wrap
-                    items-center
-                    gap-2
-                  "
-                >
-                  <span
-                    className="
-                      text-[12px]
-                      font-semibold
-                      uppercase
-
-                      tracking-[0.08em]
-
-                      text-gray-400
-                    "
-                  >
-                    Choose a time slot
-                  </span>
-
-                  <StatusBadge
-                    status={
-                      event.status
-                    }
-                  />
-                </div>
-
-                <h1
-                  className="
-                    mt-2
-
-                    max-w-[700px]
-
-                    font-heading
-
-                    text-[24px]
-                    font-bold
-
-                    leading-[1.15]
-
-                    tracking-[-0.03em]
-
-                    text-secondary
-
-                    sm:text-[28px]
-
-                    lg:text-[31px]
-                  "
-                >
-                  {event.eventName}
-                </h1>
-                <p className="mt-1 text-xs text-gray-500">All event times: {eventTimeZone(event.timeZone)}</p>
-
-                <div
-                  className="
-                    mt-3
-
-                    flex
-                    items-start
-                    gap-1.5
-
-                    text-[12px]
-                    leading-5
-
-                    text-gray-500
-
-                    sm:text-[13px]
-                  "
-                >
-                  <span
-                    className="
-                      mt-[2px]
-                      shrink-0
-
-                      text-primary
-                    "
-                  >
-                    <LocationIcon />
-                  </span>
-
-                  <span>
-                    {
-                      event.venue
-                    }
-                  </span>
-                </div>
-
-                {event.description && (
-                  <p
-                    className="
-                      mt-3
-
-                      max-w-2xl
-
-                      line-clamp-2
-
-                      text-[12px]
-                      leading-5
-
-                      text-gray-500
-
-                      sm:text-[13px]
-                    "
-                  >
-                    {
-                      event.description
-                    }
-                  </p>
-                )}
-              </div>
-
-              {/* DESKTOP STEP SUMMARY */}
-
-              <div
-                className="
-                  hidden
-
-                  rounded-xl
-
-                  border
-                  border-gray-200
-
-                  bg-[#FAFBFC]
-
-                  p-4
-
-                  md:block
-                "
-              >
-                <p
-                  className="
-                    text-[12px]
-                    font-semibold
-                    uppercase
-
-                    tracking-[0.06em]
-
-                    text-gray-400
-                  "
-                >
-                  Booking step
-                </p>
-
-                <p
-                  className="
-                    mt-1.5
-
-                    text-[15px]
-                    font-semibold
-
-                    text-secondary
-                  "
-                >
-                  Choose your time
-                </p>
-
-                <p
-                  className="
-                    mt-1
-
-                    text-[13px]
-                    leading-5
-
-                    text-gray-500
-                  "
-                >
-                  Select an event date,
-                  then choose one
-                  available slot.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* =================================================
-              BODY
-          ================================================= */}
-
-          <div
-            className="
-              px-4
-              py-5
-
-              sm:px-6
-              sm:py-6
-
-              lg:px-8
-              lg:py-7
-            "
-          >
-            {/* =================================================
-                DATE SECTION
-            ================================================= */}
-
+          <div className="px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
+            {/* DATE */}
             <section>
-              <div
-                className="
-                  flex
-                  items-end
-                  justify-between
-
-                  gap-4
-                "
-              >
-                <div>
-                  <p
-                    className="
-                      text-[12px]
-                      font-semibold
-                      uppercase
-
-                      tracking-[0.07em]
-
-                      text-gray-400
-                    "
-                  >
-                    Step 1
-                  </p>
-
-                  <h2
-                    className="
-                      mt-1
-
-                      text-[15px]
-                      font-semibold
-
-                      text-secondary
-
-                      sm:text-[16px]
-                    "
-                  >
-                    Select a date
-                  </h2>
-                </div>
-
-                <span
-                  className="
-                    text-[12px]
-                    font-medium
-
-                    text-gray-400
-                  "
-                >
-                  {days.length}{' '}
-                  {days.length ===
-                  1
-                    ? 'day'
-                    : 'days'}
-                </span>
+              <div className="flex items-baseline justify-between gap-4">
+                <h2 className="text-[16px] font-semibold text-secondary">Select a date</h2>
+                <span className="text-[13px] text-gray-400">{days.length} {days.length === 1 ? 'day' : 'days'}</span>
               </div>
 
-              {days.length ===
-              0 ? (
-                <EmptyBlock
-                  title="No event dates available"
-                  message="The schedule for this event has not been configured yet."
-                />
+              {days.length === 0 ? (
+                <EmptyBlock title="No event dates available" message="The schedule for this event has not been configured yet." />
               ) : (
-                <div
-                  className="
-                    mt-3
-
-                    flex
-                    gap-2.5
-
-                    overflow-x-auto
-
-                    pb-1
-
-                    scrollbar-hide
-
-                    sm:flex-wrap
-                    sm:overflow-visible
-                  "
-                >
-                  {days.map(
-                    (day) => {
-                      const active =
-                        day._id ===
-                        selectedDay?._id;
-
-                      const date =
-                        new Date(
-                          day.date,
-                        );
-
-                      return (
-                        <motion.button
-                          key={
-                            day._id
-                          }
-                          type="button"
-                          onClick={() =>
-                            handleSelectDay(
-                              day._id,
-                            )
-                          }
-                          whileTap={{
-                            scale:
-                              0.97,
-                          }}
-                          className={`
-                            min-w-[92px]
-                            shrink-0
-
-                            rounded-xl
-
-                            border
-
-                            px-3
-                            py-3
-
-                            text-center
-
-                            transition-all
-                            duration-200
-
-                            sm:min-w-[104px]
-
-                            ${
-                              active
-                                ? `
-                                  border-primary
-                                  bg-primary
-                                  text-white
-
-                                  shadow-[0_8px_18px_rgba(40,63,143,0.14)]
-                                `
-                                : `
-                                  border-gray-200
-                                  bg-white
-                                  text-secondary
-
-                                  hover:border-primary/30
-                                  hover:bg-primary/[0.025]
-                                `
-                            }
-                          `}
-                        >
-                          <span
-                            className={`
-                              block
-
-                              text-[12px]
-                              font-semibold
-                              uppercase
-
-                              tracking-[0.05em]
-
-                              ${
-                                active
-                                  ? 'text-white/75'
-                                  : 'text-gray-400'
-                              }
-                            `}
-                          >
-                            {calendarDateFormatter(
-                              'en-IN',
-                              {
-                                weekday:
-                                  'short',
-                              },
-                            ).format(
-                              date,
-                            )}
-                          </span>
-
-                          <span
-                            className="
-                              mt-1
-                              block
-
-                              text-[20px]
-                              font-bold
-
-                              leading-none
-                            "
-                          >
-                            {calendarDateFormatter(
-                              'en-IN',
-                              {
-                                day:
-                                  '2-digit',
-                              },
-                            ).format(
-                              date,
-                            )}
-                          </span>
-
-                          <span
-                            className={`
-                              mt-1
-                              block
-
-                              text-[12px]
-                              font-medium
-
-                              ${
-                                active
-                                  ? 'text-white/80'
-                                  : 'text-gray-500'
-                              }
-                            `}
-                          >
-                            {calendarDateFormatter(
-                              'en-IN',
-                              {
-                                month:
-                                  'short',
-                                year:
-                                  'numeric',
-                              },
-                            ).format(
-                              date,
-                            )}
-                          </span>
-                        </motion.button>
-                      );
-                    },
-                  )}
-                </div>
-              )}
-            </section>
-
-            <div
-              className="
-                my-6
-                h-px
-                bg-gray-200
-              "
-            />
-
-            {/* =================================================
-                SLOT SECTION
-            ================================================= */}
-
-            <section>
-              <div
-                className="
-                  flex
-                  items-end
-                  justify-between
-
-                  gap-3
-                "
-              >
-                <div>
-                  <p
-                    className="
-                      text-[12px]
-                      font-semibold
-                      uppercase
-
-                      tracking-[0.07em]
-
-                      text-gray-400
-                    "
-                  >
-                    Step 2
-                  </p>
-
-                  <h2
-                    className="
-                      mt-1
-
-                      text-[15px]
-                      font-semibold
-
-                      text-secondary
-
-                      sm:text-[16px]
-                    "
-                  >
-                    Choose a time
-                  </h2>
-                </div>
-
-                <div
-                  className="
-                    shrink-0
-
-                    text-right
-                  "
-                >
-                  <p
-                    className="
-                      text-[13px]
-                      font-semibold
-
-                      text-secondary
-                    "
-                  >
-                    {availableCount}{' '}
-                    available
-                  </p>
-
-                  <p
-                    className="
-                      mt-0.5
-
-                      text-[12px]
-
-                      text-gray-400
-                    "
-                  >
-                    of{' '}
-                    {
-                      totalSlots
-                    }{' '}
-                    total
-                  </p>
-                </div>
-              </div>
-
-              {/* LEGEND */}
-
-              <div
-                className="
-                  mt-3
-
-                  flex
-                  flex-wrap
-                  items-center
-
-                  gap-x-4
-                  gap-y-2
-                "
-              >
-                <LegendItem
-                  type="available"
-                  label="Available"
-                />
-
-                <LegendItem
-                  type="selected"
-                  label="Selected"
-                />
-
-                <LegendItem
-                  type="booked"
-                  label="Booked"
-                />
-              </div>
-
-              {!selectedDay ||
-              selectedDay.slots
-                .length === 0 ? (
-                <EmptyBlock
-                  title="No time slots available"
-                  message="There are currently no time slots configured for the selected date."
-                />
-              ) : (
-                <div
-                  className="
-                    mt-4
-
-                    grid
-                    grid-cols-2
-
-                    gap-2.5
-
-                    sm:grid-cols-3
-
-                    lg:grid-cols-4
-                    lg:gap-3
-                  "
-                >
-                  {selectedDay.slots.map(
-                    (
-                      slot,
-                    ) => {
-                      const selected =
-                        selectedSlotId ===
-                        slot._id;
-
-                      const booked =
-                        !slot.available;
-
-                      return (
-                        <motion.button
-                          key={
-                            slot._id
-                          }
-                          type="button"
-                          disabled={
-                            booked
-                          }
-                          whileTap={
-                            booked
-                              ? undefined
-                              : {
-                                  scale:
-                                    0.98,
-                                }
-                          }
-                          onClick={() =>
-                            handleSlotSelect(
-                              slot,
-                            )
-                          }
-                          className={`
-                            relative
-
-                            flex
-                            min-h-[62px]
-
-                            flex-col
-
-                            items-center
-                            justify-center
-
-                            rounded-xl
-
-                            border
-
-                            px-2.5
-                            py-2.5
-
-                            text-center
-
-                            transition-all
-                            duration-200
-
-                            ${
-                              booked
-                                ? `
-                                  cursor-not-allowed
-
-                                  border-gray-200
-
-                                  bg-gray-100
-
-                                  text-gray-400
-                                `
-                                : selected
-                                  ? `
-                                    border-primary
-
-                                    bg-primary/[0.07]
-
-                                    text-primary
-
-                                    shadow-[inset_0_0_0_1px_rgba(40,63,143,0.10)]
-                                  `
-                                  : `
-                                    cursor-pointer
-
-                                    border-gray-200
-
-                                    bg-white
-
-                                    text-secondary
-
-                                    hover:-translate-y-0.5
-                                    hover:border-primary/30
-                                    hover:bg-primary/[0.02]
-                                    hover:shadow-[0_5px_14px_rgba(15,23,41,0.05)]
-                                  `
-                            }
-                          `}
-                        >
-                          <span
-                            className="
-                              text-[12px]
-                              font-semibold
-
-                              leading-5
-
-                              sm:text-[13px]
-                            "
-                          >
-                            {
-                              slot.startTime
-                            }
-                            {' – '}
-                            {
-                              slot.endTime
-                            }
-                          </span>
-
-                          <span
-                            className={`
-                              mt-0.5
-
-                              text-[12px]
-                              font-medium
-
-                              ${
-                                booked
-                                  ? 'text-gray-400'
-                                  : selected
-                                    ? 'text-primary'
-                                    : slot.remaining <=
-                                        2
-                                      ? 'text-red-500'
-                                      : 'text-gray-400'
-                              }
-                            `}
-                          >
-                            {slot.ended
-                              ? 'Time passed'
-                              : booked
-                              ? 'Fully booked'
-                              : `${slot.remaining} ${
-                                  slot.remaining ===
-                                  1
-                                    ? 'place'
-                                    : 'places'
-                                } left`}
-                          </span>
-
-                          {selected && (
-                            <span
-                              className="
-                                absolute
-                                right-2
-                                top-2
-
-                                grid
-                                h-4
-                                w-4
-
-                                place-items-center
-
-                                rounded-full
-
-                                bg-primary
-
-                                text-white
-                              "
-                            >
-                              <svg
-                                className="
-                                  h-2.5
-                                  w-2.5
-                                "
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                strokeWidth={3}
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="m5 12 4 4L19 6"
-                                />
-                              </svg>
-                            </span>
-                          )}
-                        </motion.button>
-                      );
-                    },
-                  )}
-                </div>
-              )}
-            </section>
-
-            {/* =================================================
-                SELECTED SUMMARY
-            ================================================= */}
-
-            <AnimatePresence>
-              {selectedDay &&
-                selectedSlot && (
-                  <motion.div
-                    initial={{
-                      opacity: 0,
-                      y: 8,
-                      height: 0,
-                    }}
-                    animate={{
-                      opacity: 1,
-                      y: 0,
-                      height:
-                        'auto',
-                    }}
-                    exit={{
-                      opacity: 0,
-                      y: 6,
-                      height: 0,
-                    }}
-                    transition={{
-                      duration:
-                        0.28,
-                      ease: EASE,
-                    }}
-                    className="
-                      overflow-hidden
-                    "
-                  >
-                    <div
-                      className="
-                        mt-6
-
-                        rounded-xl
-
-                        border
-                        border-primary/20
-
-                        bg-primary/[0.035]
-
-                        px-4
-                        py-3.5
-                      "
-                    >
-                      <div
-                        className="
-                          flex
-                          items-start
-
-                          gap-3
-                        "
+                <div className="scrollbar-hide mt-3 flex gap-2.5 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
+                  {days.map((day) => {
+                    const active = day._id === selectedDay?._id;
+                    const date = new Date(day.date);
+                    return (
+                      <motion.button
+                        key={day._id}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => handleSelectDay(day._id)}
+                        whileTap={{ scale: 0.97 }}
+                        className={`flex shrink-0 items-baseline gap-1.5 rounded-full border px-4 py-2 text-[14px] transition-[background-color,border-color,color,box-shadow] duration-300 ease-out ${
+                          active
+                            ? 'border-primary bg-primary text-white shadow-[0_8px_18px_rgba(40,63,143,0.16)]'
+                            : 'border-gray-200/80 bg-white/70 text-gray-500 hover:border-primary/30 hover:bg-white'
+                        }`}
                       >
-                        <div
-                          className="
-                            mt-0.5
+                        <span className="font-medium">{calendarDateFormatter('en-IN', { weekday: 'short' }).format(date)}</span>
+                        <span className={`text-[17px] font-bold ${active ? 'text-white' : 'text-secondary'}`}>
+                          {calendarDateFormatter('en-IN', { day: 'numeric' }).format(date)}
+                        </span>
+                        <span className="font-medium">{calendarDateFormatter('en-IN', { month: 'short' }).format(date)}</span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
 
-                            grid
-                            h-8
-                            w-8
+            <div className="my-4 h-px bg-gray-200/70" />
 
-                            shrink-0
+            {/* TIME */}
+            <section>
+              <div className="flex items-baseline justify-between gap-3">
+                <h2 className="text-[16px] font-semibold text-secondary">Choose a time</h2>
+                <span className="text-[13px] text-gray-400">{availableCount} of {totalSlots} open</span>
+              </div>
 
-                            place-items-center
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
+                <LegendItem type="available" label="Available" />
+                <LegendItem type="selected" label="Selected" />
+                {anyWaitlist && <LegendItem type="waitlist" label="Full · waitlist" />}
+              </div>
 
-                            rounded-lg
-
-                            bg-primary/10
-
-                            text-primary
-                          "
+              {!selectedDay || selectedDay.slots.length === 0 ? (
+                <EmptyBlock title="No time slots available" message="There are currently no time slots configured for the selected date." />
+              ) : (
+                <motion.div
+                  key={selectedDay._id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.25, ease: EASE }}
+                  className="mt-3.5 grid grid-cols-3 gap-2 max-[359px]:gap-1.5 sm:gap-2.5 lg:grid-cols-4 lg:gap-3"
+                >
+                  {selectedDay.slots.map((slot, index) => {
+                    const selected = selectedSlotId === slot._id;
+                    const waitlist = !slot.available && !!slot.waitlistOpen;
+                    const booked = !slot.available && !waitlist;
+                    return (
+                      <motion.button
+                        key={slot._id}
+                        type="button"
+                        disabled={booked}
+                        aria-pressed={selected}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, ease: EASE, delay: Math.min(index, 16) * 0.02 }}
+                        whileTap={booked ? undefined : { scale: 0.96 }}
+                        onClick={() => handleSlotSelect(slot)}
+                        className={`relative flex min-h-[58px] flex-col items-center justify-center rounded-xl border px-1.5 py-2 text-center transition-[background-color,border-color,color,box-shadow,transform] duration-300 ease-out ${
+                          booked
+                            ? 'cursor-not-allowed border-gray-200/70 bg-gray-100/70 text-gray-400'
+                            : selected && waitlist
+                              ? 'border-amber-500 bg-amber-50/90 text-amber-800 shadow-[0_6px_16px_rgba(217,119,6,0.15)]'
+                            : waitlist
+                              ? 'cursor-pointer border-dashed border-amber-300 bg-amber-50/50 text-secondary hover:bg-amber-50'
+                            : selected
+                              ? 'border-primary bg-primary/[0.06] text-primary shadow-[0_6px_16px_rgba(40,63,143,0.12)]'
+                              : 'cursor-pointer border-gray-200/80 bg-white/75 text-secondary hover:-translate-y-0.5 hover:bg-white hover:border-primary/30 hover:shadow-[0_5px_14px_rgba(15,23,41,0.05)]'
+                        }`}
+                      >
+                        <span className="whitespace-nowrap text-[12.5px] font-medium leading-5 max-[359px]:text-[11px] sm:text-[14px]">
+                          {slot.startTime} – {slot.endTime}
+                        </span>
+                        <span
+                          className={`mt-0.5 flex items-center gap-1 text-[12px] sm:text-[13px] ${
+                            booked ? 'text-gray-400' : waitlist ? 'text-amber-700' : selected ? 'text-primary' : slot.remaining <= 2 ? 'text-red-500' : 'text-gray-500'
+                          }`}
                         >
-                          <svg
-                            className="
-                              h-4
-                              w-4
-                            "
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
+                          {!booked && <span className={`h-1.5 w-1.5 rounded-full ${waitlist ? 'bg-amber-500' : slot.remaining <= 2 ? 'bg-red-500' : 'bg-emerald-500'}`} />}
+                          {slot.ended ? 'Time passed' : booked ? 'Full' : waitlist ? (slot.waitlistCount ? `Waitlist · ${slot.waitlistCount}` : 'Waitlist') : `${slot.remaining} left`}
+                        </span>
+                        {selected && (
+                          <motion.span
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ type: "spring", stiffness: 420, damping: 24 }}
+                            className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-primary text-white ring-2 ring-white"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="m5 12 4 4L19 6"
-                            />
-                          </svg>
-                        </div>
-
-                        <div
-                          className="
-                            min-w-0
-                          "
-                        >
-                          <p
-                            className="
-                              text-[12px]
-                              font-semibold
-                              uppercase
-
-                              tracking-[0.05em]
-
-                              text-gray-400
-                            "
-                          >
-                            Selected appointment
-                          </p>
-
-                          <p
-                            className="
-                              mt-1
-
-                              text-[13px]
-                              font-semibold
-
-                              text-secondary
-                            "
-                          >
-                            {formatSelectedDate(
-                              selectedDay.date,
-                            )}
-                          </p>
-
-                          <p
-                            className="
-                              mt-0.5
-
-                              text-[12px]
-
-                              text-gray-500
-                            "
-                          >
-                            {
-                              selectedSlot.startTime
-                            }
-                            {' – '}
-                            {
-                              selectedSlot.endTime
-                            }
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* ERROR */}
+                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3} aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m5 12 4 4L19 6" />
+                            </svg>
+                          </motion.span>
+                        )}
+                      </motion.button>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </section>
 
             <AnimatePresence>
               {error && (
                 <motion.div
-                  initial={{
-                    opacity: 0,
-                    y: 5,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  exit={{
-                    opacity: 0,
-                    y: 5,
-                  }}
-                  className="
-                    mt-4
-
-                    rounded-xl
-
-                    border
-                    border-red-200
-
-                    bg-red-50
-
-                    px-3.5
-                    py-3
-
-                    text-[13px]
-                    font-medium
-                    leading-5
-
-                    text-red-700
-
-                    sm:text-xs
-                  "
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 5 }}
+                  className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-[13px] font-medium leading-5 text-red-700"
                 >
                   {error} <button type="button" className="ml-3 underline" onClick={() => { void loadSlots(true); }}>Retry</button>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* =================================================
-                DESKTOP ACTIONS
-            ================================================= */}
-
-            <div
-              className="
-                mt-7
-
-                hidden
-
-                grid-cols-2
-
-                gap-3
-
-                md:grid
-              "
-            >
+            {/* DESKTOP ACTIONS */}
+            <div className="mt-7 hidden items-center justify-between gap-4 md:flex">
               <button
                 type="button"
-                onClick={() =>
-                  router.back()
-                }
-                className="
-                  flex
-                  h-12
-                  items-center
-                  justify-center
-
-                  rounded-xl
-
-                  border
-                  border-gray-300
-
-                  bg-white
-
-                  text-sm
-                  font-semibold
-
-                  text-secondary
-
-                  transition-all
-                  duration-200
-
-                  hover:border-primary/25
-                  hover:bg-gray-50
-
-                  active:scale-[0.995]
-                "
+                onClick={() => router.back()}
+                className="h-12 rounded-full border border-gray-300 bg-white px-6 text-sm font-semibold text-secondary transition hover:bg-gray-50"
               >
-                Back to Details
+                Back to details
               </button>
-
-              <button
-                type="button"
-                disabled={!selectedSlot || submitting}
-                onClick={() => void handleContinue()}
-                className="
-                  flex
-                  h-12
-                  items-center
-                  justify-center
-
-                  btn-primary rounded-full text-[16px] font-medium text-white disabled:bg-none
-
-                  transition-all
-                  duration-200
-
-                  hover:brightness-95
-
-                  active:scale-[0.995]
-
-                  disabled:cursor-not-allowed
-                  disabled:bg-gray-200
-                  disabled:text-gray-400
-                  disabled:shadow-none
-                "
-              >
-                {submitting ? 'Booking your slot...' : availableCount === 0 ? 'No slots left for this date' : 'Confirm booking'}
-              </button>
+              <div className="flex items-center gap-5">
+                {selectedDay && selectedSlot && (
+                  <p className="text-right text-[13px] text-gray-500">
+                    {formatSelectedDate(selectedDay.date)}
+                    <span className="block text-[16px] font-semibold text-secondary">{selectedSlot.startTime} – {selectedSlot.endTime}</span>
+                  </p>
+                )}
+                <button
+                  type="button"
+                  disabled={!selectedSlot || submitting}
+                  onClick={() => void handleContinue()}
+                  className="btn-primary h-12 rounded-full px-8 text-[16px] font-medium text-white transition-all disabled:cursor-not-allowed disabled:bg-gray-200 disabled:bg-none disabled:text-gray-400 disabled:shadow-none"
+                >
+                  {confirmLabel}
+                </button>
+              </div>
             </div>
           </div>
         </motion.section>
 
-        <p
-          className="
-            mx-auto
-            mt-4
-            max-w-xl
-
-            px-3
-
-            text-center
-
-            text-[12px]
-            leading-4
-
-            text-gray-400
-
-            sm:text-[12px]
-          "
-        >
+        <p className="mx-auto mt-4 max-w-xl px-3 text-center text-[12px] leading-4 text-gray-400">
           Slot availability may change until the booking is confirmed.
         </p>
       </div>
 
-      {/* =====================================================
-          MOBILE STICKY FOOTER
-      ===================================================== */}
-
-      <div
-        className="
-          fixed
-          inset-x-0
-          bottom-0 max-md:bottom-[var(--user-nav-h)]
-          z-50
-
-          border-t
-          border-gray-200/80
-
-          bg-white/95
-
-          px-4
-
-          pb-[max(12px,env(safe-area-inset-bottom))]
-          pt-3
-
-          shadow-[0_-8px_24px_rgba(15,23,41,0.06)]
-
-          backdrop-blur-xl
-
-          md:hidden
-        "
-      >
-        <div
-          className="
-            mx-auto
-            w-full
-            max-w-[500px]
-          "
-        >
-          {selectedDay &&
-            selectedSlot && (
-              <div
-                className="
-                  mb-2.5
-
-                  flex
-                  items-center
-                  justify-between
-
-                  gap-3
-                "
-              >
-                <div
-                  className="
-                    min-w-0
-                  "
-                >
-                  <p
-                    className="
-                      truncate
-
-                      text-[12px]
-                      font-medium
-
-                      text-gray-400
-                    "
-                  >
-                    Selected
-                  </p>
-
-                  <p
-                    className="
-                      truncate
-
-                      text-[13px]
-                      font-semibold
-
-                      text-secondary
-                    "
-                  >
-                    {formatSelectedDate(
-                      selectedDay.date,
-                    )}
-                    {' · '}
-                    {
-                      selectedSlot.startTime
-                    }
-                    {' – '}
-                    {
-                      selectedSlot.endTime
-                    }
-                  </p>
-                </div>
-
-                <span
-                  className="
-                    shrink-0
-
-                    rounded-full
-
-                    bg-primary/10
-
-                    px-2
-                    py-1
-
-                    text-[12px]
-                    font-semibold
-
-                    text-primary
-                  "
-                >
-                  Selected
-                </span>
-              </div>
+      {/* MOBILE STICKY FOOTER */}
+      <div className="fixed inset-x-0 bottom-0 z-50 glass-bar px-4 pb-[max(10px,env(safe-area-inset-bottom))] pt-2.5 max-md:bottom-[var(--user-nav-h)] md:hidden">
+        <div className="mx-auto flex w-full max-w-[500px] items-center gap-3">
+          <div className="min-w-0 flex-1">
+            {selectedDay && selectedSlot ? (
+              <motion.div key={selectedSlot._id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: EASE }}>
+                <p className="truncate text-[13px] text-gray-500">
+                  {formatSelectedDate(selectedDay.date)}
+                  {joiningWaitlist && <span className="font-semibold text-amber-700"> · Waitlist{selectedSlot.waitlistCount ? `, ${selectedSlot.waitlistCount} ahead` : ''}</span>}
+                </p>
+                <p className="truncate text-[17px] font-semibold text-secondary">{selectedSlot.startTime} – {selectedSlot.endTime}</p>
+              </motion.div>
+            ) : (
+              <p className="text-[13px] text-gray-500">Pick a time slot</p>
             )}
-
+          </div>
           <button
             type="button"
             disabled={!selectedSlot || submitting}
-                onClick={() => void handleContinue()}
-            className="
-              flex
-              h-12
-              w-full
-
-              items-center
-              justify-center
-
-              btn-primary rounded-full text-[16px] font-medium text-white disabled:bg-none
-
-              transition-all
-
-              active:scale-[0.995]
-
-              disabled:cursor-not-allowed
-              disabled:bg-gray-200
-              disabled:text-gray-400
-              disabled:shadow-none
-            "
+            onClick={() => void handleContinue()}
+            className="btn-primary flex h-12 shrink-0 items-center justify-center rounded-full px-6 max-[359px]:px-4 text-[16px] font-medium text-white transition-all active:scale-[0.995] disabled:cursor-not-allowed disabled:bg-gray-200 disabled:bg-none disabled:text-gray-400 disabled:shadow-none"
           >
-            {submitting ? 'Booking your slot...' : availableCount === 0 ? 'No slots left for this date' : 'Confirm booking'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() =>
-              router.back()
-            }
-            className="
-              mt-2
-
-              flex
-              h-10
-              w-full
-
-              items-center
-              justify-center
-
-              text-[12px]
-              font-semibold
-
-              text-gray-500
-
-              transition
-
-              hover:text-secondary
-            "
-          >
-            Back to Details
+            {confirmLabel}
           </button>
         </div>
       </div>
@@ -1897,126 +759,20 @@ export default function TimeSlotsPage() {
 }
 
 /* ============================================================
-   STATUS BADGE
-============================================================ */
-
-function StatusBadge({
-  status,
-}: {
-  status:
-    SlotEvent['status'];
-}) {
-  return (
-    <span
-      className={`
-        inline-flex
-        items-center
-        gap-1.5
-
-        rounded-full
-
-        px-2
-        py-1
-
-        text-[12px]
-        font-bold
-        uppercase
-
-        tracking-[0.06em]
-
-        ${
-          status ===
-          'LIVE'
-            ? `
-              bg-[rgba(25,204,106,0.12)]
-              text-[#15935A]
-            `
-            : status ===
-                'UPCOMING'
-              ? `
-                bg-primary/[0.07]
-                text-primary
-              `
-              : `
-                bg-gray-100
-                text-gray-500
-              `
-        }
-      `}
-    >
-      {status ===
-        'LIVE' && (
-        <span
-          className="
-            h-1.5
-            w-1.5
-
-            rounded-full
-
-            bg-[#19CC6A]
-          "
-        />
-      )}
-
-      {status}
-    </span>
-  );
-}
-
-/* ============================================================
    LEGEND
 ============================================================ */
 
-function LegendItem({
-  type,
-  label,
-}: {
-  type:
-    | 'available'
-    | 'selected'
-    | 'booked';
-
-  label: string;
-}) {
+function LegendItem({ type, label }: { type: 'available' | 'selected' | 'booked' | 'waitlist'; label: string }) {
+  const mark =
+    type === 'booked'
+      ? 'h-3 w-3 rounded-[3px] border border-gray-300 bg-white'
+      : type === 'waitlist'
+      ? 'h-3 w-3 rounded-[3px] border border-dashed border-amber-400 bg-amber-50'
+      : `h-2 w-2 rounded-full ${type === 'available' ? 'bg-emerald-500' : 'bg-primary'}`;
   return (
-    <div
-      className="
-        flex
-        items-center
-        gap-1.5
-      "
-    >
-      <span
-        className={`
-          h-2
-          w-2
-
-          rounded-full
-
-          ${
-            type ===
-            'available'
-              ? 'bg-gray-300'
-              : type ===
-                  'selected'
-                ? 'bg-primary'
-                : 'bg-gray-400'
-          }
-        `}
-      />
-
-      <span
-        className="
-          text-[12px]
-          font-medium
-
-          text-gray-500
-
-          sm:text-[12px]
-        "
-      >
-        {label}
-      </span>
+    <div className="flex items-center gap-1.5">
+      <span className={mark} />
+      <span className="text-[13px] text-gray-500">{label}</span>
     </div>
   );
 }
@@ -2334,29 +1090,21 @@ function SlotsError({
    DATE FORMAT
 ============================================================ */
 
-function formatSelectedDate(
-  value: string,
-) {
-  return calendarDateFormatter(
-    'en-IN',
-    {
-      weekday:
-        'short',
+function formatSelectedDate(value: string) {
+  return calendarDateFormatter('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })
+    .format(new Date(value))
+    .replace(',', '');
+}
 
-      day:
-        '2-digit',
-
-      month:
-        'short',
-
-      year:
-        'numeric',
-    },
-  ).format(
-    new Date(
-      value,
-    ),
-  );
+/** Short zone name for the venue line, e.g. Asia/Kolkata -> IST. */
+function shortTimeZone(timeZone?: string) {
+  try {
+    return new Intl.DateTimeFormat('en-IN', { timeZone: eventTimeZone(timeZone), timeZoneName: 'short' })
+      .formatToParts(new Date())
+      .find((part) => part.type === 'timeZoneName')?.value ?? '';
+  } catch {
+    return '';
+  }
 }
 
 /* ============================================================

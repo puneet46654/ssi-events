@@ -4,9 +4,10 @@ import { db, keys, TABLE_NAME } from '../db/table.js';
 import { error, HttpError, json } from '../http.js';
 import { bumpRealtime, logActivity } from '../lib/activity.js';
 import {
-  allEvents, eventBookings, eventPending, parsePendingRowId, pendingRowId, type AdminEvent, type PendingItem,
+  allEvents, eventBookings, eventPending, eventWaitlist, parsePendingRowId, waitlistPositions, pendingRowId, type AdminEvent, type PendingItem,
 } from '../lib/admin-data.js';
 import { requireAdmin } from '../lib/admins.js';
+import { seatWaitlistEntry } from '../lib/waitlist.js';
 import { assertSameOrigin, jsonBody } from '../lib/body.js';
 import { getBooking, isBookingId, isOpenRegistration, phoneIdentity, readBookingDetails, type BookingItem } from '../lib/bookings.js';
 import { eventStatus, eventTimeZone, isTimeZone, zonedDate } from '../lib/dates.js';
@@ -62,13 +63,20 @@ export const listBookings: Handler = async (req) => {
   const now = new Date();
   const events = await allEvents();
   const eventsById = new Map(events.map((e) => [e.eventId, e]));
-  const loaded = await Promise.all(events.map(async (e) => ({ e, bookings: await eventBookings(e.eventId), pending: await eventPending(e.eventId) })));
+  const loaded = await Promise.all(events.map(async (e) => ({
+    e, bookings: await eventBookings(e.eventId), pending: await eventPending(e.eventId), waitlist: await eventWaitlist(e.eventId),
+  })));
   const bookings = loaded.flatMap((l) => l.bookings);
   const pending = loaded.flatMap((l) => l.pending);
+  const waitlist = loaded.flatMap((l) => l.waitlist);
+  const positions = new Map(loaded.flatMap((l) => [...waitlistPositions(l.waitlist)]));
 
   // Slot, day and attendance exist only on confirmed bookings; pending ones belong to events not yet over.
-  const excludePending = q.status === 'confirmed' || dateFilter === 'past' || !!q.attendance || !!q.slotId || !!q.dayScheduleId;
-  const excludeBookings = q.status === 'pending';
+  // Admins see only confirmed bookings and waitlist places; details saved without a slot are not listed.
+  const excludePending = true;
+  const excludeBookings = q.status === 'pending' || q.status === 'waitlisted';
+  // Waitlist places hold no seat and have no attendance; they show only under All or Waitlisted.
+  const excludeWaitlist = (!!q.status && q.status !== 'waitlisted') || !!q.attendance;
   const sharedMatch = (details: Record<string, unknown>, at: string, rowEventId: string, reference = '') =>
     (!eventId || rowEventId === eventId)
     && (!search || reference.toLowerCase().includes(search) || SEARCHED.some((f) => text(details[f]).toLowerCase().includes(search)))
@@ -83,6 +91,16 @@ export const listBookings: Handler = async (req) => {
       if (dateFilter !== 'all' && isPast(b, event, now) !== (dateFilter === 'past')) continue;
       if (q.attendance === 'present' && b.attendanceStatus !== 'PRESENT') continue;
       if (q.attendance === 'not_present' && b.attendanceStatus === 'PRESENT') continue;
+      if (q.dayScheduleId && b.dayId !== q.dayScheduleId) continue;
+      if (q.slotId && b.slotId !== q.slotId) continue;
+      rows.push({ pending: false, at: b.createdAt, name: b.details.fullName || '', booking: b, event });
+    }
+  }
+  if (!excludeWaitlist) {
+    for (const b of waitlist) {
+      const event = eventsById.get(b.eventId);
+      if (!sharedMatch(b.details, b.createdAt, b.eventId, b.bookingId)) continue;
+      if (dateFilter !== 'all' && isPast(b, event, now) !== (dateFilter === 'past')) continue;
       if (q.dayScheduleId && b.dayId !== q.dayScheduleId) continue;
       if (q.slotId && b.slotId !== q.slotId) continue;
       rows.push({ pending: false, at: b.createdAt, name: b.details.fullName || '', booking: b, event });
@@ -103,6 +121,8 @@ export const listBookings: Handler = async (req) => {
       _id: b ? b.bookingId : pendingRowId(r.pendingItem!),
       bookingId: b?.bookingId ?? '',
       ...(r.pending ? { pending: true } : {}),
+      ...(b?.waitlisted ? { waitlisted: true, waitlistPosition: positions.get(b.bookingId) ?? null } : {}),
+      ...(b?.seatedFromWaitlist ? { seatedFromWaitlist: true } : {}),
       attendee: { fullName: text(details.fullName) || 'Unknown attendee', email: text(details.email), mobile: text(details.mobile) },
       event: eventSummary(r.event, now),
       daySchedule: b && !isOpenRegistration(b) ? { _id: b.dayId, date: isoDate(b.date) } : null,
@@ -139,7 +159,7 @@ export const listBookings: Handler = async (req) => {
     bookings: pageRows,
     events: [...events].sort((a, b) => b.startDate.localeCompare(a.startDate)).map((e) => ({ _id: e.eventId, eventName: e.eventName })),
     filterOptions,
-    stats: { total: bookings.length, upcoming: bookings.length - past, past, pending: pending.length },
+    stats: { total: bookings.length, upcoming: bookings.length - past, past, pending: 0, waitlisted: waitlist.length },
     pagination: { page, limit, total: rows.length, pages: Math.max(Math.ceil(rows.length / limit), 1) },
   });
 };
@@ -177,6 +197,7 @@ async function bookingDetail(b: BookingItem) {
     registrationOnly: isOpenRegistration(b),
     attendanceStatus: b.attendanceStatus, checkedInAt: b.checkedInAt ?? null, checkedInBy: b.checkedInBy || '',
     checkInMethod: b.checkInMethod || '', createdAt: b.createdAt, updatedAt: b.updatedAt,
+    waitlisted: !!b.waitlisted, seatedFromWaitlist: !!b.seatedFromWaitlist,
   };
 }
 
@@ -251,6 +272,16 @@ export const updateAdminBooking: Handler = async (req) => {
 
   const booking = await getBooking(bookingRef(id));
   if (!booking) return error(404, 'Booking not found.');
+  if (booking.waitlisted && attendance === 'PRESENT') {
+    // "Mark present" on a waitlisted doctor seats them: confirmed booking, checked in.
+    await seatWaitlistEntry(booking, admin.username);
+    await Promise.all([
+      bumpRealtime('attendance'), bumpRealtime('bookings'),
+      logActivity({ admin: admin.username, action: 'update', resource: 'booking', resourceId: booking.bookingId, details: { bookingId: booking.bookingId, seatedFromWaitlist: `${booking.date} ${booking.startTime}` } }),
+    ]);
+    const seated = await getBooking(booking.bookingId);
+    return json(200, { success: true, message: 'Seated from the waitlist and marked present.', booking: seated && await bookingDetail(seated) });
+  }
   const details = mergedDetails(booking.details, body?.details);
   const phone = phoneIdentity(details.mobile, details.countryCode);
   const changeAttendance = attendance !== undefined && attendance !== booking.attendanceStatus;
@@ -309,16 +340,17 @@ export const deleteAdminBooking: Handler = async (req) => {
   if (!isBookingId(bookingRef(id))) return deletePending(req, id, admin.username);
   const booking = await getBooking(bookingRef(id));
   if (!booking) return error(404, 'Booking not found.');
+  const seatHeld = !booking.waitlisted;
   try {
     await db.send(new TransactWriteCommand({
       TransactItems: [
         { Delete: { TableName: TABLE_NAME, Key: keys.booking(booking.bookingId), ConditionExpression: 'attribute_exists(PK)' } },
-        ...(isOpenRegistration(booking) ? [] : [{ Update: {
+        ...(isOpenRegistration(booking) || !seatHeld ? [] : [{ Update: {
           TableName: TABLE_NAME, Key: { PK: keys.event(booking.eventId).PK, SK: booking.slotSK },
           UpdateExpression: 'SET bookedCount = bookedCount - :one', ConditionExpression: 'bookedCount > :zero',
           ExpressionAttributeValues: { ':one': 1, ':zero': 0 },
         } }]),
-        { Update: { TableName: TABLE_NAME, Key: keys.event(booking.eventId), UpdateExpression: 'ADD bookedSlots :minus', ExpressionAttributeValues: { ':minus': -1 } } },
+        ...(seatHeld ? [{ Update: { TableName: TABLE_NAME, Key: keys.event(booking.eventId), UpdateExpression: 'ADD bookedSlots :minus', ExpressionAttributeValues: { ':minus': -1 } } }] : []),
         { Delete: { TableName: TABLE_NAME, Key: keys.bookingRequest(booking.eventId, booking.requestKeyHash) } },
       ],
     }));
@@ -330,7 +362,7 @@ export const deleteAdminBooking: Handler = async (req) => {
     bumpRealtime('bookings'), bumpRealtime('attendance'),
     logActivity({ admin: admin.username, action: 'delete', resource: 'booking', resourceId: booking.bookingId, details: { bookingId: booking.bookingId, eventId: booking.eventId } }),
   ]);
-  return json(200, { success: true, message: 'Booking deleted successfully.' });
+  return json(200, { success: true, message: seatHeld ? 'Booking deleted successfully.' : 'Removed from the waitlist.' });
 };
 
 /** DELETE /api/admin/bookings/pending/:id — discards a pending registration. */
