@@ -236,7 +236,7 @@ export function UserFooter() {
           <p className="mt-2 flex flex-wrap items-center gap-x-2 text-gray-400">
             <span>© {new Date().getFullYear()} SS Innovations</span>
             <span aria-hidden="true">·</span>
-            <span>Developed by <span className="font-semibold text-gray-600">By SSI Maya</span></span>
+            <span>Developed by <span className="font-semibold text-gray-600">SSI Maya</span></span>
           </p>
         </div>
       </div>
@@ -270,10 +270,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
       <Image src="/logos/ssii-logo.png" alt="SS Innovations" width={520} height={227} priority
         className={`w-auto shrink-0 ${compact ? 'h-7' : 'h-8'}`} />
       <span className={`w-px shrink-0 bg-gray-200 ${compact ? 'h-5' : 'h-6'}`} aria-hidden="true" />
-      <span className="flex flex-col leading-none">
-        <span className={`font-medium tracking-[-0.012em] text-secondary ${compact ? 'text-[17px]' : 'text-[19px]'}`}>Events</span>
-        <span className="mt-[3px] text-[10.5px] font-semibold tracking-[0.03em] text-gray-400">By SSI Maya</span>
-      </span>
+      <span className={`font-medium tracking-[-0.012em] text-secondary ${compact ? 'text-[17px]' : 'text-[19px]'}`}>Events</span>
     </Link>
   );
 }
