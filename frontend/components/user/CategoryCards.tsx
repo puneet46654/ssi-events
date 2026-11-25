@@ -4,6 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight } from '@phosphor-icons/react';
 import { EVENT_CATEGORIES } from '@/lib/event-categories';
+import { localizeCategory } from '@/lib/i18n/categories';
+import { useI18n } from '@/lib/i18n';
 
 type Props = {
   /** Every published event (already excludes cancelled ones). */
@@ -16,19 +18,20 @@ type Props = {
  * A category registered elsewhere links straight to that site once its address is known.
  */
 export function CategoryCards({ events, loading = false }: Props) {
+  const { t, locale } = useI18n();
   return (
-    <section aria-label="Event categories" className="mb-8 md:mb-12">
+    <section aria-label={t('home.eventCategories')} className="mb-8 md:mb-12">
       <ul className="grid gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-4">
-        {EVENT_CATEGORIES.map((category, index) => {
+        {EVENT_CATEGORIES.map((source) => localizeCategory(source, locale)).map((category, index) => {
           const open = events.filter((e) => e.eventType === category.type && (e.status === 'UPCOMING' || e.status === 'LIVE')).length;
           const past = events.filter((e) => e.eventType === category.type && e.status === 'COMPLETED').length;
           const externalUrl = category.external?.externalUrl;
           const status = category.external
-            ? (externalUrl ? 'Register on the conference website' : 'Registration link to follow')
+            ? (externalUrl ? t('home.registerOnConferenceSite') : t('home.registrationLinkToFollow'))
             : category.archive
-              ? open > 0 ? (open === 1 ? '1 upcoming conference' : `${open} upcoming conferences`)
-                : past > 0 ? 'Past conferences' : 'No upcoming conferences'
-              : open > 0 ? (open === 1 ? '1 event open for registration' : `${open} events open for registration`) : 'No events open';
+              ? open > 0 ? (open === 1 ? t('home.upcomingConferenceOne') : t('home.upcomingConferencesMany', { n: open }))
+                : past > 0 ? t('home.pastConferences') : t('home.noUpcomingConferences')
+              : open > 0 ? (open === 1 ? t('home.eventsOpenOne') : t('home.eventsOpenMany', { n: open })) : t('home.noEventsOpen');
           const active = category.external ? Boolean(externalUrl) : open > 0 || (Boolean(category.archive) && past > 0);
           const body = (
             <>
@@ -52,7 +55,7 @@ export function CategoryCards({ events, loading = false }: Props) {
                 </span>
                 <span className="mt-3 flex items-center gap-1.5 text-[14px] font-medium md:mt-4 md:text-[15px]">
                   {loading && !category.external ? (
-                    <span className="h-4 w-28 animate-pulse rounded-full bg-gray-200" aria-label="Loading" />
+                    <span className="h-4 w-28 animate-pulse rounded-full bg-gray-200" aria-label={t('common.loading')} />
                   ) : (
                     <span className={`inline-flex items-center gap-1.5 ${active ? 'text-primary' : 'text-gray-400'}`}>
                       {status}

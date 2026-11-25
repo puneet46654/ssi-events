@@ -6,6 +6,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { AppFeedbackDialog } from '@/components/user/AppFeedback';
 import { useSmartBack, useTrackPreviousPath } from '@/lib/flow-nav';
+import { useI18n } from '@/lib/i18n';
+import LanguageSwitcher from './LanguageSwitcher';
+import { HeaderHint, useHeaderHints } from './HeaderHint';
 import { refreshEventSearch, searchHref, setEventSearch, useEventSearch } from '@/lib/event-search';
 
 /*
@@ -67,6 +70,7 @@ function HeaderSearch({ className = '', autoFocus = false, onSubmitted }: { clas
   const router = useRouter();
   const onHome = HOME_PAGES.includes(pathname);
   const query = useEventSearch();
+  const { t } = useI18n();
   const [draft, setDraft] = useState('');
   const value = onHome ? query : draft;
   // The header outlives page changes: read the search again once a navigation has updated the URL.
@@ -85,8 +89,8 @@ function HeaderSearch({ className = '', autoFocus = false, onSubmitted }: { clas
       <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"><SearchIcon /></span>
       <input
         type="search"
-        aria-label="Search events"
-        placeholder="Search events, venue or type"
+        aria-label={t('common.searchEvents')}
+        placeholder={t('common.searchPlaceholder')}
         autoFocus={autoFocus}
         value={value}
         onChange={(e) => (onHome ? setEventSearch(e.target.value) : setDraft(e.target.value))}
@@ -102,7 +106,9 @@ export function UserHeader() {
   const { shared, share } = useShare();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const shareLabel = shared ? 'Link copied' : 'Share this event';
+  const hints = useHeaderHints();
+  const { t } = useI18n();
+  const shareLabel = shared ? t('common.linkCopied') : t('common.shareEvent');
 
   return (
     <>
@@ -110,13 +116,13 @@ export function UserHeader() {
         {/* Phones */}
         <div className="mx-auto flex h-14 max-w-[560px] items-center gap-2 px-4 md:hidden">
           {chrome.showBack && (
-            <button type="button" onClick={chrome.goBack} aria-label="Go back" className={`-ml-2 h-11 w-11 active:bg-gray-100 ${ROUND}`}>
+            <button type="button" onClick={chrome.goBack} aria-label={t('common.goBack')} className={`-ml-2 h-11 w-11 active:bg-gray-100 ${ROUND}`}>
               <BackIcon />
             </button>
           )}
           <Brand compact />
           <div className="ml-auto flex items-center gap-1">
-            <button type="button" onClick={() => setSearchOpen((open) => !open)} aria-label="Search events" aria-expanded={searchOpen}
+            <button type="button" onClick={() => setSearchOpen((open) => !open)} aria-label={t('common.searchEvents')} aria-expanded={searchOpen}
               className={`h-11 w-11 active:bg-gray-100 ${ROUND} ${searchOpen ? 'bg-gray-100' : ''}`}>
               <SearchIcon />
             </button>
@@ -125,9 +131,13 @@ export function UserHeader() {
                 <ShareIcon done={shared} />
               </button>
             )}
-            <button type="button" onClick={() => setFeedbackOpen(true)} aria-label="Feedback" className={`-mr-2 h-11 w-11 active:bg-gray-100 ${ROUND}`}>
-              <FeedbackIcon />
-            </button>
+            <LanguageSwitcher compact hint={hints === 'language'} />
+            <span className="relative -mr-2">
+              <button type="button" onClick={() => setFeedbackOpen(true)} aria-label={t('common.feedback')} className={`h-11 w-11 active:bg-gray-100 ${ROUND}`}>
+                <FeedbackIcon />
+              </button>
+              <HeaderHint show={hints === 'feedback'} label={t('common.tipFeedback')} align="right" />
+            </span>
           </div>
         </div>
 
@@ -141,7 +151,7 @@ export function UserHeader() {
         <div className="mx-auto hidden h-[72px] w-full max-w-[1200px] items-center justify-between gap-6 px-6 md:flex">
           <div className="flex items-center gap-3">
             {chrome.showBack && (
-              <button type="button" onClick={chrome.goBack} aria-label="Go back"
+              <button type="button" onClick={chrome.goBack} aria-label={t('common.goBack')}
                 className={`group h-11 w-11 bg-gray-50 hover:bg-gray-100 ${ROUND}`}>
                 <BackIcon />
               </button>
@@ -153,18 +163,22 @@ export function UserHeader() {
             {chrome.isEventDetails && (
               <button type="button" onClick={() => void share()} className={`${NAV} ${NAV_IDLE}`}>
                 <ShareIcon done={shared} />
-                {shared ? 'Link copied' : 'Share'}
+                {shared ? t('common.linkCopied') : t('common.share')}
               </button>
             )}
             <Link href="/" aria-current={chrome.onEvents ? 'page' : undefined} className={`${NAV} ${chrome.onEvents ? NAV_ACTIVE : NAV_IDLE}`}>
-              Events
+              {t('common.events')}
             </Link>
             <Link href="/events/mytickets" aria-current={chrome.onTickets ? 'page' : undefined} className={`${NAV} ${chrome.onTickets ? NAV_ACTIVE : NAV_IDLE}`}>
-              My tickets
+              {t('common.myTickets')}
             </Link>
-            <button type="button" onClick={() => setFeedbackOpen(true)} className={`${NAV} ${NAV_IDLE}`}>
-              Feedback
-            </button>
+            <LanguageSwitcher hint={hints === 'language'} />
+            <span className="relative">
+              <button type="button" onClick={() => setFeedbackOpen(true)} className={`${NAV} ${NAV_IDLE}`}>
+                {t('common.feedback')}
+              </button>
+              <HeaderHint show={hints === 'feedback'} label={t('common.tipFeedback')} align="right" />
+            </span>
           </nav>
         </div>
       </header>
@@ -176,17 +190,17 @@ export function UserHeader() {
 // Explicit colour: the global link style would otherwise turn these blue on the dark band.
 const FOOTER_LINK = 'inline-flex min-h-[32px] items-center text-[14px] text-gray-600 transition-colors hover:text-primary';
 const FOOTER_LINKS: { heading: string; links: { label: string; href: string; external?: boolean }[] }[] = [
-  { heading: 'Events', links: [
-    { label: 'All events', href: '/' },
+  { heading: 'common.footerEvents', links: [
+    { label: 'common.allEvents', href: '/' },
     { label: 'SMRSC', href: '/smrsc' },
     { label: 'SSi MantraM', href: '/mantram' },
-    { label: 'CME and workshops', href: '/cme' },
-    { label: 'Conferences', href: '/conferences' },
+    { label: 'common.cmeWorkshops', href: '/cme' },
+    { label: 'common.conferences', href: '/conferences' },
   ] },
-  { heading: 'Attendees', links: [
-    { label: 'My tickets', href: '/events/mytickets' },
-    { label: 'Event terms', href: '/terms' },
-    { label: 'Privacy notice', href: '/privacy' },
+  { heading: 'common.footerAttendees', links: [
+    { label: 'common.myTickets', href: '/events/mytickets' },
+    { label: 'common.eventTerms', href: '/terms' },
+    { label: 'common.privacyNotice', href: '/privacy' },
   ] },
   { heading: 'SS Innovations', links: [
     { label: 'ssinnovations.com', href: 'https://ssinnovations.com', external: true },
@@ -201,6 +215,13 @@ export function UserFooter() {
   const pathname = usePathname();
   // Event page, details and time slots end at their action bar: no footer to scroll into.
   if (/^\/events\/(?!mytickets(?:\/|$))[^/]+(\/book(\/slots)?)?\/?$/.test(pathname)) return null;
+  return <FooterBand />;
+}
+
+/** Footer labels starting with "common." are translation keys; brand names are shown as is. */
+function FooterBand() {
+  const { t } = useI18n();
+  const label = (text: string) => (text.startsWith('common.') ? t(text) : text);
   return (
     <footer className="lg-chrome relative mt-12 border-t md:mt-16">
       {/* Full-width light glass band: compact on phones, four columns on desktop. */}
@@ -209,19 +230,19 @@ export function UserFooter() {
           <div className="col-span-2 md:col-span-1">
             <BrandMark />
             <p className="mt-3 max-w-[34ch] text-[13px] leading-relaxed text-gray-500">
-              Registration, slot booking and QR check-in for SS Innovations events.
+              {t('common.footerAbout')}
             </p>
           </div>
           <div className="col-span-2 grid grid-cols-2 gap-x-6 gap-y-5 md:col-span-3 md:grid-cols-3">
             {FOOTER_LINKS.map((group) => (
-              <nav key={group.heading} aria-label={group.heading}>
-                <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.08em] text-gray-400">{group.heading}</h2>
+              <nav key={group.heading} aria-label={label(group.heading)}>
+                <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.08em] text-gray-400">{label(group.heading)}</h2>
                 <ul className="mt-1.5">
                   {group.links.map((link) => (
                     <li key={link.href}>
                       {link.external
-                        ? <a href={link.href} className={FOOTER_LINK}>{link.label}</a>
-                        : <Link href={link.href} className={FOOTER_LINK}>{link.label}</Link>}
+                        ? <a href={link.href} className={FOOTER_LINK}>{label(link.label)}</a>
+                        : <Link href={link.href} className={FOOTER_LINK}>{label(link.label)}</Link>}
                     </li>
                   ))}
                 </ul>
@@ -231,12 +252,12 @@ export function UserFooter() {
         </div>
         <div className="mt-6 border-t border-gray-200/70 pt-4 text-[12px] leading-[1.6] text-gray-500">
           <p className="max-w-[90ch]">
-            Information on this site is intended for healthcare professionals. SSi Mantra and SSi MantraM are not available in all countries; availability and approved uses depend on local regulatory approval.
+            {t('common.regulatory')}
           </p>
           <p className="mt-2 flex flex-wrap items-center gap-x-2 text-gray-400">
             <span>© {new Date().getFullYear()} SS Innovations</span>
             <span aria-hidden="true">·</span>
-            <span>Developed by <span className="font-semibold text-gray-600">SSI Maya</span></span>
+            <span>{t('common.developedBy')} <span className="font-semibold text-gray-600">SSI Maya</span></span>
           </p>
         </div>
       </div>
@@ -246,16 +267,17 @@ export function UserFooter() {
 
 export function UserBottomNav() {
   const { onTickets } = useChrome();
+  const { t } = useI18n();
 
   return (
     // iOS-style floating tab bar: a glass capsule; the active tab sits on a brighter lens.
     // A soft fade behind it keeps content scrolling underneath from showing around the capsule.
     <nav aria-label="Main" className="vt-bottom pointer-events-none fixed inset-x-0 bottom-0 z-40 h-[var(--user-nav-h)] bg-[linear-gradient(to_top,rgba(230,236,246,0.96)_35%,rgba(230,236,246,0))] px-4 pb-[max(8px,env(safe-area-inset-bottom))] pt-1.5 md:hidden">
       <div className="lg-chrome pointer-events-auto mx-auto grid h-full max-w-[400px] grid-cols-2 gap-1 rounded-full border p-1">
-      <NavItem href="/" label="Events" active={!onTickets}>
+      <NavItem href="/" label={t('common.events')} active={!onTickets}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 10.5 12 3l9 7.5M5 9.5V20h5v-6h4v6h5V9.5" />
       </NavItem>
-      <NavItem href="/events/mytickets" label="My tickets" active={onTickets}>
+      <NavItem href="/events/mytickets" label={t('common.myTickets')} active={onTickets}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V7Zm10-2v12" />
       </NavItem>
       </div>

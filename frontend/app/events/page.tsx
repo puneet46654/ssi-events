@@ -6,6 +6,8 @@ import PendingRegistrations from '@/components/user/PendingRegistrations';
 import { CategoryCards } from '@/components/user/CategoryCards';
 import { OpenEventCard, UpcomingGrid } from '@/components/user/EventGrid';
 import { categoryOf } from '@/lib/event-categories';
+import { useI18n } from '@/lib/i18n';
+import type { Translate } from '@/lib/i18n';
 import { setEventSearch, useEventSearch } from '@/lib/event-search';
 
 
@@ -99,6 +101,7 @@ const EASE = [
 ============================================================ */
 
 export default function EventsPage() {
+  const { t } = useI18n();
 
   /* ==========================================================
      TRACK PAGE VIEW
@@ -141,6 +144,25 @@ export default function EventsPage() {
     showFilters,
     setShowFilters,
   ] = useState(false);
+
+  // Filters close on a tap anywhere outside them (phone and desktop) or on Escape.
+  const mobileFilterRef = useRef<HTMLDivElement>(null);
+  const desktopFilterRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!showFilters) return;
+    const outside = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (mobileFilterRef.current?.contains(target) || desktopFilterRef.current?.contains(target)) return;
+      setShowFilters(false);
+    };
+    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') setShowFilters(false); };
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [showFilters]);
 
   const [
     statusFilter,
@@ -528,16 +550,13 @@ export default function EventsPage() {
       <section
         className="
           relative
-          top-0
-          z-50
+          z-20
 
           bg-transparent
 
           px-4
           pb-3
           pt-[max(10px,env(safe-area-inset-top))]
-
-          backdrop-blur-xl
 
           md:hidden
         "
@@ -565,7 +584,7 @@ export default function EventsPage() {
                 text-secondary
               "
             >
-              <span className="ssi-highlight">SS Innovations</span> events
+              <span className="ssi-highlight">SS Innovations</span> {t('home.heroEvents')}
             </h1>
 
           </div>
@@ -573,6 +592,7 @@ export default function EventsPage() {
           {/* FILTERS */}
 
           <div
+            ref={mobileFilterRef}
             className="
               relative
               mt-3
@@ -670,7 +690,7 @@ export default function EventsPage() {
                 lg:text-[56px]
               "
             >
-              <span className="ssi-highlight">SS Innovations</span> events
+              <span className="ssi-highlight">SS Innovations</span> {t('home.heroEvents')}
             </h1>
 
           </div>
@@ -678,6 +698,7 @@ export default function EventsPage() {
                 <div className="relative">
   
                   <div
+                    ref={desktopFilterRef}
                     className="
                       relative
                     "
@@ -721,7 +742,7 @@ export default function EventsPage() {
                 </div>
                     <button
                       type="button"
-                      aria-label="Refresh events"
+                      aria-label={t('home.refreshEvents')}
                       disabled={
                         refreshing
                       }
@@ -804,7 +825,7 @@ export default function EventsPage() {
             >
               {hasSearch && (
                 <FilterTag
-                  label={`Search: ${search}`}
+                  label={t('home.searchTag', { query: search })}
                   onRemove={() =>
                     setSearch('')
                   }
@@ -816,6 +837,7 @@ export default function EventsPage() {
                 <FilterTag
                   label={formatStatus(
                     statusFilter,
+                    t,
                   )}
                   onRemove={() =>
                     setStatusFilter(
@@ -830,6 +852,7 @@ export default function EventsPage() {
                 <FilterTag
                   label={formatType(
                     typeFilter,
+                    t,
                   )}
                   onRemove={() =>
                     setTypeFilter(
@@ -857,7 +880,7 @@ export default function EventsPage() {
                   hover:text-secondary
                 "
               >
-                Clear all
+                {t('home.clearAll')}
               </button>
             </motion.div>
           )}
@@ -868,7 +891,7 @@ export default function EventsPage() {
         ==================================================== */}
 
         {loadError && <div role="alert" className="my-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">
-          {loadError} <button type="button" className="ml-3 underline" onClick={() => { void fetchEvents(false); }}>Try again</button>
+          {t('home.loadEventsError')} <button type="button" className="ml-3 underline" onClick={() => { void fetchEvents(false); }}>{t('common.tryAgain')}</button>
         </div>}
         {loading ? (
           <div
@@ -938,7 +961,7 @@ export default function EventsPage() {
               0 && (
               <AnimatedSection>
                 <SectionHeading
-                  title="Open for Registration"
+                  title={t('home.openForRegistration')}
                 />
 
                 <div
@@ -1014,7 +1037,7 @@ export default function EventsPage() {
               0 && (
               <AnimatedSection>
                 <SectionHeading
-                                    title="CME and workshops"
+                                    title={t('common.cmeWorkshops')}
                 />
 
                 <UpcomingGrid
@@ -1030,7 +1053,7 @@ export default function EventsPage() {
             {upcomingParticipation.length > 0 && (
               <AnimatedSection>
                 <SectionHeading
-                  title="Conferences"
+                  title={t('common.conferences')}
                 />
 
                 <UpcomingGrid events={upcomingParticipation} />
@@ -1045,7 +1068,7 @@ export default function EventsPage() {
                 'COMPLETED' && (
                 <AnimatedSection>
                   <SectionHeading
-                    title="Completed Events"
+                    title={t('home.completedEvents')}
                   />
 
                   <UpcomingGrid
@@ -1065,7 +1088,7 @@ export default function EventsPage() {
 
         <section className="mt-10 md:mt-14">
           <SectionHeading
-            title="Browse by category"
+            title={t('home.browseByCategory')}
           />
           <CategoryCards events={events} loading={loading && events.length === 0} />
         </section>
@@ -1095,10 +1118,11 @@ function FilterButton({
   onToggle: () => void;
   hasActiveFilters: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
-      aria-label="Filter events"
+      aria-label={t('home.filterEvents')}
       aria-expanded={showFilters}
       onClick={onToggle}
       className={`relative inline-flex h-10 items-center gap-2 rounded-lg border px-3.5 text-[14px] font-medium transition-all ${
@@ -1108,8 +1132,8 @@ function FilterButton({
       }`}
     >
       <FilterIcon />
-      Filters
-      {hasActiveFilters && <span className="h-[6px] w-[6px] rounded-full bg-primary" aria-label="Filters applied" />}
+      {t('home.filters')}
+      {hasActiveFilters && <span className="h-[6px] w-[6px] rounded-full bg-primary" aria-label={t('home.filtersApplied')} />}
     </button>
   );
 }
@@ -1250,6 +1274,7 @@ function FilterContents({
   hasActiveFilters,
   onClose,
 }: FilterPanelProps) {
+  const { t } = useI18n();
   return (
     <>
       <div
@@ -1269,14 +1294,14 @@ function FilterContents({
               text-secondary
             "
           >
-            Filter events
+            {t('home.filterEvents')}
           </h3>
 
         </div>
 
         <button
           type="button"
-          aria-label="Close filters"
+          aria-label={t('home.closeFilters')}
           onClick={
             onClose
           }
@@ -1309,7 +1334,7 @@ function FilterContents({
         "
       >
         <FilterLabel>
-          Status
+          {t('home.status')}
         </FilterLabel>
 
         <div
@@ -1342,6 +1367,7 @@ function FilterContents({
                 }
                 label={formatStatus(
                   value,
+                  t,
                 )}
                 onClick={() =>
                   setStatusFilter(
@@ -1362,7 +1388,7 @@ function FilterContents({
         "
       >
         <FilterLabel>
-          Category
+          {t('home.category')}
         </FilterLabel>
 
         <div
@@ -1396,6 +1422,7 @@ function FilterContents({
                 }
                 label={formatType(
                   value,
+                  t,
                 )}
                 onClick={() =>
                   setTypeFilter(
@@ -1445,7 +1472,7 @@ function FilterContents({
             disabled:opacity-40
           "
         >
-          Clear filters
+          {t('home.clearFilters')}
         </button>
 
         <button
@@ -1472,7 +1499,7 @@ function FilterContents({
             hover:bg-primary-dark
           "
         >
-          Apply
+          {t('home.apply')}
         </button>
       </div>
     </>
@@ -1582,6 +1609,7 @@ function FilterTag({
   onRemove:
     () => void;
 }) {
+  const { t } = useI18n();
   return (
     <motion.span
       layout
@@ -1627,7 +1655,7 @@ function FilterTag({
 
       <button
         type="button"
-        aria-label={`Remove ${label}`}
+        aria-label={t('home.removeFilter', { label })}
         onClick={
           onRemove
         }
@@ -1748,6 +1776,7 @@ function NoMatchingEvents({
   clearAll:
     () => void;
 }) {
+  const { t } = useI18n();
   return (
     <motion.section
       initial={{
@@ -1804,7 +1833,7 @@ function NoMatchingEvents({
           text-secondary
         "
       >
-        No matching events
+        {t('home.noMatchingEvents')}
       </h2>
 
       <p
@@ -1820,8 +1849,7 @@ function NoMatchingEvents({
           text-gray-500
         "
       >
-        Try another search or clear
-        the current filters.
+        {t('home.noMatchingEventsHint')}
       </p>
 
       <button
@@ -1853,7 +1881,7 @@ function NoMatchingEvents({
           hover:bg-gray-50
         "
       >
-        Clear Search & Filters
+        {t('home.clearSearchAndFilters')}
       </button>
     </motion.section>
   );
@@ -2007,37 +2035,41 @@ function LoadingState() {
 function formatStatus(
   value:
     EventStatusFilter,
+  t: Translate,
 ) {
   if (
     value ===
     'ALL'
   ) {
-    return 'All';
+    return t('home.statusAll');
   }
 
   if (
     value ===
     'UPCOMING'
   ) {
-    return 'Upcoming';
+    return t('home.statusUpcoming');
   }
 
   if (
     value ===
     'COMPLETED'
   ) {
-    return 'Completed';
+    return t('home.statusCompleted');
   }
 
-  return 'Open';
+  return t('home.statusOpen');
 }
 
 function formatType(
   value:
     EventTypeFilter |
     IEvent['eventType'],
+  t: Translate,
 ) {
-  return value === 'ALL' ? 'All' : categoryOf(value).name;
+  if (value === 'event') return t('home.cmeWorkshop');
+  if (value === 'participation') return t('common.conferences');
+  return value === 'ALL' ? t('home.statusAll') : categoryOf(value).name;
 }
 
 /* ============================================================

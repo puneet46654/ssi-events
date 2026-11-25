@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { categoryOf, type EventCategoryType } from '@/lib/event-categories';
+import { localizeCategory } from '@/lib/i18n/categories';
 import { useRealtimeRefresh } from '@/components/realtime/RealtimeProvider';
 import { OpenEventCard, UpcomingGrid, type IEvent } from '@/components/user/EventGrid';
+import { useI18n } from '@/lib/i18n';
 
 /**
  * A category's own page (e.g. /mantram): the events of that kind that are open, soonest first,
@@ -12,7 +14,8 @@ import { OpenEventCard, UpcomingGrid, type IEvent } from '@/components/user/Even
  * lib/event-categories.ts.
  */
 export function CategoryPage({ type }: { type: EventCategoryType }) {
-  const category = categoryOf(type);
+  const { t, locale } = useI18n();
+  const category = localizeCategory(categoryOf(type), locale);
   const page = category.page;
   const [events, setEvents] = useState<IEvent[] | null>(null);
   const [pastEvents, setPastEvents] = useState<IEvent[]>([]);
@@ -32,7 +35,7 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
         .sort((a, b) => String(b.startDate).localeCompare(String(a.startDate))));
       setError('');
     } catch {
-      setError('Unable to load events. Please retry.');
+      setError('loadError');
     }
   }, [type]);
 
@@ -45,7 +48,7 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
 
   return (
     <main className="mx-auto w-full max-w-[1200px] px-4 pb-16 pt-5 md:px-8 md:pt-8">
-      <Link href="/" className="text-[13px] font-medium text-primary underline-offset-4 hover:underline">All events</Link>
+      <Link href="/" className="text-[13px] font-medium text-primary underline-offset-4 hover:underline">{t('common.allEvents')}</Link>
       <h1 className="mt-2 text-[24px] font-semibold leading-tight tracking-[-0.01em] text-secondary md:text-[30px]">
         {page.title}
       </h1>
@@ -57,11 +60,11 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
           {category.external.externalUrl ? (
             <a href={category.external.externalUrl} target="_blank" rel="noopener"
               className="mt-4 inline-flex h-11 items-center rounded-full bg-primary px-6 text-[14px] font-semibold text-white">
-              Go to the conference website
+              {t('home.goToConferenceSite')}
             </a>
           ) : (
             <p className="mt-2 text-[16px] leading-[1.6] text-gray-600">
-              <span className="mb-2 block font-semibold text-secondary">Registration link to follow</span>
+              <span className="mb-2 block font-semibold text-secondary">{t('home.registrationLinkToFollow')}</span>
               {category.external.comingSoon}
             </p>
           )}
@@ -75,11 +78,11 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
         <div className="mt-4">
           {error ? (
             <p role="alert" className="text-[14px] text-gray-600">
-              {error}{' '}
-              <button type="button" onClick={() => { void load(); }} className="font-medium text-primary underline underline-offset-4">Try again</button>
+              {t('home.loadEventsError')}{' '}
+              <button type="button" onClick={() => { void load(); }} className="font-medium text-primary underline underline-offset-4">{t('common.tryAgain')}</button>
             </p>
           ) : events === null ? (
-            <div aria-busy="true" aria-label="Loading" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div aria-busy="true" aria-label={t('common.loading')} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[0, 1].map((i) => <div key={i} className="h-[320px] animate-pulse rounded-xl bg-gray-100" />)}
             </div>
           ) : events.length ? (
@@ -105,7 +108,7 @@ export function CategoryPage({ type }: { type: EventCategoryType }) {
       {/* The category explained: below the events, so open events lead the page. */}
       {page.intro.length > 0 && (
         <section aria-labelledby="category-about" className="mt-12 border-t border-gray-200 pt-6 md:mt-14 md:pt-8">
-          <h2 id="category-about" className="text-[16px] font-semibold text-secondary md:text-[17px]">About {page.title}</h2>
+          <h2 id="category-about" className="text-[16px] font-semibold text-secondary md:text-[17px]">{t('home.aboutCategory', { name: page.title })}</h2>
           <div className="mt-2 max-w-[72ch] space-y-2 text-[13.5px] leading-[1.65] text-gray-600 md:text-[14px]">
             {page.intro.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
           </div>

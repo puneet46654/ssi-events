@@ -8,6 +8,7 @@ import { useDialog } from '@/lib/use-dialog';
 import { AppFeedbackForm, useAppFeedbackDone } from '@/components/user/AppFeedback';
 import { hasSlotEnded } from '@/lib/events/status';
 import { ticketStorage } from '@/lib/booking-contracts';
+import { useI18n } from '@/lib/i18n';
 
 import { isValidPhone, normalizePhone } from '@/lib/phone';
 import { chooseCountries, INDIA_FALLBACK, type CountryOption } from '@/lib/country-defaults';
@@ -135,6 +136,7 @@ const CACHE_KEY =
 export default function MyTicketsPage() {
 
 
+  const { t } = useI18n();
   const hydrated = useHydrated();
   const [mobile, setMobile] = useState('');
   // Needed on a device that didn't make the booking: a phone number alone never reveals tickets.
@@ -167,7 +169,7 @@ export default function MyTicketsPage() {
   const loadTickets = useCallback(async (value: string, bookingReference = '') => {
     const clean = normalizePhone(value);
     if (!isValidPhone(value)) {
-      setError('Enter the mobile number you registered with.');
+      setError(t('tickets.errEnterMobile'));
       return;
     }
     pendingRef.current?.abort();
@@ -183,12 +185,12 @@ export default function MyTicketsPage() {
       });
       const data = await response.json();
       if (version !== requestVersion.current || controller.signal.aborted) return;
-      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to load your ticket. Please retry.');
+      if (!response.ok || !data.success) throw new Error(data.message || t('tickets.errLoad'));
       if (data.referenceNeeded) {
         // Nothing this device may show yet: ask for the reference instead of showing an empty list.
         setReferenceNeeded(true);
         setTickets([]);
-        setError('No tickets for this number have been opened on this device. Enter the booking reference from your confirmation to view them.');
+        setError(t('tickets.errReferenceNeeded'));
         return;
       }
       setReferenceNeeded(false);
@@ -206,11 +208,11 @@ export default function MyTicketsPage() {
       try { if (keep) localStorage.setItem(CACHE_KEY, clean); else localStorage.removeItem(CACHE_KEY); } catch { /* Storage is optional. */ }
     } catch (error) {
       if (version !== requestVersion.current || controller.signal.aborted) return;
-      setError(error instanceof Error ? error.message : 'Unable to load your ticket. Please retry.');
+      setError(error instanceof Error ? error.message : t('tickets.errLoad'));
     } finally {
       if (version === requestVersion.current) setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -357,7 +359,7 @@ export default function MyTicketsPage() {
               text-secondary
             "
           >
-            My tickets
+            {t('common.myTickets')}
           </h1>
 
 
@@ -379,7 +381,7 @@ export default function MyTicketsPage() {
                 hover:text-primary-dark
               "
             >
-              Look up another ticket
+              {t('tickets.lookUpAnother')}
             </button>
           )}
 
@@ -422,13 +424,13 @@ export default function MyTicketsPage() {
                 text-secondary
               "
             >
-              Registered mobile number
+              {t('tickets.registeredMobile')}
             </label>
 
 
             <div className="mt-2 flex gap-2">
               <select disabled={!hydrated}
-                aria-label="Country code"
+                aria-label={t('tickets.countryCode')}
                 value={phoneCountry.iso2}
                 onChange={e => {
                   const next = countries.find(country => country.iso2 === e.target.value);
@@ -456,7 +458,7 @@ export default function MyTicketsPage() {
                 if (e.key === 'Enter') void loadTickets(fullNumber(mobile), reference);
               }}
 
-              placeholder="Mobile number, e.g. 98765 43210"
+              placeholder={t('tickets.mobilePlaceholder')}
 
               inputMode="tel"
 
@@ -487,7 +489,7 @@ export default function MyTicketsPage() {
 
 
             <label htmlFor="ticket-reference" className="mt-3 block text-[13px] font-semibold text-secondary">
-              Booking reference{referenceNeeded ? '' : ' (optional)'}
+              {referenceNeeded ? t('tickets.bookingReference') : t('tickets.bookingReferenceOptional')}
             </label>
             <input disabled={!hydrated}
               id="ticket-reference"
@@ -501,7 +503,7 @@ export default function MyTicketsPage() {
               className="mt-1.5 h-11 w-full rounded-xl border border-gray-200 bg-white/80 px-3 text-[13px] uppercase transition-colors focus:bg-white tracking-wide outline-none focus:border-primary/40"
             />
 
-            <p className="mt-3 text-xs text-gray-500">On the device you booked with, your mobile number is enough. On any other device, also enter the booking reference shown on your confirmation.</p>
+            <p className="mt-3 text-xs text-gray-500">{t('tickets.lookupHelp')}</p>
 
             <button
               disabled={!hydrated || loading}
@@ -520,8 +522,8 @@ export default function MyTicketsPage() {
             >
 
               {loading
-                ? 'Checking...'
-                : 'View tickets'}
+                ? t('tickets.checking')
+                : t('tickets.viewTickets')}
             </button>
             {previousMobile && (
               <button
@@ -529,7 +531,7 @@ export default function MyTicketsPage() {
                 onClick={() => window.history.back()}
                 className="mt-2 h-11 w-full rounded-lg border border-gray-200 text-[12px] font-semibold text-secondary hover:bg-gray-50"
               >
-                ← Back to my tickets (number ending {previousMobile.slice(-4)})
+                {t('tickets.backToTickets', { n: previousMobile.slice(-4) })}
               </button>
             )}
 
@@ -607,7 +609,7 @@ export default function MyTicketsPage() {
                   text-secondary
                 "
               >
-                No tickets found
+                {t('tickets.noTicketsFound')}
               </h2>
 
 
@@ -620,7 +622,7 @@ export default function MyTicketsPage() {
                   text-gray-500
                 "
               >
-                No ticket matches this mobile number.
+                {t('tickets.noTicketsMatch')}
               </p>
 
 
@@ -646,14 +648,14 @@ export default function MyTicketsPage() {
           >
             <span aria-hidden="true" className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[13px] font-bold text-white">✓</span>
             <div className="min-w-0 flex-1">
-              <p className="text-[14px] font-semibold text-secondary">{justBookedWaitlist ? "You're on the waitlist" : 'Booking confirmed'}</p>
+              <p className="text-[14px] font-semibold text-secondary">{justBookedWaitlist ? t('tickets.onWaitlist') : t('tickets.bookingConfirmed')}</p>
               <p className="mt-0.5 text-[12px] text-gray-600">
                 {justBookedWaitlist
-                  ? 'Your waitlist place is below, and we have emailed you the details. If a booked attendee does not arrive, staff at the venue will seat waitlisted attendees in the order they joined. Give your name or reference at the registration desk.'
-                  : `Your ticket ${justBooked} is below, and we have emailed a copy to the address you registered with. Open QR Ticket to save it to your phone, and present it at the venue for check-in.`}
+                  ? t('tickets.waitlistBannerText')
+                  : t('tickets.confirmedBannerText', { id: justBooked })}
               </p>
             </div>
-            <button type="button" onClick={() => setJustBooked('')} aria-label="Dismiss" className="text-[18px] leading-none text-gray-400 hover:text-gray-600">×</button>
+            <button type="button" onClick={() => setJustBooked('')} aria-label={t('common.dismiss')} className="text-[18px] leading-none text-gray-400 hover:text-gray-600">×</button>
           </motion.div>
         )}
 
@@ -661,7 +663,7 @@ export default function MyTicketsPage() {
           <motion.section
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            aria-label="Rate SSInnovations Events"
+            aria-label={t('tickets.rateApp')}
             className="mt-3 rounded-2xl border border-amber-200/80 bg-amber-50/70 p-4 backdrop-blur-md"
           >
             <AppFeedbackForm compact onDone={markFeedbackDone} />
@@ -853,16 +855,17 @@ function TicketCard({
   onManage: (mode: 'reschedule' | 'cancel') => void;
   highlighted?: boolean;
 }) {
+  const { t, intl } = useI18n();
   const upcoming = ticket.status === 'ACTIVE';
   const waitlisted = ticket.status === 'WAITLISTED';
   const changeable = (upcoming || waitlisted) && !!ticket.canManage;
   const date = ticket.date
-    ? new Date(ticket.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
+    ? new Date(ticket.date).toLocaleDateString(intl, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
     : '';
   const when = ticket.registrationOnly
     ? ticket.eventEndDate && ticket.eventEndDate !== ticket.date
-      ? `${date} – ${new Date(ticket.eventEndDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' })} · Any time`
-      : `${date} · Any time`
+      ? `${date} – ${new Date(ticket.eventEndDate).toLocaleDateString(intl, { day: 'numeric', month: 'short', timeZone: 'UTC' })} · ${t('tickets.anyTime')}`
+      : `${date} · ${t('tickets.anyTime')}`
     : `${date} · ${ticket.startTime} – ${ticket.endTime}`;
 
   return (
@@ -890,7 +893,7 @@ function TicketCard({
           </div>
           <p className="mt-1 truncate text-[12.5px] font-medium text-secondary/80">
             {when}
-            {!ticket.registrationOnly && <span className="text-gray-400"> {shortZone(ticket.timeZone)}</span>}
+            {!ticket.registrationOnly && <span className="text-gray-400"> {shortZone(ticket.timeZone, intl)}</span>}
           </p>
           {ticket.venue && <p className="truncate text-[12px] text-gray-500">{ticket.venue}</p>}
         </div>
@@ -898,7 +901,7 @@ function TicketCard({
 
       {waitlisted ? (
         <p className="mt-3 rounded-xl border border-dashed border-amber-300 bg-amber-50/70 px-3 py-2 text-[12.5px] leading-snug text-amber-800">
-          You are registered and we have your details. This slot is full, so there is no QR code yet. If a seat frees up, use Change slot to take it and get your QR ticket; at the venue, staff also seat waitlisted doctors in order.
+          {t('tickets.waitlistNote')}
         </p>
       ) : (
       <div className="mt-3 flex items-center gap-2">
@@ -907,15 +910,15 @@ function TicketCard({
           onClick={onClick}
           className="btn-primary h-10 flex-1 rounded-full px-4 text-[14px] font-medium text-white transition-transform active:scale-[0.98]"
         >
-          {ticket.status === 'CANCELLED' ? 'View cancellation' : 'Show QR ticket'}
+          {ticket.status === 'CANCELLED' ? t('tickets.viewCancellation') : t('tickets.showQr')}
         </button>
         {upcoming && (
           <a
             href={googleCalendarUrl(ticket)}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Add to Google Calendar"
-            title="Add to Google Calendar"
+            aria-label={t('tickets.addToCalendar')}
+            title={t('tickets.addToCalendar')}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-gray-200/80 bg-white/70 text-secondary transition-colors hover:bg-white"
           >
             <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
@@ -933,11 +936,11 @@ function TicketCard({
           <span className="flex shrink-0 gap-1">
             {!ticket.registrationOnly && (
               <button type="button" onClick={() => onManage('reschedule')} className="rounded-full px-3 py-1.5 text-primary transition-colors hover:bg-primary/[0.06]">
-                {waitlisted ? 'Change slot' : 'Reschedule'}
+                {waitlisted ? t('tickets.changeSlot') : t('tickets.reschedule')}
               </button>
             )}
             <button type="button" onClick={() => onManage('cancel')} className="rounded-full px-3 py-1.5 text-red-600 transition-colors hover:bg-red-50">
-              {waitlisted ? 'Leave waitlist' : 'Cancel'}
+              {waitlisted ? t('tickets.leaveWaitlist') : t('common.cancel')}
             </button>
           </span>
         </div>
@@ -948,9 +951,9 @@ function TicketCard({
 }
 
 /** Short zone name, e.g. Asia/Kolkata -> IST. */
-function shortZone(timeZone?: string) {
+function shortZone(timeZone?: string, locale = 'en-IN') {
   try {
-    return new Intl.DateTimeFormat('en-IN', { timeZone: eventTimeZone(timeZone), timeZoneName: 'short' })
+    return new Intl.DateTimeFormat(locale, { timeZone: eventTimeZone(timeZone), timeZoneName: 'short' })
       .formatToParts(new Date())
       .find((part) => part.type === 'timeZoneName')?.value ?? '';
   } catch {
@@ -959,6 +962,7 @@ function shortZone(timeZone?: string) {
 }
 
 function StatusBadge({ status, position }: { status: TicketStatus; position?: number | null }) {
+  const { t } = useI18n();
   const style =
     status === 'WAITLISTED'
       ? 'bg-amber-100 text-amber-800'
@@ -967,7 +971,7 @@ function StatusBadge({ status, position }: { status: TicketStatus; position?: nu
       : status === 'ATTENDED'
         ? 'bg-primary/10 text-primary'
         : 'bg-gray-100 text-gray-600';
-  const label = status === 'WAITLISTED' ? `Waitlist${position ? ` #${position}` : ''}` : status === 'ACTIVE' ? 'Upcoming' : status === 'ATTENDED' ? 'Attended' : status.charAt(0) + status.slice(1).toLowerCase();
+  const label = status === 'WAITLISTED' ? (position ? t('tickets.statusWaitlistN', { n: position }) : t('tickets.statusWaitlist')) : status === 'ACTIVE' ? t('tickets.statusUpcoming') : status === 'ATTENDED' ? t('tickets.statusAttended') : status === 'CANCELLED' ? t('tickets.statusCancelled') : t('tickets.statusExpired');
   return <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${style}`}>{label}</span>;
 }
 
@@ -989,7 +993,8 @@ function ManageTicketDialog({
   onClose: () => void;
   onDone: () => void;
 }) {
-  const dialog = useDialog(true, onClose, mode === 'cancel' ? 'Cancel booking' : 'Reschedule booking');
+  const { t, intl } = useI18n();
+  const dialog = useDialog(true, onClose, mode === 'cancel' ? t('tickets.cancelBooking') : t('tickets.rescheduleBooking'));
   const sheetDrag = useDragControls();
   const [days, setDays] = useState<DayOption[] | null>(mode === 'cancel' ? [] : null);
   const [choice, setChoice] = useState<{ dayScheduleId: string; slotId: string } | null>(null);
@@ -1002,16 +1007,16 @@ function ManageTicketDialog({
     fetch(`/api/events/${encodeURIComponent(ticket.eventId)}/slots?refresh=${Date.now()}`, { cache: 'no-store', signal: controller.signal })
       .then(response => response.json())
       .then(data => {
-        if (!data?.success || !Array.isArray(data.days)) throw new Error(data?.error || 'Unable to load time slots.');
+        if (!data?.success || !Array.isArray(data.days)) throw new Error(data?.error || t('tickets.errSlots'));
         setDays((data.days as DayOption[]).map(day => ({
           ...day, slots: day.slots.filter(slot => ticket.status === 'WAITLISTED'
             ? slot.available || (slot.waitlistOpen && slot._id !== ticket.slotId)
             : slot.available && slot._id !== ticket.slotId),
         })).filter(day => day.slots.length));
       })
-      .catch(err => { if (!controller.signal.aborted) { setDays([]); setError(err instanceof Error ? err.message : 'Unable to load time slots.'); } });
+      .catch(err => { if (!controller.signal.aborted) { setDays([]); setError(err instanceof Error ? err.message : t('tickets.errSlots')); } });
     return () => controller.abort();
-  }, [mode, ticket.eventId, ticket.slotId, ticket.status]);
+  }, [mode, ticket.eventId, ticket.slotId, ticket.status, t]);
 
   async function submit() {
     if (saving || (mode === 'reschedule' && !choice)) return;
@@ -1025,15 +1030,15 @@ function ManageTicketDialog({
           body: JSON.stringify({ bookingId: ticket.bookingId, ...choice }),
         });
       const data = await response.json().catch(() => null);
-      if (!response.ok || !data?.success) throw new Error(data?.error || 'Something went wrong. Please retry.');
+      if (!response.ok || !data?.success) throw new Error(data?.error || t('tickets.errGeneric'));
       onDone();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please retry.');
+      setError(err instanceof Error ? err.message : t('tickets.errGeneric'));
       setSaving(false);
     }
   }
 
-  const dayLabel = (value: string) => new Date(value).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const dayLabel = (value: string) => new Date(value).toLocaleDateString(intl, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
 
   return (
     <motion.div
@@ -1052,28 +1057,28 @@ function ManageTicketDialog({
       >
         <SheetHandle controls={sheetDrag} />
         <h2 className="text-[16px] font-semibold text-secondary">
-          {mode === 'cancel' ? (ticket.status === 'WAITLISTED' ? 'Leave the waitlist?' : 'Cancel this booking?') : ticket.status === 'WAITLISTED' ? 'Change your slot' : 'Choose a new time slot'}
+          {mode === 'cancel' ? (ticket.status === 'WAITLISTED' ? t('tickets.leaveWaitlistQ') : t('tickets.cancelBookingQ')) : ticket.status === 'WAITLISTED' ? t('tickets.changeYourSlot') : t('tickets.chooseNewSlot')}
         </h2>
         <p className="mt-1 text-[12px] text-gray-500">
-          {ticket.eventName} · {ticket.registrationOnly ? 'registration' : <>currently {ticket.date ? dayLabel(ticket.date) : ''}, {ticket.startTime} - {ticket.endTime}</>}
+          {ticket.eventName} · {ticket.registrationOnly ? t('tickets.registration') : t('tickets.currently', { date: ticket.date ? dayLabel(ticket.date) : '', start: ticket.startTime, end: ticket.endTime })}
         </p>
 
         {mode === 'reschedule' && ticket.status === 'WAITLISTED' && (
           <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-[12.5px] leading-snug text-emerald-800">
-            Pick a slot with seats left to get a confirmed booking and your QR ticket straight away, or another full slot to wait there instead.
+            {t('tickets.waitlistPickHelp')}
           </p>
         )}
 
         {mode === 'cancel' ? (
           <p className="mt-4 text-[13px] text-gray-600">
             {ticket.status === 'WAITLISTED'
-              ? 'You will lose your place in the queue for this slot. You can join again later, but you would go to the back of the queue.'
-              : 'Your seat will be released for someone else and this QR ticket will stop working. This cannot be undone.'}
+              ? t('tickets.leaveWaitlistWarn')
+              : t('tickets.cancelWarn')}
           </p>
         ) : days === null ? (
-          <p className="mt-4 text-[13px] text-gray-500">Loading available slots...</p>
+          <p className="mt-4 text-[13px] text-gray-500">{t('tickets.loadingSlots')}</p>
         ) : days.length === 0 && !error ? (
-          <p className="mt-4 text-[13px] text-gray-500">{ticket.status === 'WAITLISTED' ? 'No other slots are open right now.' : 'No other slots have seats left right now.'}</p>
+          <p className="mt-4 text-[13px] text-gray-500">{ticket.status === 'WAITLISTED' ? t('tickets.noOtherOpen') : t('tickets.noOtherSeats')}</p>
         ) : (
           <div className="mt-4 space-y-4">
             {days.map(day => (
@@ -1088,8 +1093,8 @@ function ManageTicketDialog({
                         className={`rounded-xl border px-3 py-2 text-left text-[12px] transition-colors duration-200 ${selected ? 'border-primary bg-primary/[0.06] text-primary' : 'border-gray-200 text-secondary hover:bg-gray-50'}`}>
                         <span className="block font-semibold">{slot.startTime} - {slot.endTime}</span>
                         {slot.available
-                          ? <span className="text-[13px] text-emerald-700">{slot._id === ticket.slotId ? 'Seat free in your slot · ' : ''}{slot.remaining} seat{slot.remaining === 1 ? '' : 's'} left</span>
-                          : <span className="text-[13px] text-amber-700">Full · waitlist{slot.waitlistCount ? ` (${slot.waitlistCount} waiting)` : ''}</span>}
+                          ? <span className="text-[13px] text-emerald-700">{slot._id === ticket.slotId ? t('tickets.seatFreeInSlot') : ''}{t(slot.remaining === 1 ? 'tickets.seatLeft' : 'tickets.seatsLeft', { n: slot.remaining })}</span>
+                          : <span className="text-[13px] text-amber-700">{slot.waitlistCount ? t('tickets.fullWaitlistN', { n: slot.waitlistCount }) : t('tickets.fullWaitlist')}</span>}
                       </button>
                     );
                   })}
@@ -1103,13 +1108,13 @@ function ManageTicketDialog({
 
         <div className="mt-6 flex justify-end gap-2">
           <button type="button" onClick={onClose} className="h-11 flex-1 rounded-full border border-gray-200 px-4 text-[13px] font-semibold text-secondary sm:flex-none">
-            {mode === 'cancel' ? (ticket.status === 'WAITLISTED' ? 'Stay on waitlist' : 'Keep booking') : 'Close'}
+            {mode === 'cancel' ? (ticket.status === 'WAITLISTED' ? t('tickets.stayOnWaitlist') : t('tickets.keepBooking')) : t('common.close')}
           </button>
           <button type="button" onClick={() => void submit()} disabled={saving || (mode === 'reschedule' && !choice)}
             className={`h-11 flex-1 rounded-full px-4 text-[13px] font-semibold text-white disabled:opacity-50 sm:flex-none ${mode === 'cancel' ? 'bg-red-600' : 'bg-primary'}`}>
-            {saving ? 'Saving...' : mode === 'cancel' ? (ticket.status === 'WAITLISTED' ? 'Leave waitlist' : 'Cancel booking')
-              : ticket.status === 'WAITLISTED' && choice && !days?.some(d => d.slots.some(sl => sl._id === choice.slotId && sl.available)) ? 'Move to this waitlist'
-              : ticket.status === 'WAITLISTED' ? 'Confirm my seat' : 'Confirm new slot'}
+            {saving ? t('tickets.saving') : mode === 'cancel' ? (ticket.status === 'WAITLISTED' ? t('tickets.leaveWaitlist') : t('tickets.cancelBooking'))
+              : ticket.status === 'WAITLISTED' && choice && !days?.some(d => d.slots.some(sl => sl._id === choice.slotId && sl.available)) ? t('tickets.moveToWaitlist')
+              : ticket.status === 'WAITLISTED' ? t('tickets.confirmSeat') : t('tickets.confirmNewSlot')}
           </button>
         </div>
       </motion.div>
@@ -1119,13 +1124,14 @@ function ManageTicketDialog({
 
 /** The ticket as one card: what staff need at the door, and what the attendee saves to their phone. */
 function TicketPass({ ticket, onClose }: { ticket: Ticket; onClose: () => void }) {
+  const { t, intl } = useI18n();
   const cardRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const cancelled = ticket.status === 'CANCELLED';
   const name = [ticket.details?.title, ticket.details?.fullName].filter(Boolean).join(' ');
-  const date = new Date(ticket.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-  const endDate = new Date(ticket.eventEndDate || ticket.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const date = new Date(ticket.date).toLocaleDateString(intl, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const endDate = new Date(ticket.eventEndDate || ticket.date).toLocaleDateString(intl, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
   async function save() {
     if (!cardRef.current || saving) return;
@@ -1139,7 +1145,7 @@ function TicketPass({ ticket, onClose }: { ticket: Ticket; onClose: () => void }
       link.download = `SSI-ticket-${ticket.bookingId}.png`;
       link.click();
     } catch {
-      setSaveError('The ticket could not be saved. Please take a screenshot instead.');
+      setSaveError(t('tickets.saveError'));
     } finally {
       setSaving(false);
     }
@@ -1151,14 +1157,14 @@ function TicketPass({ ticket, onClose }: { ticket: Ticket; onClose: () => void }
         <p className="text-[12px] font-medium text-primary">SS Innovations Events</p>
         <p className="mt-1 text-[17px] font-semibold leading-snug text-secondary">{ticket.eventName}</p>
         <dl className="mt-3 space-y-1.5 text-[13px] text-gray-700">
-          {name && <div><dt className="sr-only">Attendee</dt><dd className="font-medium text-secondary">{name}</dd></div>}
-          <div><dt className="sr-only">Date</dt><dd>{ticket.registrationOnly && endDate !== date ? `${date} to ${endDate}` : date}</dd></div>
-          <div><dt className="sr-only">Time</dt><dd>{ticket.registrationOnly ? 'Any time during the event' : `${ticket.startTime} – ${ticket.endTime} (${eventTimeZone(ticket.timeZone)})`}</dd></div>
-          {ticket.venue && <div><dt className="sr-only">Venue</dt><dd>{ticket.venue}</dd></div>}
+          {name && <div><dt className="sr-only">{t('tickets.attendee')}</dt><dd className="font-medium text-secondary">{name}</dd></div>}
+          <div><dt className="sr-only">{t('tickets.date')}</dt><dd>{ticket.registrationOnly && endDate !== date ? t('tickets.dateRange', { start: date, end: endDate }) : date}</dd></div>
+          <div><dt className="sr-only">{t('tickets.time')}</dt><dd>{ticket.registrationOnly ? t('tickets.anyTimeDuringEvent') : `${ticket.startTime} – ${ticket.endTime} (${eventTimeZone(ticket.timeZone)})`}</dd></div>
+          {ticket.venue && <div><dt className="sr-only">{t('tickets.venue')}</dt><dd>{ticket.venue}</dd></div>}
         </dl>
         <div className="mt-4 flex justify-center">
           {cancelled
-            ? <p className="max-w-xs py-8 text-center font-semibold text-red-700">Event cancelled. This ticket is not valid for admission.</p>
+            ? <p className="max-w-xs py-8 text-center font-semibold text-red-700">{t('tickets.eventCancelledInvalid')}</p>
             : <QRCodeSVG value={ticket.qrData} size={220} marginSize={2} />}
         </div>
         <p className="mt-3 text-center text-[13px] font-semibold tracking-wide text-secondary">{ticket.bookingId}</p>
@@ -1168,12 +1174,12 @@ function TicketPass({ ticket, onClose }: { ticket: Ticket; onClose: () => void }
         {!cancelled && (
           <button type="button" onClick={() => { void save(); }} disabled={saving}
             className="btn-primary h-11 flex-1 rounded-full px-4 text-[14px] font-medium text-white disabled:opacity-60">
-            {saving ? 'Saving…' : 'Save ticket'}
+            {saving ? t('tickets.saving') : t('tickets.saveTicket')}
           </button>
         )}
         <button type="button" onClick={onClose}
           className="h-11 flex-1 rounded-full border border-gray-200 px-4 text-[14px] font-semibold text-secondary">
-          Close
+          {t('common.close')}
         </button>
       </div>
     </>

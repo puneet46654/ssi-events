@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { confirmBooking } from '@/lib/bookings/confirm-booking';
+import { useI18n } from '@/lib/i18n';
 
 /**
  * Tickets now live only in My Tickets. This route remains for old links and for
@@ -11,6 +12,7 @@ import { confirmBooking } from '@/lib/bookings/confirm-booking';
 export default function BookingConfirmRedirect() {
   const { id: eventId } = useParams<{ id: string }>();
   const router = useRouter();
+  const { t } = useI18n();
 
   useEffect(() => {
     let cancelled = false;
@@ -36,7 +38,7 @@ export default function BookingConfirmRedirect() {
 
   return (
     <main className="flex min-h-dvh items-center justify-center bg-transparent px-4">
-      <p role="status" className="text-[14px] font-medium text-gray-500">Opening your ticket...</p>
+      <p role="status" className="text-[14px] font-medium text-gray-500">{t('event.openingTicket')}</p>
     </main>
   );
 }

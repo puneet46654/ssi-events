@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { calendarDateFormatter } from '@/lib/events/dates';
 import { categoryOf } from '@/lib/event-categories';
+import { useI18n } from '@/lib/i18n';
 
 export interface IEvent {
   _id: string;
@@ -110,6 +111,7 @@ const UpcomingEventCard = memo(function UpcomingEventCard({
   completed:
     boolean;
 }) {
+  const { t, intl } = useI18n();
   return (
     <motion.div
       initial={{
@@ -237,7 +239,7 @@ const UpcomingEventCard = memo(function UpcomingEventCard({
           "
         >
 
-          <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-primary">{categoryOf(event.eventType).cardLabel}</span>
+          <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-primary">{event.eventType === 'event' ? t('home.cmeWorkshop') : event.eventType === 'participation' ? t('home.conferenceLabel') : categoryOf(event.eventType).cardLabel}</span>
           <h3
             className="
               mt-1
@@ -270,6 +272,7 @@ const UpcomingEventCard = memo(function UpcomingEventCard({
           >
             {formatDate(
               event.startDate,
+              intl,
             )}
           </p>
 
@@ -364,6 +367,7 @@ export function EventPlaceholder({
 export function formatDate(
   value:
     string,
+  locale = 'en-GB',
 ) {
   const date =
     new Date(
@@ -379,7 +383,7 @@ export function formatDate(
   }
 
   return calendarDateFormatter(
-    'en-GB',
+    locale,
     {
       day:
         '2-digit',
@@ -474,6 +478,7 @@ export const OpenEventCard = memo(function OpenEventCard({
   index:
     number;
 }) {
+  const { t, intl } = useI18n();
   return (
     <motion.div
       initial={{
@@ -591,7 +596,7 @@ export const OpenEventCard = memo(function OpenEventCard({
           "
         >
           {/* TYPE */}
-          <span className="block text-[12px] font-semibold uppercase tracking-[0.06em] text-primary">{categoryOf(event.eventType).cardLabel}</span>
+          <span className="block text-[12px] font-semibold uppercase tracking-[0.06em] text-primary">{event.eventType === 'event' ? t('home.cmeWorkshop') : event.eventType === 'participation' ? t('home.conferenceLabel') : categoryOf(event.eventType).cardLabel}</span>
 
           {/* NAME */}
 
@@ -637,6 +642,7 @@ export const OpenEventCard = memo(function OpenEventCard({
               value={formatDateRange(
                 event.startDate,
                 event.endDate,
+                intl,
               )}
             />
           </div>
@@ -674,7 +680,7 @@ export const OpenEventCard = memo(function OpenEventCard({
                   text-secondary
                 "
               >
-                About
+                {t('home.about')}
               </span>
 
               <p
@@ -694,7 +700,7 @@ export const OpenEventCard = memo(function OpenEventCard({
               >
                 {event.description
                   ?.trim() ||
-                  'View event information, schedule and registration details.'}
+                  t('home.viewEventInfoFallback')}
               </p>
             </div>
           </div>
@@ -727,7 +733,7 @@ export const OpenEventCard = memo(function OpenEventCard({
                   text-gray-400
                 "
               >
-                {event.registrationMode === 'info' ? 'Information only' : 'Registration available'}
+                {event.registrationMode === 'info' ? t('home.informationOnly') : t('home.registrationAvailable')}
               </span>
 
               <span
@@ -746,7 +752,7 @@ export const OpenEventCard = memo(function OpenEventCard({
                   group-hover:text-primary-dark
                 "
               >
-                View event
+                {t('home.viewEvent')}
 
                 <ArrowIcon />
               </span>
@@ -808,6 +814,7 @@ export function formatDateRange(
 
   endValue:
     string,
+  locale = 'en-GB',
 ) {
   const start =
     new Date(
@@ -836,12 +843,13 @@ export function formatDateRange(
   ) {
     return formatDate(
       startValue,
+      locale,
     );
   }
 
   const startLabel =
     calendarDateFormatter(
-      'en-GB',
+      locale,
       {
         day:
           '2-digit',
@@ -855,7 +863,7 @@ export function formatDateRange(
 
   const endLabel =
     calendarDateFormatter(
-      'en-GB',
+      locale,
       {
         day:
           '2-digit',

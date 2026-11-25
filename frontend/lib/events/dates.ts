@@ -68,9 +68,10 @@ export function slotInstant(date: Date | string, time: string, timeZone = DEFAUL
   } catch { return new Date(NaN); }
 }
 
-export function formatSlotTime(value: string): string {
+/** 12-hour slot time; attendee pages pass their language (Intl tag), admin keeps the English default. */
+export function formatSlotTime(value: string, locale = 'en-GB'): string {
   const instant = slotInstant('2000-01-01', value, 'UTC');
-  return Number.isNaN(instant.getTime()) ? value : new Intl.DateTimeFormat('en-GB', {
+  return Number.isNaN(instant.getTime()) ? value : new Intl.DateTimeFormat(locale, {
     timeZone: 'UTC', hour: 'numeric', minute: '2-digit', hour12: true,
   }).format(instant);
 }
