@@ -6,6 +6,7 @@ import { login, logout, session } from './routes/admin-auth.js';
 import { collectAnalytics } from './routes/analytics.js';
 import { cancelBooking, createBooking, eventSlots, getOwnBooking, myTickets, rescheduleBooking, savePending } from './routes/bookings.js';
 import { listActivity } from './routes/admin-activity.js';
+import { createFolder, createNote, deleteFolder, deleteNote, getFolderWithNotes, listFolders, updateFolder, updateNote } from './routes/admin-notes.js';
 import { attendanceSummary, checkIn, moveWaitlisted, seatFromWaitlist, waitlistForEvent } from './routes/admin-attendance.js';
 import { analyticsLive, analyticsSummary } from './routes/admin-analytics.js';
 import { dashboard } from './routes/admin-dashboard.js';
@@ -56,6 +57,14 @@ export const router = new Router()
   .get('/api/admin/waitlist', waitlistForEvent)
   .post('/api/admin/waitlist/seat', seatFromWaitlist)
   .post('/api/admin/waitlist/move', moveWaitlisted)
+  .get('/api/admin/notes/folders', listFolders)
+  .post('/api/admin/notes/folders', createFolder)
+  .get('/api/admin/notes/folders/:id', getFolderWithNotes)
+  .patch('/api/admin/notes/folders/:id', updateFolder)
+  .delete('/api/admin/notes/folders/:id', deleteFolder)
+  .post('/api/admin/notes/folders/:id/notes', createNote)
+  .patch('/api/admin/notes/folders/:id/notes/:noteId', updateNote)
+  .delete('/api/admin/notes/folders/:id/notes/:noteId', deleteNote)
   .get('/api/admin/reports', reports)
   .get('/api/admin/dashboard', dashboard)
   .get('/api/admin/analytics', analyticsSummary)

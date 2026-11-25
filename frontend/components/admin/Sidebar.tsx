@@ -37,7 +37,8 @@ interface SidebarProps {
 const ALL_NAV_ITEMS: {
   name: string;
   href: string;
-  permission: AdminPermission;
+  /** Omitted: open to every signed-in admin (shared Notes workspace). */
+  permission?: AdminPermission;
   icon: string;
 }[] = [
   {
@@ -67,6 +68,12 @@ const ALL_NAV_ITEMS: {
     permission: 'check-in',
     icon:
       'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+  },
+  {
+    name: 'Notes',
+    href: '/admin/notes',
+    icon:
+      'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7zm6 6h6m-6 3h4',
   },
   {
     name: 'Reports & Export',
@@ -187,7 +194,7 @@ export default function Sidebar({
       }
 
       return ALL_NAV_ITEMS.filter((item) =>
-        hasAdminPermission(currentUser, item.permission),
+        !item.permission || hasAdminPermission(currentUser, item.permission),
       );
     }, [
       currentUser,
