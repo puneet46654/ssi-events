@@ -7,14 +7,14 @@ import { useEffect, useState } from 'react';
 const SHOW_MS = 2500;
 
 /**
- * Every time the home page is opened, point out the feedback button for 2.5 s.
+ * Every time the home page or My tickets is opened, point out the feedback button for 2.5 s.
  * Any tap dismisses it early.
  */
 export function useFeedbackHint(): boolean {
   const pathname = usePathname();
   const [show, setShow] = useState(false);
   useEffect(() => {
-    if (pathname !== '/' && pathname !== '/events') return;
+    if (!['/', '/events', '/events/mytickets'].includes(pathname)) return;
     const timers = [
       window.setTimeout(() => setShow(true), 600), // after the page has settled
       window.setTimeout(() => setShow(false), 600 + SHOW_MS),

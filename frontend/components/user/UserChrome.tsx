@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { AppFeedbackDialog } from '@/components/user/AppFeedback';
 import { useSmartBack, useTrackPreviousPath } from '@/lib/flow-nav';
 import { HeaderHint, useFeedbackHint } from './HeaderHint';
@@ -252,21 +253,86 @@ export function UserFooter() {
   );
 }
 
+/**
+ * Dynamic-Island-style tab bar: scrolling down shrinks it to a small pill with only My tickets;
+ * scrolling up (or reaching the top) springs it back to full width.
+ */
+function useCollapseOnScroll(): boolean {
+  const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    let last = window.scrollY;
+    let frame = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const y = window.scrollY;
+        const delta = y - last;
+        if (y < 48) { setCollapsed(false); last = y; return; }
+        if (Math.abs(delta) < 8) return; // ignore tiny jitters
+        setCollapsed(delta > 0);
+        last = y;
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    // A new page starts expanded.
+    const reset = window.setTimeout(() => setCollapsed(false), 0);
+    return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(frame); window.clearTimeout(reset); };
+  }, [pathname]);
+  return collapsed;
+}
+
+// Soft, settled spring (like the Dynamic Island): no stiffness, a hint of bounce.
+const ISLAND_SPRING = { type: 'spring', visualDuration: 0.5, bounce: 0.18 } as const;
+const TAB_FADE = { type: 'spring', visualDuration: 0.32, bounce: 0 } as const;
+
+const HOME_ICON = 'M3 10.5 12 3l9 7.5M5 9.5V20h5v-6h4v6h5V9.5';
+const TICKET_ICON = 'M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V7Zm10-2v12';
+
 export function UserBottomNav() {
   const { onTickets } = useChrome();
+  const collapsed = useCollapseOnScroll();
+  // Collapsed, the pill offers the other place: Home from My tickets, My tickets from everywhere else.
+  const showEvents = !collapsed || onTickets;
+  const showTickets = !collapsed || !onTickets;
+
+  const tab = (key: 'events' | 'tickets') => (
+    <motion.div
+      key={key}
+      layout
+      className="flex min-w-0 flex-1"
+      initial={{ opacity: 0, scale: 0.86 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.86, transition: { duration: 0.14 } }}
+      transition={TAB_FADE}
+    >
+      {key === 'events' ? (
+        <NavItem href="/" label="Events" active={collapsed || !onTickets}>
+          <path strokeLinecap="round" strokeLinejoin="round" d={HOME_ICON} />
+        </NavItem>
+      ) : (
+        <NavItem href="/events/mytickets" label="My tickets" active={collapsed || onTickets}>
+          <path strokeLinecap="round" strokeLinejoin="round" d={TICKET_ICON} />
+        </NavItem>
+      )}
+    </motion.div>
+  );
 
   return (
     // iOS-style floating tab bar: a glass capsule; the active tab sits on a brighter lens.
     // A soft fade behind it keeps content scrolling underneath from showing around the capsule.
     <nav aria-label="Main" className="vt-bottom pointer-events-none fixed inset-x-0 bottom-0 z-40 h-[var(--user-nav-h)] bg-[linear-gradient(to_top,rgba(230,236,246,0.96)_35%,rgba(230,236,246,0))] px-4 pb-[max(8px,env(safe-area-inset-bottom))] pt-1.5 md:hidden">
-      <div className="lg-chrome pointer-events-auto mx-auto grid h-full max-w-[400px] grid-cols-2 gap-1 rounded-full border p-1">
-      <NavItem href="/" label="Events" active={!onTickets}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10.5 12 3l9 7.5M5 9.5V20h5v-6h4v6h5V9.5" />
-      </NavItem>
-      <NavItem href="/events/mytickets" label="My tickets" active={onTickets}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V7Zm10-2v12" />
-      </NavItem>
-      </div>
+      <motion.div
+        className="lg-chrome pointer-events-auto mx-auto flex h-full w-full gap-1 overflow-hidden rounded-full border p-1 will-change-[max-width]"
+        initial={false}
+        animate={{ maxWidth: collapsed ? 148 : 400 }}
+        transition={ISLAND_SPRING}
+      >
+        <AnimatePresence initial={false} mode="popLayout">
+          {showEvents && tab('events')}
+          {showTickets && tab('tickets')}
+        </AnimatePresence>
+      </motion.div>
     </nav>
   );
 }
@@ -312,7 +378,7 @@ function NavItem({
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className={`relative flex flex-col items-center justify-center gap-0.5 rounded-full text-[11.5px] font-semibold transition-[background-color,color,box-shadow,transform] duration-300 ease-out active:scale-[0.97] ${
+      className={`relative flex w-full flex-col items-center justify-center gap-0.5 rounded-full text-[11.5px] font-semibold transition-[background-color,color,box-shadow,transform] duration-300 ease-out active:scale-[0.97] ${
         active ? 'bg-white/85 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,1),0_2px_10px_-2px_rgba(40,63,143,0.25)]' : 'text-gray-500'
       }`}
     >
