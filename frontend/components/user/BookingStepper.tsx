@@ -1,20 +1,17 @@
 /** Two-step progress card shared by the booking details form (step 1) and the time-slot page (step 2). */
 /** On step 2, `onEditDetails` makes "Your details" a button back to the form. */
-import { useI18n } from '@/lib/i18n';
-
 export default function BookingStepper({ step, onEditDetails }: { step: 1 | 2; onEditDetails?: () => void }) {
   const done = step === 2;
-  const { t } = useI18n();
   const editable = done && !!onEditDetails;
   return (
     <nav
-      aria-label={t('common.bookingProgress')}
+      aria-label="Booking progress"
       className="flex items-center gap-2.5 glass rounded-2xl px-3 py-2 sm:px-4"
     >
       <div
         className={`flex shrink-0 items-center gap-2 ${editable ? '-m-1 cursor-pointer rounded-xl p-1 transition-colors hover:bg-primary/[0.05] active:bg-primary/[0.08]' : ''}`}
         aria-current={step === 1 ? 'step' : undefined}
-        {...(editable ? { role: 'button', tabIndex: 0, 'aria-label': t('common.editDetails'), onClick: onEditDetails, onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEditDetails!(); } } } : {})}
+        {...(editable ? { role: 'button', tabIndex: 0, 'aria-label': 'Edit your details', onClick: onEditDetails, onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEditDetails!(); } } } : {})}
       >
         <span
           className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-[14px] font-semibold text-white ${
@@ -32,8 +29,8 @@ export default function BookingStepper({ step, onEditDetails }: { step: 1 | 2; o
           )}
         </span>
         <span className="leading-tight">
-          <span className="block text-[10px] font-semibold uppercase max-[359px]:hidden tracking-[0.08em] text-gray-400">{t('common.step1')}</span>
-          <span className={`block text-[13.5px] font-semibold ${done ? 'text-primary' : 'text-secondary'}`}>{t('common.yourDetails')}</span>
+          <span className="block text-[10px] font-semibold uppercase max-[359px]:hidden tracking-[0.08em] text-gray-400">Step 1</span>
+          <span className={`block text-[13.5px] font-semibold ${done ? 'text-primary' : 'text-secondary'}`}>Your details</span>
         </span>
       </div>
 
@@ -56,8 +53,8 @@ export default function BookingStepper({ step, onEditDetails }: { step: 1 | 2; o
           2
         </span>
         <span className="leading-tight">
-          <span className="block text-[10px] font-semibold uppercase max-[359px]:hidden tracking-[0.08em] text-gray-400">{t('common.step2')}</span>
-          <span className={`block text-[13.5px] font-semibold ${done ? 'text-secondary' : 'text-gray-400'}`}>{t('common.timeSlot')}</span>
+          <span className="block text-[10px] font-semibold uppercase max-[359px]:hidden tracking-[0.08em] text-gray-400">Step 2</span>
+          <span className={`block text-[13.5px] font-semibold ${done ? 'text-secondary' : 'text-gray-400'}`}>Time slot</span>
         </span>
       </div>
     </nav>

@@ -25,7 +25,6 @@ import {
 import {
   useRealtimeRefresh,
 } from '@/components/realtime/RealtimeProvider';
-import { useI18n } from '@/lib/i18n';
 
 
 interface DaySchedule {
@@ -105,7 +104,6 @@ const EASE = [
 ] as const;
 
 export default function EventDetailsPage() {
-  const { t, intl } = useI18n();
   const params =
     useParams<{
       id: string;
@@ -195,7 +193,7 @@ export default function EventDetailsPage() {
           ) {
             throw new Error(
               data.error ||
-                t('event.loadFailed'),
+                'Failed to load event.',
             );
           }
 
@@ -214,7 +212,7 @@ export default function EventDetailsPage() {
           setError(
             error instanceof Error
               ? error.message
-              : t('event.loadFailed'),
+              : 'Failed to load event.',
           );
 
         } finally {
@@ -226,7 +224,7 @@ export default function EventDetailsPage() {
         }
       },
       [
-        eventId, t,
+        eventId,
       ],
     );
 
@@ -270,11 +268,9 @@ export default function EventDetailsPage() {
       return formatTimeRange(
         firstDay.startTime,
         firstDay.endTime,
-        intl,
       );
     }, [
       event,
-      intl,
     ]);
 
   const remainingCapacity =
@@ -299,7 +295,7 @@ export default function EventDetailsPage() {
       <EventError
         message={
           error ||
-          t('event.couldNotLoadMsg')
+          'Event could not be loaded.'
         }
         onBack={() =>
           router.push(
@@ -319,7 +315,7 @@ export default function EventDetailsPage() {
   const unlimited = registrationOnly && !event.capacity;
   const canBook =
     (event.status === 'LIVE' || event.status === 'UPCOMING') && (unlimited || remainingCapacity > 0);
-  const bookLabel = t('event.registerNow');
+  const bookLabel = 'Register now';
 
   return (
     <main
@@ -332,7 +328,7 @@ export default function EventDetailsPage() {
       "
     >
       {error && <div role="alert" className="m-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-        {error} <button type="button" className="ml-3 underline" onClick={() => { void fetchEvent(false); }}>{t('common.tryAgain')}</button>
+        {error} <button type="button" className="ml-3 underline" onClick={() => { void fetchEvent(false); }}>Try again</button>
       </div>}
 
       {/* CONTENT */}
@@ -508,7 +504,7 @@ export default function EventDetailsPage() {
                 >
                   {event.eventName}
                 </h1>
-                {!infoOnly && <p className="mt-1 text-xs text-gray-500">{t('event.allTimes', { tz: eventTimeZone(event.timeZone) })}</p>}
+                {!infoOnly && <p className="mt-1 text-xs text-gray-500">All event times: {eventTimeZone(event.timeZone)}</p>}
 
                 <div
                   className="
@@ -525,7 +521,6 @@ export default function EventDetailsPage() {
                     value={formatDateRange(
                       event.startDate,
                       event.endDate,
-                      intl,
                     )}
                   />
 
@@ -549,7 +544,7 @@ export default function EventDetailsPage() {
 
               {infoOnly ? (event.stand ? (
                 <div className="rounded-xl border border-gray-200 bg-[#FAFBFC] p-4">
-                  <p className="text-[14px] font-medium text-gray-500">{t('event.findUsAt')}</p>
+                  <p className="text-[14px] font-medium text-gray-500">Find us at</p>
                   <p className="mt-1.5 text-[18px] font-bold tracking-[-0.01em] text-secondary">{event.stand}</p>
                 </div>
               ) : null) : (
@@ -569,7 +564,7 @@ export default function EventDetailsPage() {
                   lg:block
                 "
               >
-                <p className="text-[14px] font-medium text-gray-500">{t('event.availability')}</p>
+                <p className="text-[14px] font-medium text-gray-500">Availability</p>
 
                 <p
                   className="
@@ -583,7 +578,7 @@ export default function EventDetailsPage() {
                     text-secondary
                   "
                 >
-                  {unlimited ? t('event.open') : remainingCapacity}
+                  {unlimited ? 'Open' : remainingCapacity}
                 </p>
 
                 <p
@@ -595,7 +590,7 @@ export default function EventDetailsPage() {
                     text-gray-500
                   "
                 >
-                  {unlimited ? t('event.noLimit') : registrationOnly ? (remainingCapacity === 1 ? t('event.placeLeft') : t('event.placesLeft')) : remainingCapacity === 1 ? t('event.slotLeft') : t('event.slotsLeft')}
+                  {unlimited ? 'No registration limit' : registrationOnly ? (remainingCapacity === 1 ? 'place left' : 'places left') : remainingCapacity === 1 ? 'slot left' : 'slots left'}
                 </p>
               </div>
               )}
@@ -622,7 +617,7 @@ export default function EventDetailsPage() {
                   sm:text-lg
                 "
               >
-                {t('event.about')}
+                About this event
               </h2>
 
               <p
@@ -648,7 +643,7 @@ export default function EventDetailsPage() {
 
             {links.length > 0 && (
               <section className="mt-6">
-                <h2 className="font-heading text-[17px] font-bold text-secondary sm:text-lg">{t('event.moreInfo')}</h2>
+                <h2 className="font-heading text-[17px] font-bold text-secondary sm:text-lg">More information</h2>
                 <ul className="mt-3 flex flex-wrap gap-2">
                   {links.map((link) => (
                     <li key={link.url}>
@@ -656,7 +651,7 @@ export default function EventDetailsPage() {
                         className="inline-flex h-10 items-center gap-1.5 rounded-full border border-gray-300 bg-white px-4 text-[14px] font-medium text-secondary transition-colors hover:border-primary hover:text-primary">
                         {link.label}
                         <span aria-hidden="true">↗</span>
-                        <span className="sr-only"> {t('event.opensNewTab')}</span>
+                        <span className="sr-only"> (opens in a new tab)</span>
                       </a>
                     </li>
                   ))}
@@ -718,7 +713,7 @@ export default function EventDetailsPage() {
             `}
           >
             {canBook
-              ? bookLabel : remainingCapacity === 0 && (event.status === 'LIVE' || event.status === 'UPCOMING') ? t('event.fullyBooked') : t('event.bookingClosed')}
+              ? bookLabel : remainingCapacity === 0 && (event.status === 'LIVE' || event.status === 'UPCOMING') ? 'Fully booked' : 'Booking closed'}
           </Link>
           )}
 
@@ -749,7 +744,7 @@ export default function EventDetailsPage() {
               hover:bg-gray-50
             "
           >
-            {t('common.goBack')}
+            Go back
           </button>
         </div>
       </div>
@@ -759,7 +754,7 @@ export default function EventDetailsPage() {
         <div className="mx-auto flex w-full max-w-[430px] items-center gap-3">
           <Link
             href="/"
-            aria-label={t('common.home')}
+            aria-label="Home"
             className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-gray-200/80 bg-white/80 text-secondary shadow-[inset_0_1px_0_rgba(255,255,255,1)] transition active:scale-95"
           >
             <svg className="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
@@ -776,11 +771,11 @@ export default function EventDetailsPage() {
               href={`/events/${event._id}/book`}
               className="btn-primary flex h-12 flex-1 items-center justify-center rounded-full text-[16px] font-medium text-white transition active:scale-[0.98]"
             >
-              {t('event.registerNow')}
+              Register now
             </Link>
           ) : (
             <span className="flex h-12 flex-1 items-center justify-center rounded-full bg-gray-200/80 text-[15px] font-semibold text-gray-500">
-              {t('event.registrationClosed')}
+              Registration closed
             </span>
           )}
         </div>
@@ -800,7 +795,6 @@ function StatusBadge({
   status:
     EventDetails['status'];
 }) {
-  const { t } = useI18n();
   const classes =
     status === 'LIVE'
       ? 'bg-white text-[#15935A]'
@@ -833,7 +827,7 @@ function StatusBadge({
             rounded-full
             bg-[#19CC6A]
           "
-        /> )} {t(`event.status${status.charAt(0) + status.slice(1).toLowerCase()}`)} </span>
+        /> )} {status.charAt(0) + status.slice(1).toLowerCase()} </span>
   );
 }
 
@@ -854,7 +848,6 @@ function EventError({
   onRetry:
     () => void;
 }) {
-  const { t } = useI18n();
   return (
     <main
       className="
@@ -893,7 +886,7 @@ function EventError({
             text-secondary
           "
         >
-          {t('event.couldNotLoad')}
+          Event could not be loaded
         </h1>
 
         <p
@@ -937,7 +930,7 @@ function EventError({
               text-secondary
             "
           >
-            {t('common.goBack')}
+            Go back
           </button>
 
           <button
@@ -957,7 +950,7 @@ function EventError({
               text-white
             "
           >
-            {t('common.tryAgain')}
+            Try again
           </button>
         </div>
       </div>
@@ -1188,7 +1181,6 @@ function EventDetailsSkeleton() {
 function formatDateRange(
   startValue: string,
   endValue: string,
-  intl: string,
 ) {
   const start =
     new Date(
@@ -1205,7 +1197,7 @@ function formatDateRange(
     end.toDateString()
   ) {
     return calendarDateFormatter(
-      intl,
+      'en-GB',
       {
         day: '2-digit',
         month: 'short',
@@ -1218,7 +1210,7 @@ function formatDateRange(
 
   const startLabel =
     calendarDateFormatter(
-      intl,
+      'en-GB',
       {
         day: '2-digit',
         month: 'short',
@@ -1229,7 +1221,7 @@ function formatDateRange(
 
   const endLabel =
     calendarDateFormatter(
-      intl,
+      'en-GB',
       {
         day: '2-digit',
         month: 'short',
@@ -1245,12 +1237,14 @@ function formatDateRange(
 function formatTimeRange(
   start: string,
   end: string,
-  locale: string,
 ) {
-  return `${formatTime(start, locale)} – ${formatTime(end, locale)}`;
+  return `${formatTime(
+    start,
+  )} – ${formatTime(
+    end,
+  )}`;
 }
 
 function formatTime(
   value: string,
-  locale: string,
-) { return value ? formatSlotTime(value, locale) : ""; }
+) { return value ? formatSlotTime(value) : ""; }

@@ -6,8 +6,6 @@ import PendingRegistrations from '@/components/user/PendingRegistrations';
 import { CategoryCards } from '@/components/user/CategoryCards';
 import { OpenEventCard, UpcomingGrid } from '@/components/user/EventGrid';
 import { categoryOf } from '@/lib/event-categories';
-import { useI18n } from '@/lib/i18n';
-import type { Translate } from '@/lib/i18n';
 import { setEventSearch, useEventSearch } from '@/lib/event-search';
 
 
@@ -101,7 +99,6 @@ const EASE = [
 ============================================================ */
 
 export default function EventsPage() {
-  const { t } = useI18n();
 
   /* ==========================================================
      TRACK PAGE VIEW
@@ -584,7 +581,7 @@ export default function EventsPage() {
                 text-secondary
               "
             >
-              <span className="ssi-highlight">SS Innovations</span> {t('home.heroEvents')}
+              <span className="ssi-highlight">SS Innovations</span> events
             </h1>
 
           </div>
@@ -606,6 +603,10 @@ export default function EventsPage() {
               hasActiveFilters={hasActiveFilters}
             />
 
+            {/* Catches the tap outside the panel, so it only closes the panel (nothing underneath is opened). */}
+              {showFilters && (
+                <div aria-hidden="true" className="fixed inset-0 z-[60]" onClick={() => setShowFilters(false)} />
+              )}
             <AnimatePresence>
               {showFilters && (
                 <MobileFilterPanel
@@ -690,7 +691,7 @@ export default function EventsPage() {
                 lg:text-[56px]
               "
             >
-              <span className="ssi-highlight">SS Innovations</span> {t('home.heroEvents')}
+              <span className="ssi-highlight">SS Innovations</span> events
             </h1>
 
           </div>
@@ -709,6 +710,9 @@ export default function EventsPage() {
               hasActiveFilters={hasActiveFilters}
             />
   
+                    {showFilters && (
+                      <div aria-hidden="true" className="fixed inset-0 z-[60]" onClick={() => setShowFilters(false)} />
+                    )}
                     <AnimatePresence>
                       {showFilters && (
                         <DesktopFilterPanel
@@ -742,7 +746,7 @@ export default function EventsPage() {
                 </div>
                     <button
                       type="button"
-                      aria-label={t('home.refreshEvents')}
+                      aria-label="Refresh events"
                       disabled={
                         refreshing
                       }
@@ -825,7 +829,7 @@ export default function EventsPage() {
             >
               {hasSearch && (
                 <FilterTag
-                  label={t('home.searchTag', { query: search })}
+                  label={`Search: ${search}`}
                   onRemove={() =>
                     setSearch('')
                   }
@@ -837,7 +841,6 @@ export default function EventsPage() {
                 <FilterTag
                   label={formatStatus(
                     statusFilter,
-                    t,
                   )}
                   onRemove={() =>
                     setStatusFilter(
@@ -852,7 +855,6 @@ export default function EventsPage() {
                 <FilterTag
                   label={formatType(
                     typeFilter,
-                    t,
                   )}
                   onRemove={() =>
                     setTypeFilter(
@@ -880,7 +882,7 @@ export default function EventsPage() {
                   hover:text-secondary
                 "
               >
-                {t('home.clearAll')}
+                Clear all
               </button>
             </motion.div>
           )}
@@ -891,7 +893,7 @@ export default function EventsPage() {
         ==================================================== */}
 
         {loadError && <div role="alert" className="my-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">
-          {t('home.loadEventsError')} <button type="button" className="ml-3 underline" onClick={() => { void fetchEvents(false); }}>{t('common.tryAgain')}</button>
+          {loadError} <button type="button" className="ml-3 underline" onClick={() => { void fetchEvents(false); }}>Try again</button>
         </div>}
         {loading ? (
           <div
@@ -961,7 +963,7 @@ export default function EventsPage() {
               0 && (
               <AnimatedSection>
                 <SectionHeading
-                  title={t('home.openForRegistration')}
+                  title="Open for Registration"
                 />
 
                 <div
@@ -1037,7 +1039,7 @@ export default function EventsPage() {
               0 && (
               <AnimatedSection>
                 <SectionHeading
-                                    title={t('common.cmeWorkshops')}
+                                    title="CME and workshops"
                 />
 
                 <UpcomingGrid
@@ -1053,7 +1055,7 @@ export default function EventsPage() {
             {upcomingParticipation.length > 0 && (
               <AnimatedSection>
                 <SectionHeading
-                  title={t('common.conferences')}
+                  title="Conferences"
                 />
 
                 <UpcomingGrid events={upcomingParticipation} />
@@ -1068,7 +1070,7 @@ export default function EventsPage() {
                 'COMPLETED' && (
                 <AnimatedSection>
                   <SectionHeading
-                    title={t('home.completedEvents')}
+                    title="Completed Events"
                   />
 
                   <UpcomingGrid
@@ -1088,7 +1090,7 @@ export default function EventsPage() {
 
         <section className="mt-10 md:mt-14">
           <SectionHeading
-            title={t('home.browseByCategory')}
+            title="Browse by category"
           />
           <CategoryCards events={events} loading={loading && events.length === 0} />
         </section>
@@ -1118,11 +1120,10 @@ function FilterButton({
   onToggle: () => void;
   hasActiveFilters: boolean;
 }) {
-  const { t } = useI18n();
   return (
     <button
       type="button"
-      aria-label={t('home.filterEvents')}
+      aria-label="Filter events"
       aria-expanded={showFilters}
       onClick={onToggle}
       className={`relative inline-flex h-10 items-center gap-2 rounded-lg border px-3.5 text-[14px] font-medium transition-all ${
@@ -1132,8 +1133,8 @@ function FilterButton({
       }`}
     >
       <FilterIcon />
-      {t('home.filters')}
-      {hasActiveFilters && <span className="h-[6px] w-[6px] rounded-full bg-primary" aria-label={t('home.filtersApplied')} />}
+      Filters
+      {hasActiveFilters && <span className="h-[6px] w-[6px] rounded-full bg-primary" aria-label="Filters applied" />}
     </button>
   );
 }
@@ -1236,7 +1237,7 @@ function DesktopFilterPanel(
         right-0
         top-[48px]
 
-        z-50
+        z-[70]
 
         w-[400px]
 
@@ -1274,7 +1275,6 @@ function FilterContents({
   hasActiveFilters,
   onClose,
 }: FilterPanelProps) {
-  const { t } = useI18n();
   return (
     <>
       <div
@@ -1294,14 +1294,14 @@ function FilterContents({
               text-secondary
             "
           >
-            {t('home.filterEvents')}
+            Filter events
           </h3>
 
         </div>
 
         <button
           type="button"
-          aria-label={t('home.closeFilters')}
+          aria-label="Close filters"
           onClick={
             onClose
           }
@@ -1334,7 +1334,7 @@ function FilterContents({
         "
       >
         <FilterLabel>
-          {t('home.status')}
+          Status
         </FilterLabel>
 
         <div
@@ -1367,7 +1367,6 @@ function FilterContents({
                 }
                 label={formatStatus(
                   value,
-                  t,
                 )}
                 onClick={() =>
                   setStatusFilter(
@@ -1388,7 +1387,7 @@ function FilterContents({
         "
       >
         <FilterLabel>
-          {t('home.category')}
+          Category
         </FilterLabel>
 
         <div
@@ -1422,7 +1421,6 @@ function FilterContents({
                 }
                 label={formatType(
                   value,
-                  t,
                 )}
                 onClick={() =>
                   setTypeFilter(
@@ -1472,7 +1470,7 @@ function FilterContents({
             disabled:opacity-40
           "
         >
-          {t('home.clearFilters')}
+          Clear filters
         </button>
 
         <button
@@ -1499,7 +1497,7 @@ function FilterContents({
             hover:bg-primary-dark
           "
         >
-          {t('home.apply')}
+          Apply
         </button>
       </div>
     </>
@@ -1609,7 +1607,6 @@ function FilterTag({
   onRemove:
     () => void;
 }) {
-  const { t } = useI18n();
   return (
     <motion.span
       layout
@@ -1655,7 +1652,7 @@ function FilterTag({
 
       <button
         type="button"
-        aria-label={t('home.removeFilter', { label })}
+        aria-label={`Remove ${label}`}
         onClick={
           onRemove
         }
@@ -1776,7 +1773,6 @@ function NoMatchingEvents({
   clearAll:
     () => void;
 }) {
-  const { t } = useI18n();
   return (
     <motion.section
       initial={{
@@ -1833,7 +1829,7 @@ function NoMatchingEvents({
           text-secondary
         "
       >
-        {t('home.noMatchingEvents')}
+        No matching events
       </h2>
 
       <p
@@ -1849,7 +1845,8 @@ function NoMatchingEvents({
           text-gray-500
         "
       >
-        {t('home.noMatchingEventsHint')}
+        Try another search or clear
+        the current filters.
       </p>
 
       <button
@@ -1881,7 +1878,7 @@ function NoMatchingEvents({
           hover:bg-gray-50
         "
       >
-        {t('home.clearSearchAndFilters')}
+        Clear Search & Filters
       </button>
     </motion.section>
   );
@@ -2035,41 +2032,37 @@ function LoadingState() {
 function formatStatus(
   value:
     EventStatusFilter,
-  t: Translate,
 ) {
   if (
     value ===
     'ALL'
   ) {
-    return t('home.statusAll');
+    return 'All';
   }
 
   if (
     value ===
     'UPCOMING'
   ) {
-    return t('home.statusUpcoming');
+    return 'Upcoming';
   }
 
   if (
     value ===
     'COMPLETED'
   ) {
-    return t('home.statusCompleted');
+    return 'Completed';
   }
 
-  return t('home.statusOpen');
+  return 'Open';
 }
 
 function formatType(
   value:
     EventTypeFilter |
     IEvent['eventType'],
-  t: Translate,
 ) {
-  if (value === 'event') return t('home.cmeWorkshop');
-  if (value === 'participation') return t('common.conferences');
-  return value === 'ALL' ? t('home.statusAll') : categoryOf(value).name;
+  return value === 'ALL' ? 'All' : categoryOf(value).name;
 }
 
 /* ============================================================

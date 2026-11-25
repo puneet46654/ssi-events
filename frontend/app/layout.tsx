@@ -5,9 +5,6 @@ import { RealtimeProvider } from "@/components/realtime/RealtimeProvider";
 import { Warmup } from "@/components/perf/Warmup";
 import { Analytics } from "@/components/perf/Analytics";
 import MotionProvider from "@/components/MotionProvider";
-import { cookies } from "next/headers";
-import { I18nProvider } from "@/lib/i18n";
-import { isLocale, LOCALE_COOKIE } from "@/lib/i18n/types";
 
 // The SS Innovations typeface. Self-hosted by Next.js, so no request to Google at runtime.
 const figtree = Figtree({
@@ -41,9 +38,7 @@ export const viewport: Viewport = {
   themeColor: "#ffffff",
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const saved = (await cookies()).get(LOCALE_COOKIE)?.value;
-  const initialLocale = isLocale(saved) ? saved : undefined;
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
@@ -51,7 +46,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body className="liquid min-h-full flex flex-col" suppressHydrationWarning>
-        <MotionProvider><I18nProvider initialLocale={initialLocale}><RealtimeProvider>{children}<Warmup /><Analytics /></RealtimeProvider></I18nProvider></MotionProvider>
+        <MotionProvider><RealtimeProvider>{children}<Warmup /><Analytics /></RealtimeProvider></MotionProvider>
       </body>
     </html>
   );

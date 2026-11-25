@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useSmartBack } from '@/lib/flow-nav';
 import { navigateWithTransition } from '@/lib/page-transition';
 import { useId } from 'react';
-import { useI18n } from '@/lib/i18n';
 
 import { bookingStorage } from '@/lib/booking-contracts';
 
@@ -90,7 +89,6 @@ export default function ConferenceTemplate({
 }: ConferenceTemplateProps) {
   const router = useRouter();
   const smartBack = useSmartBack();
-  const { t } = useI18n();
 
   const formRef =
     useRef<HTMLFormElement | null>(
@@ -251,7 +249,7 @@ export default function ConferenceTemplate({
   ) {
     event.preventDefault();
 
-    if (countriesLoading) { setFormError(t('details.waitCountries')); return; }
+    if (countriesLoading) { setFormError('Please wait for the country choices to load.'); return; }
     setFormError('');
 
     const form =
@@ -270,7 +268,7 @@ export default function ConferenceTemplate({
 
     if (!isValidPhone(rawMobile, selectedPhoneCountry.callingCode)) {
       setFormError(
-        t('details.invalidMobile'),
+        'Please enter a valid mobile number.',
       );
 
       return;
@@ -280,7 +278,7 @@ export default function ConferenceTemplate({
       !selectedCountry.name
     ) {
       setFormError(
-        t('details.selectCountryErr'),
+        'Please select a country.',
       );
 
       return;
@@ -291,7 +289,7 @@ export default function ConferenceTemplate({
       !selectedState
     ) {
       setFormError(
-        t('details.selectStateErr'),
+        'Please select a state or province.',
       );
 
       return;
@@ -409,7 +407,7 @@ export default function ConferenceTemplate({
       setFormError(
         error instanceof Error
           ? error.message
-          : t('details.continueFailed'),
+          : 'Unable to continue to time slots.',
       );
 
       setSubmitting(false);
@@ -524,15 +522,15 @@ export default function ConferenceTemplate({
 
           <header className="mt-3.5">
             <h1 className="font-heading text-[21px] font-bold leading-tight tracking-[-0.02em] text-secondary sm:text-[24px]">
-              {t('common.yourDetails')}
+              Your details
             </h1>
             <p className="mt-0.5 text-[13.5px] text-gray-500">
               {eventName && (
                 <>
-                  {t('details.forBefore')}<span className="font-semibold text-secondary">{eventName}</span>{t('details.forAfter')} ·{' '}
+                  For <span className="font-semibold text-secondary">{eventName}</span> ·{' '}
                 </>
               )}
-              {t('details.allRequired')}
+              all fields required
             </p>
           </header>
 
@@ -616,7 +614,7 @@ export default function ConferenceTemplate({
           >
             {/* DESIGNATION */}
 
-            <Field label={t('details.designation')}>
+            <Field label="Designation">
               <select
                 name="designation"
                 required
@@ -625,7 +623,7 @@ export default function ConferenceTemplate({
                     ? 'Delegate'
                     : ''
                 }
-                aria-label={t('details.facultyOrDelegate')}
+                aria-label="Faculty or Delegate"
                 className={`${selectClass}`}
               >
                 {!removeDesignationPlaceholder && (
@@ -633,23 +631,23 @@ export default function ConferenceTemplate({
                     value=""
                     disabled
                   >
-                    {t('details.selectFacultyDelegate')}
+                    Select Faculty / Delegate
                   </option>
                 )}
 
                 <option value="Delegate">
-                  {t('details.delegate')}
+                  Delegate
                 </option>
 
                 <option value="Faculty">
-                  {t('details.faculty')}
+                  Faculty
                 </option>
               </select>
             </Field>
 
             {/* FULL NAME */}
 
-            <Field label={t('details.fullName')}>
+            <Field label="Full name">
               <div
                 className="
                   grid
@@ -664,7 +662,7 @@ export default function ConferenceTemplate({
                   name="title"
                   required
                   defaultValue="Dr."
-                  aria-label={t('details.titleAria')}
+                  aria-label="Title"
                   className={`${selectClass} px-3.5`}
                 >
                   <option value="Dr.">
@@ -693,7 +691,7 @@ export default function ConferenceTemplate({
                   type="text"
                   required
                   autoComplete="name"
-                  placeholder={t('details.namePh')}
+                  placeholder="e.g. Ramesh Kumar"
                   className={
                     inputClass
                   }
@@ -703,12 +701,12 @@ export default function ConferenceTemplate({
 
             {/* SPECIALTY */}
 
-            <Field label={t('details.specialty')}>
+            <Field label="Specialty / department">
               <input
                 name="specialty"
                 type="text"
                 required
-                placeholder={t('details.specialtyPh')}
+                placeholder="e.g. Cardiology"
                 className={
                   inputClass
                 }
@@ -717,7 +715,7 @@ export default function ConferenceTemplate({
 
             {/* PHONE */}
 
-            <Field label={t('details.mobile')}>
+            <Field label="Mobile number">
               <div
                 className="
                   grid
@@ -778,7 +776,7 @@ export default function ConferenceTemplate({
                   inputMode="tel"
                   autoComplete="tel-national"
                   maxLength={24}
-                  placeholder={t('details.mobile')}
+                  placeholder="Mobile number"
                   className={
                     inputClass
                   }
@@ -798,7 +796,7 @@ export default function ConferenceTemplate({
             {/* EMAIL */}
 
             <div className="md:col-span-2">
-              <Field label={t('details.email')}>
+              <Field label="Email">
                 <input
                   name="email"
                   type="email"
@@ -815,13 +813,13 @@ export default function ConferenceTemplate({
             {/* HOSPITAL */}
 
             <div className="md:col-span-2">
-              <Field label={t('details.hospital')}>
+              <Field label="Hospital">
                 <input
                   name="hospitalName"
                   type="text"
                   required
                   autoComplete="organization"
-                  placeholder={t('details.hospitalPh')}
+                  placeholder="e.g. All India Institute of Medical Sciences"
                   className={
                     inputClass
                   }
@@ -831,7 +829,7 @@ export default function ConferenceTemplate({
 
             {/* COUNTRY */}
 
-            <Field label={t('details.country')}>
+            <Field label="Country">
               <CountrySelector
                 countries={
                   filteredCountries
@@ -879,7 +877,7 @@ export default function ConferenceTemplate({
             {/* STATE */}
 
             <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-x-6">
-            <Field label={t('details.state')}>
+            <Field label="State">
               {states.length > 0 ? (
                 <select
                   name="state"
@@ -901,8 +899,8 @@ export default function ConferenceTemplate({
                 >
                   <option value="">
                     {statesLoading
-                      ? t('common.loading')
-                      : t('details.selectState')}
+                      ? 'Loading...'
+                      : 'Select state'}
                   </option>
 
                   {states.map(
@@ -938,8 +936,8 @@ export default function ConferenceTemplate({
                   }
                   placeholder={
                     statesLoading || countriesLoading
-                      ? t('common.loading')
-                      : t('details.statePh')
+                      ? 'Loading...'
+                      : 'e.g. Delhi'
                   }
                   className={
                     inputClass
@@ -951,13 +949,13 @@ export default function ConferenceTemplate({
             {/* CITY */}
 
             <div className="min-w-0">
-              <Field label={t('details.city')}>
+              <Field label="City">
                 <input
                   name="city"
                   type="text"
                   required
                   autoComplete="address-level2"
-                  placeholder={t('details.cityPh')}
+                  placeholder="e.g. New Delhi"
                   className={
                     inputClass
                   }
@@ -987,7 +985,7 @@ export default function ConferenceTemplate({
           >
             <Link
               href="/"
-              aria-label={t('common.home')}
+              aria-label="Home"
               className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border border-gray-200/80 bg-white/80 text-secondary shadow-[inset_0_1px_0_rgba(255,255,255,1)] transition active:scale-95 md:hidden"
             >
               <svg className="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
@@ -1033,7 +1031,7 @@ export default function ConferenceTemplate({
                 sm:order-1
               "
             >
-              {t('details.goBackBtn')}
+              Go Back
             </button>
 
             <button
@@ -1103,10 +1101,10 @@ export default function ConferenceTemplate({
                     "
                   />
 
-                  {t('details.loadingSlots')}
+                  Loading Time Slots...
                 </span>
               ) : (
-                t('details.continueToSlots')
+                'Continue to time slots'
               )}
             </button>
           </div>
@@ -1150,7 +1148,6 @@ function PhoneCountrySelector({
     country: CountryOption,
   ) => void;
 }) {
-  const { t } = useI18n();
   return (
     <div
       ref={dropdownRef}
@@ -1158,7 +1155,7 @@ function PhoneCountrySelector({
     >
       <button
         type="button"
-        aria-label={t('details.selectPhoneCode')}
+        aria-label="Select phone country code"
         disabled={loading}
         onClick={onToggle}
         className="
@@ -1205,7 +1202,7 @@ function PhoneCountrySelector({
           <SearchBox
             value={search}
             onChange={onSearch}
-            placeholder={t('details.searchCountryCode')}
+            placeholder="Search country or code"
           />
 
           <div
@@ -1217,10 +1214,10 @@ function PhoneCountrySelector({
             "
           >
             {loading ? (
-              <LoadingText text={t('details.loadingCodes')} />
+              <LoadingText text="Loading country codes..." />
             ) : countries.length ===
               0 ? (
-              <LoadingText text={t('details.noCountry')} />
+              <LoadingText text="No country found." />
             ) : (
               countries.map(
                 (country) => (
@@ -1315,14 +1312,13 @@ function CountrySelector({
     country: CountryOption,
   ) => void;
 }) {
-  const { t } = useI18n();
   return (
     <div
       ref={dropdownRef}
       className="relative min-w-0"
     >
       <button id="residence-country"
-        aria-label={t('details.countryAria', { name: selected.name })}
+        aria-label={`Country: ${selected.name}`}
         aria-expanded={open}
         type="button"
         disabled={loading}
@@ -1370,7 +1366,7 @@ function CountrySelector({
           <SearchBox
             value={search}
             onChange={onSearch}
-            placeholder={t('details.searchCountry')}
+            placeholder="Search country"
           />
 
           <div
@@ -1382,10 +1378,10 @@ function CountrySelector({
             "
           >
             {loading ? (
-              <LoadingText text={t('details.loadingCountries')} />
+              <LoadingText text="Loading countries..." />
             ) : countries.length ===
               0 ? (
-              <LoadingText text={t('details.noCountry')} />
+              <LoadingText text="No country found." />
             ) : (
               countries.map(
                 (country) => (
@@ -1519,7 +1515,6 @@ function SearchBox({
 
   placeholder: string;
 }) {
-  const { t } = useI18n();
   return (
     <div
       className="
@@ -1557,7 +1552,7 @@ function SearchBox({
           />
         </svg>
 
-        <input aria-label={t('details.searchCountries')}
+        <input aria-label="Search countries"
           type="search"
           autoFocus
           value={value}
@@ -1684,9 +1679,8 @@ function Field({
   label: string;
   children: ReactNode;
 }) {
-  const { t } = useI18n();
   const generatedId = useId();
-  const fieldId = label === t('details.country') ? 'residence-country' : generatedId;
+  const fieldId = label === 'Country' ? 'residence-country' : generatedId;
   return (
     <div className="min-w-0">
       <label htmlFor={fieldId}

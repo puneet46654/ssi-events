@@ -6,7 +6,6 @@ import BookingStepper from '@/components/user/BookingStepper';
 import { useSmartBack } from '@/lib/flow-nav';
 import { navigateWithTransition } from '@/lib/page-transition';
 import { readBookingDetails } from '@/lib/bookings/confirm-booking';
-import { useI18n } from '@/lib/i18n';
 
 
 import {
@@ -119,7 +118,6 @@ export default function TimeSlotsPage() {
     useRouter();
 
   const smartBack = useSmartBack();
-  const { t, intl } = useI18n();
 
   // Whose booking this is, shown above the slots; without details there is nothing to book with.
   const [bookingFor, setBookingFor] = useState('');
@@ -234,7 +232,7 @@ export default function TimeSlotsPage() {
           ) {
             throw new Error(
               data.error ||
-                t('slots.unableLoad'),
+                'Unable to load time slots.',
             );
           }
 
@@ -312,7 +310,7 @@ export default function TimeSlotsPage() {
           setError(
             error instanceof Error
               ? error.message
-              : t('slots.unableLoad'),
+              : 'Unable to load time slots.',
           );
         } finally {
           if (!controller.signal.aborted) {
@@ -322,7 +320,6 @@ export default function TimeSlotsPage() {
       },
       [
         eventId,
-        t,
       ],
     );
 
@@ -451,7 +448,7 @@ export default function TimeSlotsPage() {
       !selectedSlot || !(selectedSlot.available || selectedSlot.waitlistOpen)
     ) {
       setError(
-        t('slots.selectAvailable'),
+        'Please select an available time slot.',
       );
 
       return;
@@ -472,7 +469,7 @@ export default function TimeSlotsPage() {
       await loadSlots(true);
       setSubmitting(false);
       setSelectedSlotId('');
-      setError(err instanceof Error ? err.message : t('slots.unableConfirm'));
+      setError(err instanceof Error ? err.message : 'Unable to confirm booking. Please retry.');
     }
   }
 
@@ -508,9 +505,9 @@ export default function TimeSlotsPage() {
   }
 
   if (event?.status === 'CANCELLED') {
-    return <main className="mx-auto max-w-xl p-8 text-center"><h1 className="text-xl font-bold">{t('slots.cancelledTitle')}</h1>
-      <p className="my-4">{t('slots.cancelledMsg')}</p>
-      <button type="button" onClick={() => router.push('/')}>{t('slots.backToEvents')}</button></main>;
+    return <main className="mx-auto max-w-xl p-8 text-center"><h1 className="text-xl font-bold">Event cancelled</h1>
+      <p className="my-4">Bookings are closed. Existing tickets are not valid for admission.</p>
+      <button type="button" onClick={() => router.push('/')}>Back to events</button></main>;
   }
 
   if (!event) {
@@ -534,7 +531,7 @@ export default function TimeSlotsPage() {
           } catch (err) {
             await loadSlots(true);
             setSubmitting(false);
-            setError(err instanceof Error ? err.message : t('slots.unableConfirmReg'));
+            setError(err instanceof Error ? err.message : 'Unable to confirm your registration. Please retry.');
           }
         }}
       />
@@ -545,14 +542,14 @@ export default function TimeSlotsPage() {
      PAGE
   ============================================================ */
 
-  const timeZoneLabel = shortTimeZone(intl, event.timeZone);
+  const timeZoneLabel = shortTimeZone(event.timeZone);
   const joiningWaitlist = !!selectedSlot && !selectedSlot.available && !!selectedSlot.waitlistOpen;
   const anyWaitlist = !!selectedDay?.slots.some((slot) => slot.waitlistOpen);
   const confirmLabel = submitting
-    ? joiningWaitlist ? t('slots.joiningWaitlist') : t('slots.bookingSlot')
-    : joiningWaitlist ? t('slots.joinWaitlist')
-    : availableCount === 0 && !anyWaitlist ? t('slots.noSlotsLeft')
-    : t('slots.confirmBooking');
+    ? joiningWaitlist ? 'Joining waitlist...' : 'Booking your slot...'
+    : joiningWaitlist ? 'Join waitlist'
+    : availableCount === 0 && !anyWaitlist ? 'No slots left for this date'
+    : 'Confirm booking';
 
   return (
     <main className="booking-bg min-h-dvh overflow-x-hidden pb-[132px] md:pb-10">
@@ -561,9 +558,9 @@ export default function TimeSlotsPage() {
 
         {bookingFor && (
           <p className="mt-2 flex items-center justify-between gap-3 px-1 text-[13px] text-gray-500">
-            <span className="truncate">{t('slots.bookingFor')} <span className="font-semibold text-secondary">{bookingFor}</span></span>
+            <span className="truncate">Booking for <span className="font-semibold text-secondary">{bookingFor}</span></span>
             <button type="button" onClick={() => smartBack(`/events/${eventId}/book`)} className="shrink-0 font-semibold text-primary">
-              {t('slots.edit')}
+              Edit
             </button>
           </p>
         )}
@@ -589,12 +586,12 @@ export default function TimeSlotsPage() {
             {/* DATE */}
             <section>
               <div className="flex items-baseline justify-between gap-4">
-                <h2 className="text-[16px] font-semibold text-secondary">{t('slots.selectDate')}</h2>
-                <span className="text-[13px] text-gray-400">{t(days.length === 1 ? 'slots.dayCount' : 'slots.daysCount', { n: days.length })}</span>
+                <h2 className="text-[16px] font-semibold text-secondary">Select a date</h2>
+                <span className="text-[13px] text-gray-400">{days.length} {days.length === 1 ? 'day' : 'days'}</span>
               </div>
 
               {days.length === 0 ? (
-                <EmptyBlock title={t('slots.noDates')} message={t('slots.noDatesMsg')} />
+                <EmptyBlock title="No event dates available" message="The schedule for this event has not been configured yet." />
               ) : (
                 <div className="scrollbar-hide mt-3 flex gap-2.5 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
                   {days.map((day) => {
@@ -613,11 +610,11 @@ export default function TimeSlotsPage() {
                             : 'border-gray-200/80 bg-white/70 text-gray-500 hover:border-primary/30 hover:bg-white'
                         }`}
                       >
-                        <span className="font-medium">{calendarDateFormatter(intl, { weekday: 'short' }).format(date)}</span>
+                        <span className="font-medium">{calendarDateFormatter('en-IN', { weekday: 'short' }).format(date)}</span>
                         <span className={`text-[17px] font-bold ${active ? 'text-white' : 'text-secondary'}`}>
-                          {calendarDateFormatter(intl, { day: 'numeric' }).format(date)}
+                          {calendarDateFormatter('en-IN', { day: 'numeric' }).format(date)}
                         </span>
-                        <span className="font-medium">{calendarDateFormatter(intl, { month: 'short' }).format(date)}</span>
+                        <span className="font-medium">{calendarDateFormatter('en-IN', { month: 'short' }).format(date)}</span>
                       </motion.button>
                     );
                   })}
@@ -630,18 +627,18 @@ export default function TimeSlotsPage() {
             {/* TIME */}
             <section>
               <div className="flex items-baseline justify-between gap-3">
-                <h2 className="text-[16px] font-semibold text-secondary">{t('slots.chooseTime')}</h2>
-                <span className="text-[13px] text-gray-400">{t('slots.openOf', { a: availableCount, b: totalSlots })}</span>
+                <h2 className="text-[16px] font-semibold text-secondary">Choose a time</h2>
+                <span className="text-[13px] text-gray-400">{availableCount} of {totalSlots} open</span>
               </div>
 
               <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
-                <LegendItem type="available" label={t('slots.legendAvailable')} />
-                <LegendItem type="selected" label={t('slots.legendSelected')} />
-                {anyWaitlist && <LegendItem type="waitlist" label={t('slots.legendWaitlist')} />}
+                <LegendItem type="available" label="Available" />
+                <LegendItem type="selected" label="Selected" />
+                {anyWaitlist && <LegendItem type="waitlist" label="Full · waitlist" />}
               </div>
 
               {!selectedDay || selectedDay.slots.length === 0 ? (
-                <EmptyBlock title={t('slots.noSlots')} message={t('slots.noSlotsMsg')} />
+                <EmptyBlock title="No time slots available" message="There are currently no time slots configured for the selected date." />
               ) : (
                 <motion.div
                   key={selectedDay._id}
@@ -686,7 +683,7 @@ export default function TimeSlotsPage() {
                           }`}
                         >
                           {!booked && <span className={`h-1.5 w-1.5 rounded-full ${waitlist ? 'bg-amber-500' : slot.remaining <= 2 ? 'bg-red-500' : 'bg-emerald-500'}`} />}
-                          {slot.ended ? t('slots.timePassed') : booked ? t('slots.full') : waitlist ? (slot.waitlistCount ? t('slots.waitlistCount', { n: slot.waitlistCount }) : t('slots.waitlist')) : t('slots.left', { n: slot.remaining })}
+                          {slot.ended ? 'Time passed' : booked ? 'Full' : waitlist ? (slot.waitlistCount ? `Waitlist · ${slot.waitlistCount}` : 'Waitlist') : `${slot.remaining} left`}
                         </span>
                         {selected && (
                           <motion.span
@@ -715,7 +712,7 @@ export default function TimeSlotsPage() {
                   exit={{ opacity: 0, y: 5 }}
                   className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-[13px] font-medium leading-5 text-red-700"
                 >
-                  {error} <button type="button" className="ml-3 underline" onClick={() => { void loadSlots(true); }}>{t('common.retry')}</button>
+                  {error} <button type="button" className="ml-3 underline" onClick={() => { void loadSlots(true); }}>Retry</button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -727,12 +724,12 @@ export default function TimeSlotsPage() {
                 onClick={() => smartBack()}
                 className="h-12 rounded-full border border-gray-300 bg-white px-6 text-sm font-semibold text-secondary transition hover:bg-gray-50"
               >
-                {t('slots.backToDetails')}
+                Back to details
               </button>
               <div className="flex items-center gap-5">
                 {selectedDay && selectedSlot && (
                   <p className="text-right text-[13px] text-gray-500">
-                    {formatSelectedDate(intl, selectedDay.date)}
+                    {formatSelectedDate(selectedDay.date)}
                     <span className="block text-[16px] font-semibold text-secondary">{selectedSlot.startTime} – {selectedSlot.endTime}</span>
                   </p>
                 )}
@@ -750,7 +747,7 @@ export default function TimeSlotsPage() {
         </motion.section>
 
         <p className="mx-auto mt-4 max-w-xl px-3 text-center text-[12px] leading-4 text-gray-400">
-          {t('slots.availabilityNote')}
+          Slot availability may change until the booking is confirmed.
         </p>
       </div>
 
@@ -760,11 +757,11 @@ export default function TimeSlotsPage() {
           <div className="mb-2 flex min-h-[20px] items-baseline justify-between gap-2 px-1">
             {selectedDay && selectedSlot ? (
               <motion.p key={selectedSlot._id} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: EASE }} className="truncate text-[13px] text-gray-500">
-                {formatSelectedDate(intl, selectedDay.date)} · <span className="text-[15px] font-semibold text-secondary">{selectedSlot.startTime} – {selectedSlot.endTime}</span>
-                {joiningWaitlist && <span className="font-semibold text-amber-700"> · {selectedSlot.waitlistCount ? t('slots.waitlistAhead', { n: selectedSlot.waitlistCount }) : t('slots.waitlist')}</span>}
+                {formatSelectedDate(selectedDay.date)} · <span className="text-[15px] font-semibold text-secondary">{selectedSlot.startTime} – {selectedSlot.endTime}</span>
+                {joiningWaitlist && <span className="font-semibold text-amber-700"> · Waitlist{selectedSlot.waitlistCount ? `, ${selectedSlot.waitlistCount} ahead` : ''}</span>}
               </motion.p>
             ) : (
-              <p className="text-[13px] text-gray-500">{t('slots.pickSlot')}</p>
+              <p className="text-[13px] text-gray-500">Pick a time slot above</p>
             )}
           </div>
           <div className="flex items-center gap-2.5">
@@ -776,7 +773,7 @@ export default function TimeSlotsPage() {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 18l-6-6 6-6" />
               </svg>
-              {t('slots.details')}
+              Details
             </button>
             <button
               type="button"
@@ -934,7 +931,6 @@ function SlotsError({
   onRetry:
     () => void;
 }) {
-  const { t } = useI18n();
   return (
     <main
       className="
@@ -1033,7 +1029,7 @@ function SlotsError({
               text-secondary
             "
           >
-            {t('slots.unavailableTitle')}
+            Time slots unavailable
           </h1>
 
           <p
@@ -1084,7 +1080,7 @@ function SlotsError({
                 hover:bg-gray-50
               "
             >
-              {t('common.goBack')}
+              Go back
             </button>
 
             <button
@@ -1109,7 +1105,7 @@ function SlotsError({
                 hover:brightness-95
               "
             >
-              {t('common.tryAgain')}
+              Try again
             </button>
           </div>
         </div>
@@ -1126,16 +1122,16 @@ function SlotsError({
    DATE FORMAT
 ============================================================ */
 
-function formatSelectedDate(intl: string, value: string) {
-  return calendarDateFormatter(intl, { weekday: 'short', day: 'numeric', month: 'short' })
+function formatSelectedDate(value: string) {
+  return calendarDateFormatter('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })
     .format(new Date(value))
     .replace(',', '');
 }
 
 /** Short zone name for the venue line, e.g. Asia/Kolkata -> IST. */
-function shortTimeZone(intl: string, timeZone?: string) {
+function shortTimeZone(timeZone?: string) {
   try {
-    return new Intl.DateTimeFormat(intl, { timeZone: eventTimeZone(timeZone), timeZoneName: 'short' })
+    return new Intl.DateTimeFormat('en-IN', { timeZone: eventTimeZone(timeZone), timeZoneName: 'short' })
       .formatToParts(new Date())
       .find((part) => part.type === 'timeZoneName')?.value ?? '';
   } catch {
@@ -1398,27 +1394,26 @@ function SlotsLoading() {
 function OpenRegistration({ event, submitting, error, onBack, onConfirm }: {
   event: SlotEvent; submitting: boolean; error: string; onBack: () => void; onConfirm: () => void;
 }) {
-  const { t, intl } = useI18n();
-  const format = calendarDateFormatter(intl, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const format = calendarDateFormatter('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const start = format.format(new Date(event.startDate)), end = format.format(new Date(event.endDate));
   const full = event.remaining === 0;
   const closed = event.status === 'COMPLETED' || event.status === 'CANCELLED';
   return (
     <main className="mx-auto w-full max-w-xl px-4 pb-16 pt-8 md:pt-14">
-      <h1 className="text-[26px] font-semibold leading-tight text-secondary md:text-[32px]">{t('slots.confirmRegTitle')}</h1>
+      <h1 className="text-[26px] font-semibold leading-tight text-secondary md:text-[32px]">Confirm your registration</h1>
       <p className="mt-3 text-[16px] leading-[1.6] text-gray-600">
-        {t(start === end ? 'slots.openIntroDay' : 'slots.openIntroAny')}
+        This event does not use time slots. Once you confirm, your ticket with its QR code is shown on screen and sent to you by email. Present it at the venue on {start === end ? 'the day' : 'any day of the event'}.
       </p>
       <dl className="mt-6 space-y-3 rounded-[18px] bg-gray-50 p-5 text-[15px]">
-        <div><dt className="text-gray-500">{t('slots.event')}</dt><dd className="font-semibold text-secondary">{event.eventName}</dd></div>
-        <div><dt className="text-gray-500">{t(start === end ? 'slots.date' : 'slots.dates')}</dt><dd className="font-semibold text-secondary">{start === end ? start : t('slots.dateRange', { start, end })}</dd></div>
-        <div><dt className="text-gray-500">{t('slots.venue')}</dt><dd className="font-semibold text-secondary">{event.venue}</dd></div>
+        <div><dt className="text-gray-500">Event</dt><dd className="font-semibold text-secondary">{event.eventName}</dd></div>
+        <div><dt className="text-gray-500">{start === end ? 'Date' : 'Dates'}</dt><dd className="font-semibold text-secondary">{start === end ? start : `${start} to ${end}`}</dd></div>
+        <div><dt className="text-gray-500">Venue</dt><dd className="font-semibold text-secondary">{event.venue}</dd></div>
         {typeof event.remaining === 'number' && !full && (
-          <div><dt className="text-gray-500">{t('slots.placesRemaining')}</dt><dd className="font-semibold text-secondary">{event.remaining}</dd></div>
+          <div><dt className="text-gray-500">Places remaining</dt><dd className="font-semibold text-secondary">{event.remaining}</dd></div>
         )}
       </dl>
       {error && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-[14px] text-red-700">{error}</p>}
-      {full && !closed && <p className="mt-4 text-[15px] font-medium text-gray-700">{t('slots.regFull')}</p>}
+      {full && !closed && <p className="mt-4 text-[15px] font-medium text-gray-700">Registration for this event is full.</p>}
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <button
           type="button"
@@ -1426,10 +1421,10 @@ function OpenRegistration({ event, submitting, error, onBack, onConfirm }: {
           disabled={submitting || full || closed}
           className="btn-primary h-12 flex-1 rounded-full text-[16px] font-medium text-white disabled:opacity-60"
         >
-          {submitting ? t('slots.confirming') : t('slots.confirmRegistration')}
+          {submitting ? 'Confirming…' : 'Confirm registration'}
         </button>
         <button type="button" onClick={onBack} className="h-12 flex-1 rounded-full border border-gray-200 text-[16px] font-medium text-secondary">
-          {t('slots.back')}
+          Back
         </button>
       </div>
     </main>

@@ -22,7 +22,6 @@ import ConferenceTemplate from '@/app/components/admin/booking-templates/Confere
 import MantramTemplate from '@/app/components/admin/booking-templates/MantramTemplate';
 import Link from 'next/link';
 import { bookingStorage } from '@/lib/booking-contracts';
-import { useI18n } from '@/lib/i18n';
 
 
 type BookingFormTemplate =
@@ -120,7 +119,6 @@ function normalizeBookingTemplate(
 }
 
 export default function EventBookingPage() {
-  const { t } = useI18n();
   const params =
     useParams<{
       id: string;
@@ -232,7 +230,7 @@ export default function EventBookingPage() {
               await response.json();
           } catch {
             throw new Error(
-              t('details.invalidResponse'),
+              'The event server returned an invalid response.',
             );
           }
 
@@ -247,7 +245,7 @@ export default function EventBookingPage() {
               typeof data?.error === 'string'
                 ? data.error
                 :
-                t('details.unableToLoadEvent'),
+                'Unable to load this event.',
             );
           }
 
@@ -257,7 +255,7 @@ export default function EventBookingPage() {
             data.event.status !== 'COMPLETED' && data.event.status !== 'CANCELLED'
           ) {
             throw new Error(
-              t('details.invalidStatus'),
+              'The event server returned an invalid event status.',
             );
           }
 
@@ -299,7 +297,7 @@ export default function EventBookingPage() {
           setError(
             error instanceof Error
               ? error.message
-              : t('details.unableToLoadEvent'),
+              : 'Unable to load this event.',
           );
         } finally {
           if (!controller.signal.aborted) {
@@ -310,7 +308,7 @@ export default function EventBookingPage() {
         }
       },
       [
-        eventId, t,
+        eventId,
       ],
     );
 
@@ -388,18 +386,18 @@ export default function EventBookingPage() {
         "
       >
         {error && event && <div role="alert" className="m-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-          {error} <button type="button" className="ml-3 underline" onClick={() => { void loadEvent(false); }}>{t('common.tryAgain')}</button>
+          {error} <button type="button" className="ml-3 underline" onClick={() => { void loadEvent(false); }}>Try again</button>
         </div>}
         {loading ? (
           <BookingTemplateSkeleton />
         ) : !event ? (
           <BookingMessage
-            title={t('details.unableToLoadBooking')}
+            title="Unable to load booking"
             message={
               error ||
-              t('details.eventNotLoaded')
+              'The event could not be loaded.'
             }
-            primaryLabel={t('common.tryAgain')}
+            primaryLabel="Try Again"
             onPrimary={() =>
               void loadEvent()
             }
@@ -410,8 +408,8 @@ export default function EventBookingPage() {
         ) : event.status ===
           'COMPLETED' || event.status === 'CANCELLED' ? (
           <BookingMessage
-            title={t('details.bookingUnavailable')}
-            message={event.status === 'CANCELLED' ? t('details.eventCancelled') : t('details.eventCompleted')}
+            title="Booking unavailable"
+            message={event.status === 'CANCELLED' ? 'This event has been cancelled. Existing tickets are not valid for admission.' : 'This event has already completed and is no longer accepting bookings.'}
             onBack={() =>
               router.back()
             }
@@ -419,8 +417,8 @@ export default function EventBookingPage() {
         ) : event.bookingFormTemplate ===
           'template-3' ? (
           <BookingMessage
-            title={t('details.formUnavailable')}
-            message={t('details.formNotYet')}
+            title="Registration form unavailable"
+            message="The registration form for this event is not available yet."
             onBack={() =>
               router.back()
             }
@@ -435,18 +433,18 @@ export default function EventBookingPage() {
             <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-emerald-100 text-emerald-700" aria-hidden="true">
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="m5 12 4 4L19 6" /></svg>
             </span>
-            <h1 className="mt-3 text-[19px] font-bold text-secondary">{t('details.alreadyRegistered')}</h1>
+            <h1 className="mt-3 text-[19px] font-bold text-secondary">You have already registered</h1>
             <p className="mt-1 text-[13.5px] text-gray-500">
-              {t('details.regSavedBefore')}<span className="font-semibold text-secondary">{event.eventName}</span>{t('details.regSavedAfter', { ref: doneBooking })}
+              Your registration for <span className="font-semibold text-secondary">{event.eventName}</span> is saved (reference {doneBooking}).
             </p>
             <Link
               href={`/events/mytickets?booked=${encodeURIComponent(doneBooking)}`}
               className="btn-primary mt-4 flex h-12 w-full items-center justify-center rounded-full text-[15px] font-medium text-white"
             >
-              {t('details.viewMyTicket')}
+              View my ticket
             </Link>
             <button type="button" onClick={bookAnother} className="mt-2 h-11 w-full rounded-full border border-gray-200 bg-white/70 text-[14px] font-semibold text-secondary">
-              {t('details.registerAnother')}
+              Register another doctor
             </button>
           </motion.div>
         ) : (
@@ -523,12 +521,11 @@ function BookingHeader({
   eventName?:
     string;
 }) {
-  const { t } = useI18n();
   if (!eventName) return null;
   return (
     <div className="border-b border-gray-200/60 bg-white/45 max-md:hidden">
       <p className="mx-auto max-w-[600px] truncate px-6 py-2 text-center text-[12px] font-medium text-gray-500 sm:text-[13px]">
-        {t('details.registrationFor')}{' '}
+        Registration for{' '}
         <span className="font-semibold text-secondary">
           {eventName}
         </span>
@@ -560,7 +557,6 @@ function BookingMessage({
   onPrimary?:
     () => void;
 }) {
-  const { t } = useI18n();
   return (
     <div
       className="
@@ -708,7 +704,7 @@ function BookingMessage({
               hover:bg-gray-50
             "
           >
-            {t('common.goBack')}
+            Go back
           </button>
 
           {onPrimary &&
