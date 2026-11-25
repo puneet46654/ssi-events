@@ -516,7 +516,7 @@ export default function EventsPage() {
     <div
             className="
         min-h-dvh
-        bg-white
+        bg-transparent
         pb-[76px]
         md:pb-0
       "
@@ -531,10 +531,7 @@ export default function EventsPage() {
           top-0
           z-50
 
-          border-b
-          border-gray-200/80
-
-          bg-white
+          bg-transparent
 
           px-4
           pb-3
@@ -1160,21 +1157,12 @@ function MobileFilterPanel(
 ) {
   return (
     <motion.div
-      initial={{
-        opacity: 0,
-        y: -5,
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-      }}
-      exit={{
-        opacity: 0,
-        y: -5,
-      }}
-      transition={{
-        duration: 0.16,
-      }}
+      // iOS pop-over: grows out of the Filters button, shrinks back into it.
+      style={{ transformOrigin: 'top right' }}
+      initial={{ opacity: 0, scale: 0.9, y: -6 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.94, y: -4, transition: { duration: 0.16, ease: [0.4, 0, 1, 1] } }}
+      transition={{ type: 'spring', stiffness: 520, damping: 34, mass: 0.8 }}
       className="
         absolute
 
@@ -1212,21 +1200,12 @@ function DesktopFilterPanel(
 ) {
   return (
     <motion.div
-      initial={{
-        opacity: 0,
-        y: -5,
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-      }}
-      exit={{
-        opacity: 0,
-        y: -5,
-      }}
-      transition={{
-        duration: 0.16,
-      }}
+      // iOS pop-over: grows out of the Filters button, shrinks back into it.
+      style={{ transformOrigin: 'top right' }}
+      initial={{ opacity: 0, scale: 0.9, y: -6 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.94, y: -4, transition: { duration: 0.16, ease: [0.4, 0, 1, 1] } }}
+      transition={{ type: 'spring', stiffness: 520, damping: 34, mass: 0.8 }}
       className="
         absolute
 

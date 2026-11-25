@@ -3,6 +3,9 @@
 import { calendarDate, calendarDateFormatter, eventTimeZone, zonedDate } from '@/lib/events/dates';
 import { confirmBooking } from '@/lib/bookings/confirm-booking';
 import BookingStepper from '@/components/user/BookingStepper';
+import { useSmartBack } from '@/lib/flow-nav';
+import { navigateWithTransition } from '@/lib/page-transition';
+import { readBookingDetails } from '@/lib/bookings/confirm-booking';
 
 
 import {
@@ -113,6 +116,19 @@ export default function TimeSlotsPage() {
 
   const router =
     useRouter();
+
+  const smartBack = useSmartBack();
+
+  // Whose booking this is, shown above the slots; without details there is nothing to book with.
+  const [bookingFor, setBookingFor] = useState('');
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const details = readBookingDetails(params.id);
+      if (!details) { router.replace(`/events/${encodeURIComponent(params.id)}/book`); return; }
+      setBookingFor([details.title, details.fullName].filter(Boolean).join(' '));
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [params.id, router]);
 
   const eventId =
     params.id;
@@ -447,7 +463,7 @@ export default function TimeSlotsPage() {
         { dayScheduleId: selectedDay._id, slotId: selectedSlot._id },
         { waitlist: !selectedSlot.available },
       );
-      router.replace(`/events/mytickets?booked=${encodeURIComponent(booking.bookingId)}`);
+      navigateWithTransition(() => router.replace(`/events/mytickets?booked=${encodeURIComponent(booking.bookingId)}`));
     } catch (err) {
       // Seats may have changed while the attendee was choosing; refresh first, since loading clears errors.
       await loadSlots(true);
@@ -480,9 +496,7 @@ export default function TimeSlotsPage() {
         message={
           error
         }
-        onBack={() =>
-          router.back()
-        }
+        onBack={() => smartBack()}
         onRetry={() =>
           void loadSlots()
         }
@@ -506,7 +520,7 @@ export default function TimeSlotsPage() {
         event={event}
         submitting={submitting}
         error={error}
-        onBack={() => router.back()}
+        onBack={() => smartBack()}
         onConfirm={async () => {
           if (submitting) return;
           setSubmitting(true);
@@ -538,9 +552,18 @@ export default function TimeSlotsPage() {
     : 'Confirm booking';
 
   return (
-    <main className="booking-bg min-h-dvh overflow-x-hidden pb-[100px] md:pb-10">
+    <main className="booking-bg min-h-dvh overflow-x-hidden pb-[132px] md:pb-10">
       <div className="mx-auto w-full max-w-[1100px] px-3 pt-3 sm:px-5 sm:pt-5 lg:px-7 lg:pt-7">
-        <BookingStepper step={2} />
+        <BookingStepper step={2} onEditDetails={() => smartBack(`/events/${eventId}/book`)} />
+
+        {bookingFor && (
+          <p className="mt-2 flex items-center justify-between gap-3 px-1 text-[13px] text-gray-500">
+            <span className="truncate">Booking for <span className="font-semibold text-secondary">{bookingFor}</span></span>
+            <button type="button" onClick={() => smartBack(`/events/${eventId}/book`)} className="shrink-0 font-semibold text-primary">
+              Edit
+            </button>
+          </p>
+        )}
 
         <motion.section
           initial={{ opacity: 0, y: 10 }}
@@ -698,7 +721,7 @@ export default function TimeSlotsPage() {
             <div className="mt-7 hidden items-center justify-between gap-4 md:flex">
               <button
                 type="button"
-                onClick={() => router.back()}
+                onClick={() => smartBack()}
                 className="h-12 rounded-full border border-gray-300 bg-white px-6 text-sm font-semibold text-secondary transition hover:bg-gray-50"
               >
                 Back to details
@@ -728,30 +751,39 @@ export default function TimeSlotsPage() {
         </p>
       </div>
 
-      {/* MOBILE STICKY FOOTER */}
-      <div className="fixed inset-x-0 bottom-0 z-50 glass-bar px-4 pb-[max(10px,env(safe-area-inset-bottom))] pt-2.5 max-md:bottom-[var(--user-nav-h)] md:hidden">
-        <div className="mx-auto flex w-full max-w-[500px] items-center gap-3">
-          <div className="min-w-0 flex-1">
+      {/* MOBILE ACTION: the chosen time, then Back to details + Confirm. No tab bar here. */}
+      <div className="vt-bottom glass-bar fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-2.5 md:hidden">
+        <div className="mx-auto w-full max-w-[500px]">
+          <div className="mb-2 flex min-h-[20px] items-baseline justify-between gap-2 px-1">
             {selectedDay && selectedSlot ? (
-              <motion.div key={selectedSlot._id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: EASE }}>
-                <p className="truncate text-[13px] text-gray-500">
-                  {formatSelectedDate(selectedDay.date)}
-                  {joiningWaitlist && <span className="font-semibold text-amber-700"> · Waitlist{selectedSlot.waitlistCount ? `, ${selectedSlot.waitlistCount} ahead` : ''}</span>}
-                </p>
-                <p className="truncate text-[17px] font-semibold text-secondary">{selectedSlot.startTime} – {selectedSlot.endTime}</p>
-              </motion.div>
+              <motion.p key={selectedSlot._id} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: EASE }} className="truncate text-[13px] text-gray-500">
+                {formatSelectedDate(selectedDay.date)} · <span className="text-[15px] font-semibold text-secondary">{selectedSlot.startTime} – {selectedSlot.endTime}</span>
+                {joiningWaitlist && <span className="font-semibold text-amber-700"> · Waitlist{selectedSlot.waitlistCount ? `, ${selectedSlot.waitlistCount} ahead` : ''}</span>}
+              </motion.p>
             ) : (
-              <p className="text-[13px] text-gray-500">Pick a time slot</p>
+              <p className="text-[13px] text-gray-500">Pick a time slot above</p>
             )}
           </div>
-          <button
-            type="button"
-            disabled={!selectedSlot || submitting}
-            onClick={() => void handleContinue()}
-            className="btn-primary flex h-12 shrink-0 items-center justify-center rounded-full px-6 max-[359px]:px-4 text-[16px] font-medium text-white transition-all active:scale-[0.995] disabled:cursor-not-allowed disabled:bg-gray-200 disabled:bg-none disabled:text-gray-400 disabled:shadow-none"
-          >
-            {confirmLabel}
-          </button>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => smartBack(`/events/${eventId}/book`)}
+              className="flex h-12 shrink-0 items-center gap-1 rounded-full border border-gray-200/80 bg-white/80 pl-3 pr-4 text-[14px] font-semibold text-secondary shadow-[inset_0_1px_0_rgba(255,255,255,1)] transition active:scale-95"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 18l-6-6 6-6" />
+              </svg>
+              Details
+            </button>
+            <button
+              type="button"
+              disabled={!selectedSlot || submitting}
+              onClick={() => void handleContinue()}
+              className="btn-primary flex h-12 min-w-0 flex-1 items-center justify-center rounded-full px-4 text-[16px] font-medium text-white transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-gray-200 disabled:bg-none disabled:text-gray-400 disabled:shadow-none"
+            >
+              <span className="truncate">{confirmLabel}</span>
+            </button>
+          </div>
         </div>
       </div>
     </main>
@@ -903,7 +935,7 @@ function SlotsError({
     <main
       className="
         min-h-dvh
-        bg-[#F7F9FB]
+        bg-transparent
       "
     >
 
@@ -1147,7 +1179,7 @@ function SlotsLoading() {
     <main
       className="
         min-h-dvh
-        bg-[#F7F9FB]
+        bg-transparent
       "
     >
 

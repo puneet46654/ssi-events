@@ -2,6 +2,9 @@
 
 import { labelFieldControl } from '@/lib/field-control';
 import BookingStepper from '@/components/user/BookingStepper';
+import Link from 'next/link';
+import { useSmartBack } from '@/lib/flow-nav';
+import { navigateWithTransition } from '@/lib/page-transition';
 import { useId } from 'react';
 
 import { bookingStorage } from '@/lib/booking-contracts';
@@ -98,6 +101,7 @@ export default function MantramTemplate({
   eventName,
 }: MantramTemplateProps) {
   const router = useRouter();
+  const smartBack = useSmartBack();
 
   const formRef =
     useRef<HTMLFormElement | null>(
@@ -387,11 +391,7 @@ export default function MantramTemplate({
       // Shown to admins as Pending and restored here if the slot step is abandoned.
       savePendingBooking(eventId, bookingDetails);
 
-      router.push(
-        `/events/${encodeURIComponent(
-          eventId,
-        )}/book/slots`,
-      );
+      navigateWithTransition(() => router.push(`/events/${encodeURIComponent(eventId)}/book/slots`));
     } catch (
       error: unknown
     ) {
@@ -416,7 +416,7 @@ export default function MantramTemplate({
         min-h-dvh
         w-full
         overflow-x-hidden
-        bg-[#F7F9FB]
+        bg-transparent
       "
     >
       <div
@@ -948,14 +948,22 @@ export default function MantramTemplate({
               sm:gap-3
 
               lg:mt-8
-              max-md:fixed max-md:inset-x-0 max-md:bottom-[var(--user-nav-h,0px)] max-md:z-30 max-md:mt-0 max-md:flex-row max-md:glass-bar max-md:px-4 max-md:py-2.5
+              max-md:vt-bottom max-md:fixed max-md:inset-x-0 max-md:bottom-[var(--user-nav-h,0px)] max-md:z-30 max-md:mt-0 max-md:flex-row max-md:glass-bar max-md:items-center max-md:gap-3 max-md:px-4 max-md:pt-3 max-md:pb-[max(12px,env(safe-area-inset-bottom))]
             "
           >
+            <Link
+              href="/"
+              aria-label="Home"
+              className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border border-gray-200/80 bg-white/80 text-secondary shadow-[inset_0_1px_0_rgba(255,255,255,1)] transition active:scale-95 md:hidden"
+            >
+              <svg className="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 10.5 12 3l9 7.5M5 9.5V20h5v-6h4v6h5V9.5" />
+              </svg>
+            </Link>
+
             <button
               type="button"
-              onClick={() =>
-                router.back()
-              }
+              onClick={() => smartBack()}
               className="max-md:hidden 
                 max-md:order-1 max-md:h-11 max-md:w-auto max-md:shrink-0 max-md:px-5 order-2
                 flex

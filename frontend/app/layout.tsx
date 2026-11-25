@@ -4,6 +4,7 @@ import "./globals.css";
 import { RealtimeProvider } from "@/components/realtime/RealtimeProvider";
 import { Warmup } from "@/components/perf/Warmup";
 import { Analytics } from "@/components/perf/Analytics";
+import MotionProvider from "@/components/MotionProvider";
 
 // The SS Innovations typeface. Self-hosted by Next.js, so no request to Google at runtime.
 const figtree = Figtree({
@@ -44,8 +45,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${figtree.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <RealtimeProvider>{children}<Warmup /><Analytics /></RealtimeProvider>
+      <body className="liquid min-h-full flex flex-col" suppressHydrationWarning>
+        <MotionProvider><RealtimeProvider>{children}<Warmup /><Analytics /></RealtimeProvider></MotionProvider>
       </body>
     </html>
   );

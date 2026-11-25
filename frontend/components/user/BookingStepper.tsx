@@ -1,12 +1,18 @@
 /** Two-step progress card shared by the booking details form (step 1) and the time-slot page (step 2). */
-export default function BookingStepper({ step }: { step: 1 | 2 }) {
+/** On step 2, `onEditDetails` makes "Your details" a button back to the form. */
+export default function BookingStepper({ step, onEditDetails }: { step: 1 | 2; onEditDetails?: () => void }) {
   const done = step === 2;
+  const editable = done && !!onEditDetails;
   return (
     <nav
       aria-label="Booking progress"
       className="flex items-center gap-2.5 glass rounded-2xl px-3 py-2 sm:px-4"
     >
-      <div className="flex shrink-0 items-center gap-2" aria-current={step === 1 ? 'step' : undefined}>
+      <div
+        className={`flex shrink-0 items-center gap-2 ${editable ? '-m-1 cursor-pointer rounded-xl p-1 transition-colors hover:bg-primary/[0.05] active:bg-primary/[0.08]' : ''}`}
+        aria-current={step === 1 ? 'step' : undefined}
+        {...(editable ? { role: 'button', tabIndex: 0, 'aria-label': 'Edit your details', onClick: onEditDetails, onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEditDetails!(); } } } : {})}
+      >
         <span
           className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-[14px] font-semibold text-white ${
             done

@@ -20,6 +20,8 @@ import {
 import ConferenceTemplate from '@/app/components/admin/booking-templates/ConferenceTemplate';
 
 import MantramTemplate from '@/app/components/admin/booking-templates/MantramTemplate';
+import Link from 'next/link';
+import { bookingStorage } from '@/lib/booking-contracts';
 
 
 type BookingFormTemplate =
@@ -148,6 +150,25 @@ export default function EventBookingPage() {
     setError,
   ] =
     useState('');
+
+  // A booking already made for this event in this tab (e.g. Back pressed after booking).
+  const [doneBooking, setDoneBooking] = useState('');
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const intent = JSON.parse(sessionStorage.getItem(bookingStorage.intent(eventId)) || 'null') as { bookingId?: string } | null;
+        if (intent?.bookingId) setDoneBooking(intent.bookingId);
+      } catch { /* no record: show the form */ }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [eventId]);
+
+  function bookAnother() {
+    try {
+      for (const key of [bookingStorage.intent(eventId), bookingStorage.details(eventId), bookingStorage.draft(eventId)]) sessionStorage.removeItem(key);
+    } catch { /* ignore */ }
+    setDoneBooking('');
+  }
 
   /* ============================================================
      LOAD PUBLIC EVENT
@@ -402,6 +423,30 @@ export default function EventBookingPage() {
               router.back()
             }
           />
+        ) : doneBooking ? (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: EASE }}
+            className="glass mx-3 rounded-2xl p-5 text-center sm:mx-auto sm:max-w-md"
+          >
+            <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-emerald-100 text-emerald-700" aria-hidden="true">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="m5 12 4 4L19 6" /></svg>
+            </span>
+            <h1 className="mt-3 text-[19px] font-bold text-secondary">You have already registered</h1>
+            <p className="mt-1 text-[13.5px] text-gray-500">
+              Your registration for <span className="font-semibold text-secondary">{event.eventName}</span> is saved (reference {doneBooking}).
+            </p>
+            <Link
+              href={`/events/mytickets?booked=${encodeURIComponent(doneBooking)}`}
+              className="btn-primary mt-4 flex h-12 w-full items-center justify-center rounded-full text-[15px] font-medium text-white"
+            >
+              View my ticket
+            </Link>
+            <button type="button" onClick={bookAnother} className="mt-2 h-11 w-full rounded-full border border-gray-200 bg-white/70 text-[14px] font-semibold text-secondary">
+              Register another doctor
+            </button>
+          </motion.div>
         ) : (
           <motion.div
             initial={{

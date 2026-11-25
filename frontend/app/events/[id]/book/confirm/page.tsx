@@ -35,7 +35,7 @@ export default function BookingConfirmRedirect() {
   }, [eventId, router]);
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-white px-4">
+    <main className="flex min-h-dvh items-center justify-center bg-transparent px-4">
       <p role="status" className="text-[14px] font-medium text-gray-500">Opening your ticket...</p>
     </main>
   );

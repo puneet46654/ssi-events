@@ -249,7 +249,7 @@ export default function AdminLayout({
   const writePage = pathname.startsWith('/admin/eventmanagement/') && (pathname.endsWith('/new') || pathname.endsWith('/edit'));
   const actionDenied = currentUser && writePage && !canAdminCreate(currentUser);
   if (verified?.path === pathname && verified.error || moduleDenied || actionDenied) {
-    return <div className="grid min-h-dvh place-items-center bg-gray-50 p-6">
+    return <div className="grid min-h-dvh place-items-center p-6">
       <div className="max-w-md text-center">
         <p role="alert">{verified?.error || (actionDenied ? 'You have view-only access to events.' : 'No admin modules are assigned to this account. Contact your administrator.')}</p>
         {verified?.error && <button className="btn btn-primary mt-4" onClick={() => setRetry(value => value + 1)}>Retry session check</button>}
@@ -265,7 +265,6 @@ export default function AdminLayout({
           grid
           min-h-dvh
           place-items-center
-          bg-gray-50
           px-4
         "
       >
@@ -316,7 +315,6 @@ export default function AdminLayout({
       className="
         min-h-dvh
         w-full
-        bg-gray-50
       "
     >
       {/* ======================================================
@@ -336,10 +334,8 @@ export default function AdminLayout({
 
           w-[248px]
 
+          lg-chrome
           border-r
-          border-gray-200
-
-          bg-white
 
           lg:block
 
@@ -366,10 +362,8 @@ export default function AdminLayout({
           items-center
           justify-between
 
+          lg-chrome
           border-b
-          border-gray-200
-
-          bg-white/95
 
           px-3
 

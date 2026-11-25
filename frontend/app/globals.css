@@ -414,11 +414,8 @@ button, a, [role="button"], input, select, textarea, label { touch-action: manip
    backdrop + frosted-glass surfaces. Mobile first.
 ============================================================ */
 .booking-bg {
-  background-color: #F4F6FB;
-  background-image:
-    radial-gradient(60% 40% at 0% 0%, rgba(40, 63, 143, 0.14), transparent 70%),
-    radial-gradient(55% 35% at 100% 12%, rgba(35, 135, 154, 0.14), transparent 70%),
-    radial-gradient(70% 45% at 50% 100%, rgba(52, 189, 152, 0.10), transparent 70%);
+  /* The app-wide Liquid Glass backdrop (body.liquid::before) shows through. */
+  background: transparent;
 }
 @utility glass {
   background: rgba(255, 255, 255, 0.68);
@@ -446,4 +443,238 @@ button, a, [role="button"], input, select, textarea, label { touch-action: manip
 
 @media (prefers-reduced-motion: reduce) {
   .sheet-in, .fade-in { animation: none; }
+}
+
+/* ============================================================
+   LIQUID GLASS (Apple-style), whole app.
+   - One soft brand backdrop on a fixed layer (never repaints on scroll).
+   - Real blur only on floating chrome (header, tab bar, sidebar, bars,
+     menus, dialog scrims): what content scrolls underneath.
+   - Panels/cards: translucent + specular top edge + soft depth, no blur
+     (over a smooth backdrop blur adds nothing but cost).
+   - Solid fallbacks for "Reduce transparency" and old browsers.
+============================================================ */
+:root {
+  --lg-panel: rgba(255, 255, 255, 0.52);
+  --lg-panel-strong: rgba(255, 255, 255, 0.84);
+  --lg-chrome: rgba(255, 255, 255, 0.55);
+  /* Bottom action bars: denser, so fields scrolling underneath never compete with the button. */
+  --lg-bar: rgba(255, 255, 255, 0.8);
+  --lg-edge: rgba(255, 255, 255, 0.72);
+  --lg-hairline: rgba(15, 23, 41, 0.07);
+  --lg-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(255, 255, 255, 0.25);
+  --lg-depth: 0 1px 2px rgba(15, 23, 41, 0.04), 0 12px 32px -14px rgba(15, 23, 41, 0.16);
+  --lg-blur: blur(28px) saturate(190%);
+}
+
+html { background-color: #E6ECF6; }
+body.liquid { background-color: transparent; }
+body.liquid::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: #E6ECF6;
+  background-image:
+    radial-gradient(60% 45% at 0% 0%, rgba(40, 63, 143, 0.34), transparent 70%),
+    radial-gradient(55% 42% at 100% 10%, rgba(35, 135, 154, 0.32), transparent 70%),
+    radial-gradient(65% 50% at 90% 100%, rgba(52, 189, 152, 0.28), transparent 70%),
+    radial-gradient(55% 48% at 0% 95%, rgba(112, 128, 230, 0.28), transparent 70%);
+}
+
+/* Floating chrome: frosted, saturated, with a bright top edge. */
+.lg-chrome {
+  background: var(--lg-chrome);
+  -webkit-backdrop-filter: var(--lg-blur);
+  backdrop-filter: var(--lg-blur);
+  border-color: var(--lg-edge);
+  box-shadow: var(--lg-highlight), 0 0 0 0.5px var(--lg-hairline), 0 10px 30px -10px rgba(15, 23, 41, 0.18);
+}
+
+/* Panels and cards across the app. */
+body.liquid :is(.card,
+  div.bg-white.border, section.bg-white.border, article.bg-white.border, form.bg-white.border,
+  li.bg-white.border, a.bg-white.border, aside.bg-white.border, div.bg-white.shadow-sm, section.bg-white.shadow-sm,
+  article.bg-white) {
+  background-color: var(--lg-panel);
+  border-color: var(--lg-edge);
+  box-shadow: var(--lg-highlight), var(--lg-depth);
+}
+
+/* Menus, popovers and anything floating over content: real frosted glass. */
+body.liquid :is(.absolute, .fixed, .sticky).bg-white,
+body.liquid :is(.absolute, .fixed, .sticky).bg-white\/95,
+body.liquid :is(.absolute, .fixed, .sticky).bg-white\/90 {
+  /* !important: these float over other content, so they must win over the lighter card glass
+     (a filter panel over the event list must never let the list show through). */
+  background-color: rgba(255, 255, 255, 0.97) !important;
+  border-color: var(--lg-edge);
+  -webkit-backdrop-filter: var(--lg-blur) !important;
+  backdrop-filter: var(--lg-blur) !important;
+}
+
+/* Dialog scrims: dim and blur what is behind, as on iOS. */
+body.liquid .fixed.inset-0:is(.bg-black\/30, .bg-black\/35, .bg-black\/40, .bg-black\/50, .bg-black\/60, .bg-secondary\/40, .bg-secondary\/50) {
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
+  backdrop-filter: blur(6px) saturate(120%);
+}
+
+/* Fields sit slightly lifted on glass; solid while typing. */
+body.liquid :is(input, select, textarea).bg-white { background-color: rgba(255, 255, 255, 0.8); }
+body.liquid :is(input, select, textarea).bg-white:focus { background-color: #ffffff; }
+
+/* Brighter, rounder glass for the booking surfaces already using .glass / .glass-bar. */
+body.liquid .glass {
+  background: var(--lg-panel);
+  border-color: var(--lg-edge);
+  box-shadow: var(--lg-highlight), var(--lg-depth);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+body.liquid .glass-bar,
+body.liquid .max-md\:glass-bar,
+body.liquid .fixed.bottom-0.bg-white\/95 {
+  background: var(--lg-bar);
+  -webkit-backdrop-filter: var(--lg-blur);
+  backdrop-filter: var(--lg-blur);
+  box-shadow: var(--lg-highlight), 0 -8px 28px -10px rgba(15, 23, 41, 0.16);
+}
+@media (min-width: 768px) {
+  body.liquid .max-md\:glass-bar { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .lg-chrome, body.liquid .glass-bar, body.liquid :is(.absolute, .fixed, .sticky).bg-white { background: rgba(255, 255, 255, 0.96); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  body.liquid::before { background-image: none; }
+  .lg-chrome, body.liquid .glass, body.liquid .glass-bar,
+  body.liquid :is(.card, div.bg-white.border, section.bg-white.border, article.bg-white.border, form.bg-white.border,
+    li.bg-white.border, a.bg-white.border, aside.bg-white.border, div.bg-white.shadow-sm, section.bg-white.shadow-sm),
+  body.liquid :is(.absolute, .fixed, .sticky).bg-white {
+    background: #ffffff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* A primary button that can't be used must look it (the gradient otherwise wins over disabled utilities). */
+.btn-primary:disabled,
+.btn-primary[aria-disabled="true"] {
+  background-image: none;
+  background-color: rgba(148, 163, 184, 0.28);
+  color: rgba(71, 85, 105, 0.75);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Dropdowns and pop-over panels (filters, selectors): fully solid so the content behind never shows
+   through, with the glass edge and depth kept. Bars and headers stay frosted. */
+body.liquid .absolute:is(.bg-white, .bg-white\/95, .bg-white\/90) {
+  background-color: #ffffff !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: var(--lg-highlight), 0 18px 44px -12px rgba(15, 23, 41, 0.28);
+}
+
+/* ============================================================
+   APPLE MOTION
+   iOS curves: quick to respond, long gentle settle. Applied
+   app-wide; framer-motion elements (inline transform) keep
+   their own springs. All off under "Reduce motion".
+============================================================ */
+:root {
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);         /* sheets, pages */
+  --ease-ios-pop: cubic-bezier(0.2, 0.9, 0.25, 1.06); /* pop-overs: a hint of overshoot */
+}
+
+/* Opacity only: a transform on <main> would detach the fixed bottom bars inside it on phones. */
+@keyframes ios-page-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ios-scrim-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ios-pop-in { from { opacity: 0; transform: scale(0.94) translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes ios-sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+
+/* Each page settles in as it opens. */
+/* fill-mode backwards: once finished it leaves no stacking context, so sheets opened inside a page still cover the tab bar. */
+body.liquid main { animation: ios-page-in 0.45s var(--ease-ios) backwards; }
+
+/* Press feedback on every button and button-like link. */
+body.liquid :is(button, a.btn-primary, a[class*="rounded-full"], [role="button"]):not(:disabled) {
+  transition-property: transform, background-color, border-color, color, box-shadow, opacity;
+  transition-duration: 0.18s;
+  transition-timing-function: var(--ease-ios);
+}
+body.liquid :is(button, a.btn-primary, a[class*="rounded-full"], [role="button"]):not(:disabled):active {
+  transform: scale(0.965);
+}
+
+/* Dialogs without their own animation (admin screens): scrim fades, panel pops; on phones,
+   panels anchored to the bottom rise like a sheet. */
+body.liquid .fixed.inset-0:is([class*="bg-black"], [class*="bg-secondary\/"]):not([style*="opacity"]) {
+  animation: ios-scrim-in 0.25s ease-out both;
+}
+body.liquid .fixed.inset-0:is([class*="bg-black"], [class*="bg-secondary\/"]) > :not([style*="transform"]):not([style*="opacity"]) {
+  animation: ios-pop-in 0.38s var(--ease-ios-pop) both;
+}
+@media (max-width: 767px) {
+  body.liquid .fixed.inset-0.items-end:is([class*="bg-black"], [class*="bg-secondary\/"]) > :not([style*="transform"]):not([style*="opacity"]) {
+    animation: ios-sheet-in 0.5s var(--ease-ios) both;
+  }
+}
+
+/* Sheet grab handle. */
+.sheet-handle {
+  display: block;
+  width: 38px;
+  height: 5px;
+  margin: 0 auto 10px;
+  border-radius: 999px;
+  background: rgba(60, 60, 67, 0.22);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.liquid main,
+  body.liquid .fixed.inset-0,
+  body.liquid .fixed.inset-0 > * { animation: none !important; }
+  body.liquid :is(button, a, [role="button"]):active { transform: none !important; }
+}
+
+/* ============================================================
+   PAGE TRANSITIONS (iOS navigation push / pop)
+   Driven by lib/page-transition.ts via document.startViewTransition.
+============================================================ */
+@keyframes vt-push-in  { from { transform: translateX(32%); opacity: 0; } }
+@keyframes vt-push-out { to   { transform: translateX(-14%); opacity: 0; filter: brightness(0.96); } }
+@keyframes vt-pop-in   { from { transform: translateX(-14%); opacity: 0; } }
+@keyframes vt-pop-out  { to   { transform: translateX(32%); opacity: 0; } }
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.48s;
+  animation-timing-function: var(--ease-ios);
+  animation-fill-mode: both;
+}
+html[data-nav-dir="forward"]::view-transition-old(root) { animation-name: vt-push-out; }
+html[data-nav-dir="forward"]::view-transition-new(root) { animation-name: vt-push-in; }
+html[data-nav-dir="back"]::view-transition-old(root)    { animation-name: vt-pop-out; }
+html[data-nav-dir="back"]::view-transition-new(root)    { animation-name: vt-pop-in; }
+
+/* The frame (header, bottom bar) is lifted out of the slide and swaps instantly, as on iOS:
+   animating a snapshot of frosted glass smears and blurs it. Only the content moves. */
+.vt-header { view-transition-name: app-header; }
+@utility vt-bottom { view-transition-name: app-bottom; }
+::view-transition-group(app-header),
+::view-transition-group(app-bottom) { animation: none; }
+::view-transition-old(app-header),
+::view-transition-old(app-bottom) { display: none; }
+::view-transition-new(app-header),
+::view-transition-new(app-bottom) { animation: none; }
+
+/* With view transitions available, the plain fade-in on <main> would double up. */
+@supports (view-transition-name: none) {
+  body.liquid main { animation: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
 }

@@ -168,11 +168,11 @@ export default function WaitlistPanel({ eventId, onSeated }: { eventId: string; 
                       <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-amber-100 text-[12px] font-bold text-amber-800">
                         {entry.position}
                       </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-semibold text-secondary">
+                      <div className="min-w-[10rem] flex-1">
+                        <p className="text-[13px] font-semibold leading-snug text-secondary">
                           {[entry.title, entry.fullName].filter(Boolean).join(' ')}
                         </p>
-                        <p className="truncate text-[12px] text-gray-500">
+                        <p className="text-[12px] leading-snug text-gray-500">
                           {[entry.specialty, entry.hospitalName, entry.mobile].filter(Boolean).join(' · ')}
                         </p>
                       </div>

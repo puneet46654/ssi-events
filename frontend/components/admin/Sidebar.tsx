@@ -259,7 +259,7 @@ export default function Sidebar({
           w-full
           flex-col
 
-          bg-white
+          bg-transparent
 
           ${
             mobile

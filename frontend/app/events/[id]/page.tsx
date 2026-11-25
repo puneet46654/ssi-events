@@ -315,13 +315,13 @@ export default function EventDetailsPage() {
   const unlimited = registrationOnly && !event.capacity;
   const canBook =
     (event.status === 'LIVE' || event.status === 'UPCOMING') && (unlimited || remainingCapacity > 0);
-  const bookLabel = registrationOnly ? 'Register' : 'Book a slot';
+  const bookLabel = 'Register now';
 
   return (
     <main
       className="
         min-h-dvh
-        bg-[#F7F9FB]
+        bg-transparent
         pb-[130px]
 
         md:pb-10
@@ -749,108 +749,35 @@ export default function EventDetailsPage() {
         </div>
       </div>
 
-      {/* MOBILE ACTION */}
-
-      <div
-        className="
-          fixed
-          inset-x-0
-          bottom-0 max-md:bottom-[var(--user-nav-h)]
-          z-50
-
-          border-t
-          border-gray-200/80
-
-          bg-white/95
-
-          px-4
-          pb-[max(12px,env(safe-area-inset-bottom))]
-          pt-3
-
-          shadow-[0_-8px_24px_rgba(15,23,41,0.06)]
-
-          backdrop-blur-xl
-
-          md:hidden
-        "
-      >
-        <div
-          className="
-            mx-auto
-            w-full
-            max-w-[430px]
-
-            space-y-2
-          "
-        >
+      {/* MOBILE ACTION: Home + the next step. No tab bar on the booking flow pages. */}
+      <div className="vt-bottom glass-bar fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 md:hidden">
+        <div className="mx-auto flex w-full max-w-[430px] items-center gap-3">
+          <Link
+            href="/"
+            aria-label="Home"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-gray-200/80 bg-white/80 text-secondary shadow-[inset_0_1px_0_rgba(255,255,255,1)] transition active:scale-95"
+          >
+            <svg className="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 10.5 12 3l9 7.5M5 9.5V20h5v-6h4v6h5V9.5" />
+            </svg>
+          </Link>
           {infoOnly ? (links[0] ? (
             <a href={links[0].url} target="_blank" rel="noopener noreferrer"
-              className="btn-primary flex h-12 w-full items-center justify-center rounded-full text-[16px] font-medium text-white">
+              className="btn-primary flex h-12 flex-1 items-center justify-center rounded-full text-[16px] font-medium text-white">
               {links[0].label}
             </a>
-          ) : null) : canBook ? (
+          ) : <span className="flex-1" />) : canBook ? (
             <Link
               href={`/events/${event._id}/book`}
-              className="
-                flex
-                h-12
-                w-full
-
-                items-center
-                justify-center
-
-                btn-primary rounded-full text-[16px] font-medium text-white
-              "
+              className="btn-primary flex h-12 flex-1 items-center justify-center rounded-full text-[16px] font-medium text-white transition active:scale-[0.98]"
             >
-              {bookLabel}
+              Register now
             </Link>
           ) : (
-            <button
-              type="button"
-              disabled
-              className="
-                h-12
-                w-full
-
-                rounded-xl
-
-                bg-gray-200
-
-                text-sm
-                font-semibold
-                text-gray-400
-              "
-            >
-              Booking closed
-            </button>
+            <span className="flex h-12 flex-1 items-center justify-center rounded-full bg-gray-200/80 text-[15px] font-semibold text-gray-500">
+              Registration closed
+            </span>
           )}
-
-          <button
-            type="button"
-            onClick={() =>
-              router.back()
-            }
-            className="
-              h-11
-              w-full
-
-              cursor-pointer
-
-              rounded-xl
-
-              border
-              border-gray-300
-
-              bg-white
-
-              text-sm
-              font-semibold
-              text-secondary
-              hidden sm:block
-            "
-          >
-            Go back
-          </button>
         </div>
       </div>
 
@@ -928,7 +855,7 @@ function EventError({
         min-h-dvh
         place-items-center
 
-        bg-[#F7F9FB]
+        bg-transparent
 
         px-4
       "
@@ -1169,7 +1096,7 @@ function InfoIcon({
 
 function EventDetailsSkeleton() {
   return (
-    <main className="min-h-dvh bg-[#F7F9FB]">
+    <main className="min-h-dvh bg-transparent">
       <div
         className="
           h-[64px]

@@ -1,6 +1,7 @@
 'use client';
 
 import { useHydrated } from '@/lib/use-hydrated';
+import { useBackCloses } from '@/lib/use-back-closes';
 import { eventTimeZone } from '@/lib/events/dates';
 import { googleCalendarUrl } from '@/lib/events/calendar';
 import { useDialog } from '@/lib/use-dialog';
@@ -24,7 +25,9 @@ import {
 import {
   AnimatePresence,
   motion,
+  useDragControls,
 } from 'framer-motion';
+import SheetHandle from '@/components/user/SheetHandle';
 
 import {
   QRCodeSVG,
@@ -148,10 +151,14 @@ export default function MyTicketsPage() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   // Set when the attendee arrives straight from booking a slot.
   const [justBooked, setJustBooked] = useState('');
+  const qrDrag = useDragControls();
   const justBookedWaitlist = tickets.some(ticket => ticket.bookingId === justBooked && ticket.status === 'WAITLISTED');
   // Asked on My Tickets (right after booking, or on any later visit) until this device has rated the app.
   const [feedbackDone, markFeedbackDone] = useAppFeedbackDone();
   const [managing, setManaging] = useState<{ ticket: Ticket; mode: 'reschedule' | 'cancel' } | null>(null);
+  // The phone Back button closes an open sheet instead of leaving the page.
+  useBackCloses(!!selectedTicket, () => setSelectedTicket(null));
+  useBackCloses(!!managing, () => setManaging(null));
   const [loaded, setLoaded] = useState(false);
   const lookupRef = useRef<string | null>(null);
   const pendingRef = useRef<AbortController | null>(null);
@@ -761,10 +768,16 @@ export default function MyTicketsPage() {
 
               <motion.div
 
-                initial={{ y: 48, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 48, opacity: 0 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', stiffness: 380, damping: 38, mass: 0.9 }}
+                dragControls={qrDrag}
+                dragListener={false}
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 0 }}
+                dragElastic={{ top: 0, bottom: 0.7 }}
+                onDragEnd={(_, info) => { if (info.offset.y > 110 || info.velocity.y > 650) setSelectedTicket(null); }}
 
                 className="
                   w-full
@@ -789,6 +802,7 @@ export default function MyTicketsPage() {
 
               >
 
+                <SheetHandle controls={qrDrag} />
                 <TicketPass ticket={selectedTicket} onClose={() => setSelectedTicket(null)} />
 
 
@@ -802,6 +816,7 @@ export default function MyTicketsPage() {
 
       </AnimatePresence>
 
+      <AnimatePresence>
       {managing && (
         <ManageTicketDialog
           key={managing.ticket.bookingId + managing.mode}
@@ -811,6 +826,7 @@ export default function MyTicketsPage() {
           onDone={() => { setManaging(null); refreshTickets(); }}
         />
       )}
+      </AnimatePresence>
     </main>
 
   );
@@ -974,6 +990,7 @@ function ManageTicketDialog({
   onDone: () => void;
 }) {
   const dialog = useDialog(true, onClose, mode === 'cancel' ? 'Cancel booking' : 'Reschedule booking');
+  const sheetDrag = useDragControls();
   const [days, setDays] = useState<DayOption[] | null>(mode === 'cancel' ? [] : null);
   const [choice, setChoice] = useState<{ dayScheduleId: string; slotId: string } | null>(null);
   const [saving, setSaving] = useState(false);
@@ -1019,8 +1036,21 @@ function ManageTicketDialog({
   const dayLabel = (value: string) => new Date(value).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
 
   return (
-    <div className="fade-in fixed inset-0 z-50 flex items-end justify-center bg-black/35 backdrop-blur-[3px] sm:items-center sm:px-4" onClick={onClose}>
-      <div {...dialog} className="sheet-in max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white px-5 pt-5 pb-[max(20px,env(safe-area-inset-bottom))] sm:rounded-3xl sm:p-6" onClick={event => event.stopPropagation()}>
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/35 backdrop-blur-[3px] sm:items-center sm:px-4" onClick={onClose}
+    >
+      <motion.div
+        {...dialog}
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        transition={{ type: 'spring', stiffness: 380, damping: 38, mass: 0.9 }}
+        dragControls={sheetDrag} dragListener={false}
+        drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: 0, bottom: 0.7 }}
+        onDragEnd={(_, info) => { if (info.offset.y > 110 || info.velocity.y > 650) onClose(); }}
+        className="max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white px-5 pt-3 pb-[max(20px,env(safe-area-inset-bottom))] sm:rounded-3xl sm:p-6"
+        onClick={event => event.stopPropagation()}
+      >
+        <SheetHandle controls={sheetDrag} />
         <h2 className="text-[16px] font-semibold text-secondary">
           {mode === 'cancel' ? (ticket.status === 'WAITLISTED' ? 'Leave the waitlist?' : 'Cancel this booking?') : ticket.status === 'WAITLISTED' ? 'Change your slot' : 'Choose a new time slot'}
         </h2>
@@ -1082,8 +1112,8 @@ function ManageTicketDialog({
               : ticket.status === 'WAITLISTED' ? 'Confirm my seat' : 'Confirm new slot'}
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
