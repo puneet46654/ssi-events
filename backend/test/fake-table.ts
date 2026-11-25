@@ -73,7 +73,8 @@ export async function installFakeTable(db: { send: (...args: any[]) => any }) {
   table.clear();
   mock.method(db, 'send', async (command: any) => {
     const input = command.input;
-    switch (command.constructor.name) {
+    // Bundlers may rename classes (e.g. GetCommand_GetCommand); the SDK name is the last part.
+    switch (String(command.constructor.name).replace(/^.*_/, '')) {
       case 'GetCommand': return { Item: table.get(k(input.Key)) };
       case 'PutCommand':
         if (!check(table.get(k(input.Item)), input.ConditionExpression, input.ExpressionAttributeValues, input.ExpressionAttributeNames)) throw new ConditionalCheckFailed('condition');
